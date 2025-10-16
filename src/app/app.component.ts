@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common'; // Убеждаемся, что CommonModule импортирован
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule],
+  // Явно импортируем CommonModule, который обеспечивает работу *ngIf и т.д.
+  imports: [CommonModule], 
   template: `
     <!-- Main Application Card -->
-    <div class="w-full max-w-2xl bg-white shadow-xl rounded-xl p-6 md:p-8 border border-gray-100">
+    <div class="w-full max-w-2xl bg-white shadow-xl rounded-xl p-6 md:p-8 border border-gray-100 mx-auto my-8">
 
       <!-- Header -->
       <header class="mb-6 text-center">
@@ -145,6 +146,10 @@ import { CommonModule } from '@angular/common';
       width: 100%;
       max-width: 100%;
     }
+    .mx-auto {
+        margin-left: auto;
+        margin-right: auto;
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -161,15 +166,24 @@ export class AppComponent {
   solutionText = signal('');
   fileName = signal('');
   
-  // --- Core Logic Functions (Will be fully implemented later) ---
+  // Storage for Base64 image data
+  private base64Image = signal<string | null>(null);
+
+  // --- Core Logic Functions (Mocked for now) ---
 
   handleFileUpload(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      // We only store the file name for now to show the user that it worked
-      this.fileName.set(input.files[0].name);
-      console.log('File selected:', input.files[0]);
-      // The actual base64 conversion and image processing logic will go here
+      const file = input.files[0];
+      this.fileName.set(file.name);
+      
+      const reader = new FileReader();
+      reader.onload = () => {
+        // Store only the base64 part, removing the data URL prefix
+        const base64String = (reader.result as string).split(',')[1];
+        this.base64Image.set(base64String);
+      };
+      reader.readAsDataURL(file);
     }
   }
 
@@ -186,7 +200,7 @@ export class AppComponent {
     this.solutionText.set('');
 
     // 2. Construct the prompt based on all inputs
-    let prompt = `Ти — освітній асистент для 5-го класу за українською програмою. Твоє завдання — надати деталізоване розв'язання та пояснення до заданого матеріалу.
+    let prompt = `Ти — освітній асистент для 5-го класу за українською програмою. Твоє завдання — надати деталізоване розв'язання та пояснення до заданого матеріалу, використовуючи LaTeX для математичних формул.
     
     **Предмет:** ${this.selectedSubject()}
     **Завдання:** ${this.userTask()}
@@ -214,6 +228,8 @@ export class AppComponent {
             Ваше завдання з предмету **${this.selectedSubject()}** було оброблено.
             
             Ми проаналізували ваш запит: *"${this.userTask() || 'Без текстового опису'}"*.
+            
+            ${this.base64Image() ? '**(Зображення було завантажено та готове до аналізу)**' : ''}
 
             ### Крок 1: Аналіз умови
             Тут буде детально описано, що потрібно знайти або зробити у завданні.
@@ -224,7 +240,7 @@ export class AppComponent {
             $$\\frac{1}{2} \\times 5^{2} + 3 = 15.5$$
             
             ### Відповідь
-            Готова відповідь на завдання (наприклад, 15.5).
+            Готова відповідь на завдання (наприклад, $15.5$).
 
             **Примітка:** Наразі це тестовий вивід. Наступним кроком ми інтегруємо справжній Gemini API, щоб отримувати реальні, корисні відповіді.
         `);
