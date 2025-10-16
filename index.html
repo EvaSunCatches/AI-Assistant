@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Освітній Асистент</title>
-    <!-- Загрузка Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Загрузка шрифта Nunito (Тот, что использовался ранее) -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         /* Применение шрифта Nunito ко всему документу */
@@ -93,7 +91,7 @@
         /* СТИЛЬ ПЕРЕКЛЮЧАТЕЛЕЙ: ХОЛОДНЫЙ ТОН */
         .input-switcher {
             /* Базовый стиль для неактивных кнопок */
-             transition: all 0.3s ease;
+            transition: all 0.3s ease;
         }
         .input-switcher.active {
             background-color: #E0F7FA !important; /* Очень светло-голубой фон */
@@ -105,33 +103,27 @@
 </head>
 <body>
 
-<!-- min-h-screen: гарантирует, что страница занимает всю высоту экрана -->
 <div class="min-h-screen flex flex-col lg:flex-row-reverse">
 
-    <!-- Правая панель - Фото Ассистента (Ледяной фон) -->
     <div class="lg:w-1/3 flex flex-col justify-center items-center relative overflow-hidden text-gray-800 assistant-container"
-         style="min-height: 250px;">
+        style="min-height: 250px;">
         
-        <!-- Заглушка/Фото AI -->
         <img id="assistant-photo"
-             src="https://raw.githubusercontent.com/EvaSunCatches/AI-Assistant/main/assets/assistant.png"
+             src="uploaded:assistant.jpg-cafc0f16-3772-473a-92dc-f72e44d788a1"
              alt="AI Асистент" 
              class="assistant-image absolute inset-0 w-full h-full object-cover" 
              onerror="this.style.display='none'; this.closest('div').style.backgroundImage='linear-gradient(to bottom, #e0f7fa 0%, #ffffff 100%)'">
 
-        <!-- КОНТЕЙНЕР ПОДПИСИ: Применяет точный матовый эффект -->
         <div class="relative z-10 text-center p-4 rounded-xl assistant-label mt-auto mb-8 shadow-xl" style="padding-left: 1.5rem; padding-right: 1.5rem;">
             <h1 class="text-3xl font-extrabold mb-1">AI Освітній Асистент</h1>
             <p class="text-lg">Ваш персональний помічник у навчанні</p>
         </div>
     </div>
 
-    <!-- Левая панель - Форма ввода задания -->
     <div class="lg:w-2/3 p-4 md:p-10 flex flex-col justify-start pt-10">
         <div class="max-w-xl mx-auto w-full bg-white p-6 md:p-8 rounded-2xl shadow-2xl">
             <h2 class="text-2xl font-extrabold text-gray-800 mb-6 border-b pb-4">Введіть ваше завдання</h2>
 
-            <!-- Выбор предмета (Drop Down) -->
             <div class="mb-5">
                 <label for="subject-select" class="block text-sm font-medium text-gray-700 mb-2">
                     Правильно вибрати предмет
@@ -145,7 +137,6 @@
                 </select>
             </div>
 
-            <!-- Раздел 1: Выбор типа ввода (URL/Фото) - Ледяной стиль -->
             <div class="mb-5">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     Розділ 1: Джерело завдання
@@ -153,68 +144,58 @@
                 <div class="flex space-x-4">
                     <button id="input-type-url" type="button" 
                             class="input-switcher active flex-1 p-3 rounded-xl font-semibold transition duration-150 ease-in-out border border-cyan-400 bg-cyan-50 text-cyan-700 shadow-md flex items-center justify-center">
-                        <!-- SVG для URL -->
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.811a4 4 0 00-.585-.585m-4.66-2.115a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.5-4.5"></path></svg>
                         По посиланню (URL)
                     </button>
                     <button id="input-type-photo" type="button" 
                             class="input-switcher flex-1 p-3 rounded-xl font-semibold transition duration-150 ease-in-out border border-gray-300 text-gray-700 hover:bg-gray-100 shadow-md flex items-center justify-center">
-                        <!-- SVG для Фото -->
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         Завантажити фото
                     </button>
                 </div>
             </div>
             
-            <!-- Динамический блок полей: URL (По умолчанию) -->
             <div id="url-fields" class="space-y-4 mb-5 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
                     <div class="flex-1">
                         <label for="task-url" class="block text-xs font-medium text-gray-500 mb-1">URL (Посилання)</label>
                         <input type="url" id="task-url" placeholder="https://pidruchnik.ua/..."
-                               class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
                     <div>
                         <label for="task-section" class="block text-xs font-medium text-gray-500 mb-1">Розділ</label>
                         <input type="text" id="task-section" placeholder="Напр. 1"
-                               class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
                 </div>
                 <div class="flex space-x-4">
                     <div class="flex-1">
                         <label for="task-page" class="block text-xs font-medium text-gray-500 mb-1">Сторінка</label>
                         <input type="number" id="task-page" placeholder="Напр. 54"
-                               class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
                     <div class="flex-1">
                         <label for="task-number" class="block text-xs font-medium text-gray-500 mb-1">Номер завдання</label>
                         <input type="text" id="task-number" placeholder="Напр. 54 або §3"
-                               class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
+                                class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
                 </div>
             </div>
 
-            <!-- Динамический блок полей: Фото (Скрыт по умолчанию) -->
             <div id="photo-fields" class="space-y-4 mb-5 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden">
                 <div class="flex space-x-4">
-                    <!-- Кнопка "Browse" -->
                     <button type="button" onclick="document.getElementById('photo-upload-input').click()"
                             class="flex-1 p-3 rounded-xl font-bold text-gray-800 shadow-lg flex items-center justify-center btn-primary">
-                        <!-- SVG для загрузки -->
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         Вибрати файл
                     </button>
-                    <!-- Единый input для файлов -->
                     <input type="file" id="photo-upload-input" accept="image/*" class="hidden">
                     
-                    <!-- Кнопка "Сделать фото" (с capture="camera") -->
                     <button type="button" onclick="document.getElementById('photo-camera-input').click()"
                             class="flex-1 p-3 rounded-xl font-bold text-gray-800 shadow-lg flex items-center justify-center btn-primary">
-                        <!-- SVG для камеры -->
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.218A2 2 0 0110.69 4h2.62a2 2 0 011.664.89l.812 1.218a2 2 0 001.664.89H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         Зробити фото
                     </button>
-                    <!-- Input с атрибутом capture="camera" (обязателен для запуска камеры) -->
                     <input type="file" id="photo-camera-input" accept="image/*" capture="camera" class="hidden">
                 </div>
                 <div id="photo-status" class="text-sm text-gray-500 text-center">
@@ -222,22 +203,19 @@
                 </div>
             </div>
 
-            <!-- Секция: Укажите, что необходимо сделать -->
             <div class="mb-6">
                 <label for="task-description" class="block text-sm font-medium text-gray-700 mb-2">
                     Секція: Укажіть, що необхідно зробити (деталі)
                 </label>
                 <textarea id="task-description" rows="4" placeholder="Наприклад: 'Допоможи мені зрозуміти, як розв'язати це завдання, та поясни правило, яке використовується.' Це дуже важливо!"
-                          class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500 resize-none"></textarea>
+                            class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500 resize-none"></textarea>
             </div>
 
-            <!-- Кнопка "Получить помощь ассистента" -->
             <button id="get-help-button" type="button"
                     class="btn-primary w-full py-3 rounded-xl text-lg font-bold shadow-lg flex items-center justify-center">
                 Отримати допомогу асистента
             </button>
             
-            <!-- Индикатор прогресса и сообщения -->
             <div id="progress-container" class="mt-6 hidden">
                 <p class="text-sm font-medium text-gray-700 mb-2">Очікування відповіді асистента:</p>
                 <div class="progress-bar">
@@ -249,8 +227,7 @@
             <div id="result-container" class="mt-6 hidden">
                 <h3 class="text-xl font-bold text-gray-800 mb-3">Відповідь Асистента</h3>
                 <div id="result-message" class="p-4 bg-white border border-cyan-200 text-gray-800 rounded-lg shadow-md whitespace-pre-wrap">
-                    <!-- Сюда будет вставляться ответ AI -->
-                </div>
+                    </div>
             </div>
 
         </div>
@@ -290,7 +267,7 @@
                 }
                 if (response.status === 429 && i < maxRetries - 1) { // 429 Too Many Requests
                     const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                    // console.warn(\`API request failed (status \${response.status}), retrying in \${(delay / 1000).toFixed(1)}s...\`);
+                    // console.warn(`API request failed (status ${response.status}), retrying in ${(delay / 1000).toFixed(1)}s...`);
                     await new Promise(resolve => setTimeout(resolve, delay));
                     continue;
                 }
@@ -374,27 +351,37 @@
             resultContainer.classList.add('hidden');
             resultMessage.textContent = '';
             
-            // Простая валидация
+            // Получение и валидация данных
             const subject = subjectSelect.value;
             const description = taskDescription.value.trim();
+            const url = document.getElementById('task-url').value.trim(); // Получаем URL здесь
 
             if (!subject) {
-                resultMessage.textContent = 'Будь ласка, виберіть предмет.';
+                resultMessage.textContent = 'Помилка: Будь ласка, виберіть предмет.';
                 resultContainer.classList.remove('hidden');
                 resultMessage.classList.add('bg-red-100', 'text-red-700');
                 return;
             }
             if (!description) {
-                resultMessage.textContent = 'Будь ласка, детально опишіть, що необхідно зробити.';
+                resultMessage.textContent = 'Помилка: Будь ласка, детально опишіть, що необхідно зробити.';
                 resultContainer.classList.remove('hidden');
                 resultMessage.classList.add('bg-red-100', 'text-red-700');
                 return;
             }
+            
+            // ИСПРАВЛЕНИЕ: Валидация URL, если выбран режим URL
+            if (selectedInputType === 'url' && !url) {
+                resultMessage.textContent = 'Помилка: Ви вибрали режим "По посиланню", але не ввели URL-адресу книги.';
+                resultContainer.classList.remove('hidden');
+                resultMessage.classList.add('bg-red-100', 'text-red-700');
+                return;
+            }
+
             if (selectedInputType === 'photo' && !selectedFile) {
-                 resultMessage.textContent = 'Ви вибрали режим "Завантажити фото", але не прикріпили файл.';
-                 resultContainer.classList.remove('hidden');
-                 resultMessage.classList.add('bg-red-100', 'text-red-700');
-                 return;
+                resultMessage.textContent = 'Помилка: Ви вибрали режим "Завантажити фото", але не прикріпили файл.';
+                resultContainer.classList.remove('hidden');
+                resultMessage.classList.add('bg-red-100', 'text-red-700');
+                return;
             }
 
 
@@ -436,35 +423,35 @@
                     await new Promise(resolve => setTimeout(resolve, 5000));
                     resultMessage.textContent = `[СИМУЛЯЦІЯ] Відповідь AI-асистента з предмету "${subject}":
                     
-                    Чудово! Ви просили допомоги із завданням. 
+Чудово! Ви просили допомоги із завданням. 
                     
-                    **Крок 1: Аналіз.** Ваше завдання стосується: ${selectedInputType === 'url' ? 'посилання та сторінки.' : 'завантаженого фото.'}
+**Крок 1: Аналіз.** Ваше завдання стосується: ${selectedInputType === 'url' ? 'посилання та сторінки.' : 'завантаженого фото.'}
                     
-                    **Крок 2: Рішення.** Якщо це була б справжня задача, я б проаналізував дані та надав вам докладне пояснення та розв'язання, використовуючи правила з ${subject}.
+**Крок 2: Рішення.** Якщо це була б справжня задача, я б проаналізував дані та надав вам докладне пояснення та розв'язання, використовуючи правила з ${subject}.
                     
-                    **Крок 3: Пояснення.** Це зроблено, щоб допомогти вам не просто списати, а зрозуміти суть матеріалу! 🚀
+**Крок 3: Пояснення.** Це зроблено, щоб допомогти вам не просто списати, а зрозуміти суть матеріалу! 🚀
                     
-                    P.S. Для реальної роботи додайте ваш Google API Key в налаштуваннях секретів Canvas.
+P.S. Для реальної роботи додайте ваш Google API Key в налаштуваннях секретів Canvas.
                     `;
                 } else {
                     // --- РЕАЛЬНЫЙ API-ЗАПРОС ---
                     
-                    const url = document.getElementById('task-url').value;
                     const section = document.getElementById('task-section').value;
                     const page = document.getElementById('task-page').value;
                     const number = document.getElementById('task-number').value;
 
                     let userPrompt = `Ти - AI Освітній Асистент, допомагаєш учню з предметом "${subject}".
                     
-                    Деталі завдання: ${description}
+Деталі завдання: ${description}
                     
-                    Джерело: `;
+Джерело: `;
 
                     let parts = [];
                     
                     if (selectedInputType === 'url') {
-                         userPrompt += `[Посилання: ${url || 'Не вказано'}]. Розділ: ${section || 'Не вказано'}, Сторінка: ${page || 'Не вказано'}, Номер завдання: ${number || 'Не вказано'}.`;
-                         parts.push({ text: userPrompt });
+                        // Используем уже полученную переменную url
+                        userPrompt += `[Посилання: ${url || 'Не вказано'}]. Розділ: ${section || 'Не вказано'}, Сторінка: ${page || 'Не вказано'}, Номер завдання: ${number || 'Не вказано'}.`;
+                        parts.push({ text: userPrompt });
                     } else if (selectedInputType === 'photo' && selectedFile) {
                         const base64Data = await fileToBase64(selectedFile);
                         // Добавляем изображение как часть запроса
