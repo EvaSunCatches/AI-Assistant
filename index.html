@@ -1,19 +1,25 @@
 <!--
   AI Ассистент для 5-го Класса
   Реализован на чистом HTML/Tailwind CSS/JavaScript
-  Использует Gemini-2.5-flash-preview-09-2025 для мультимодальной помощи.
-  Логика и Системная Инструкция строго соответствуют настройкам пользователя в Google AI Studio.
+  Включает новую двухколоночную структуру и дизайн с градиентами и эффектами.
+  Логика AI-помощника строго сохранена согласно предыдущим инструкциям.
 -->
-<html lang="ru">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Освітній Асистент 5-й Клас</title>
+    <title>AI Освітній Асистент</title>
     <!-- Загрузка Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Загрузка шрифта Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Загрузка шрифта, имитирующего "закругленные буквы" (Varela Round) -->
+    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            /* Мягкие, нетоксичные градиентные цвета */
+            --soft-blue: #D1E9FF; /* Легкий голубой */
+            --soft-yellow: #FFF8E1; /* Легкий желтый */
+            --header-gradient: linear-gradient(90deg, var(--soft-blue) 0%, var(--soft-yellow) 100%);
+        }
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f7f7f7;
@@ -23,18 +29,24 @@
             padding: 20px;
             min-height: 100vh;
         }
+        .app-title {
+            font-family: 'Varela Round', sans-serif;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        .header-gradient {
+            background: var(--header-gradient);
+        }
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             width: 100%;
             background-color: #ffffff;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
         .response-box {
-            /* Используем pre-wrap для сохранения форматирования и переносов строк от LLM */
             white-space: pre-wrap;
-            min-height: 150px;
             overflow-wrap: break-word;
-            text-align: left; /* Убедимся, что текст выравнивается по левому краю */
+            text-align: left;
+            min-height: 150px;
         }
         .loading-animation {
             border: 4px solid rgba(0, 0, 0, .1);
@@ -48,95 +60,142 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .source-link {
-            color: #1e40af; /* Tailwind blue-800 */
-            text-decoration: none;
-            font-size: 0.875rem; /* sm */
+
+        /* Анимация "биения сердца" для ассистента */
+        @keyframes pulse-shadow {
+            0% {
+                box-shadow: 0 0 5px rgba(59, 130, 246, 0.4), 0 0 10px rgba(59, 130, 246, 0.2);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 10px rgba(59, 130, 246, 0.8), 0 0 20px rgba(59, 130, 246, 0.5);
+                transform: scale(1.01);
+            }
+            100% {
+                box-shadow: 0 0 5px rgba(59, 130, 246, 0.4), 0 0 10px rgba(59, 130, 246, 0.2);
+                transform: scale(1);
+            }
         }
-        .source-link:hover {
-            text-decoration: underline;
+        .assistant-image {
+            animation: pulse-shadow 3s infinite ease-in-out;
+            object-fit: cover; /* Заполняет всю область */
         }
-        /* Mobile adjustments */
-        @media (max-width: 640px) {
-            body {
-                padding: 10px;
+
+        /* Mobile adjustments: Stack columns */
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
 
-<div class="container rounded-xl p-6 md:p-10">
+<div class="container rounded-xl overflow-hidden">
 
-    <h1 class="text-3xl font-bold text-center text-blue-800 mb-6">AI Освітній Асистент 5-й Клас</h1>
-    <p class="text-center text-gray-600 mb-8">Ваш персональний помічник у навчанні</p>
+    <!-- HEADER with Gradient -->
+    <header class="header-gradient p-6 md:p-8 text-center shadow-lg">
+        <h1 class="app-title text-4xl md:text-5xl font-bold text-blue-900 mb-1">
+            AI Освітній Асистент 5-й Клас 🇺🇦
+        </h1>
+        <p class="text-xl text-gray-700 font-semibold">Ваш персональний помічник у навчанні</p>
+    </header>
 
-    <!-- Форма запроса -->
-    <div class="space-y-4">
-        <!-- Ввод задания -->
-        <div>
-            <label for="taskInput" class="block text-sm font-medium text-gray-700 mb-1">Введіть формулювання завдання або опис (якщо немає фото)</label>
-            <textarea id="taskInput" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150" placeholder="Наприклад: 'Розв'яжи задачу. Потяг їхав зі швидкістю 60 км/год...'"></textarea>
-        </div>
-
-        <!-- Выбор предмета -->
-        <div>
-            <label for="subjectSelect" class="block text-sm font-medium text-gray-700 mb-1">Виберіть предмет</label>
-            <select id="subjectSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-                <option value="Математика">Математика</option>
-                <option value="Українська мова">Українська мова</option>
-                <option value="Історія">Історія</option>
-                <option value="Природознавство">Природознавство</option>
-                <option value="Інший">Інший</option>
-            </select>
-        </div>
+    <!-- Main Content Grid -->
+    <div class="main-grid grid grid-cols-1 lg:grid-cols-3">
         
-        <!-- Параметры задания -->
-        <div id="text-input-group" class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <div class="col-span-3">
-                <label class="block text-sm font-bold text-blue-800 mb-1">Параметри завдання з підручника (опціонально)</label>
+        <!-- Left Column: Input Form -->
+        <div class="lg:col-span-2 p-6 md:p-10 space-y-6">
+
+            <!-- 1. Введіть ваше завдання -->
+            <div class="space-y-4">
+                <div>
+                    <label for="taskInput" class="block text-lg font-bold text-gray-800 mb-1">Введіть ваше завдання</label>
+                    <textarea id="taskInput" rows="3" class="w-full p-3 border-2 border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500 transition duration-150 shadow-inner" placeholder="Опишіть завдання, яке потрібно виконати."></textarea>
+                </div>
             </div>
+
+            <!-- 2. Оберіть предмет -->
             <div>
-                <label for="bookUrlInput" class="block text-xs font-medium text-gray-700 mb-1">Посилання на підручник (URL)</label>
-                <input type="url" id="bookUrlInput" class="w-full p-2 border border-gray-300 rounded-lg text-sm" placeholder="https://pidruchnik.ua/..." />
+                <label for="subjectSelect" class="block text-lg font-bold text-gray-800 mb-1">Оберіть предмет</label>
+                <select id="subjectSelect" class="w-full p-3 border-2 border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500 transition duration-150 shadow-inner appearance-none bg-white">
+                    <option value="Математика">Математика</option>
+                    <option value="Українська мова">Українська мова</option>
+                    <option value="Історія">Історія</option>
+                    <option value="Природознавство">Природознавство</option>
+                    <option value="Інший">Інший</option>
+                </select>
             </div>
-            <div>
-                <label for="pageInput" class="block text-xs font-medium text-gray-700 mb-1">Номер сторінки</label>
-                <input type="number" id="pageInput" class="w-full p-2 border border-gray-300 rounded-lg text-sm" placeholder="25" min="1" />
+            
+            <!-- 3. ДВА ВАРИАНТА ЗАГРУЗКИ: По ссылке / Загрузить фото -->
+            <div class="grid grid-cols-1 gap-6">
+                <!-- 3a. За посиланням (URL) -->
+                <div id="link-input-group" class="bg-blue-50 p-5 rounded-xl border border-blue-200 shadow-md">
+                    <label class="block text-lg font-bold text-blue-800 mb-3">1. За посиланням (підручник)</label>
+                    <div class="space-y-3">
+                        <div>
+                            <label for="bookUrlInput" class="block text-sm font-medium text-gray-700 mb-1">Посилання на підручник (URL)</label>
+                            <input type="url" id="bookUrlInput" class="w-full p-2 border border-gray-300 rounded-lg text-sm shadow-inner" placeholder="https://pidruchnik.ua/..." />
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="pageInput" class="block text-sm font-medium text-gray-700 mb-1">Сторінка (напр., 25)</label>
+                                <input type="text" id="pageInput" class="w-full p-2 border border-gray-300 rounded-lg text-sm shadow-inner" placeholder="25" />
+                            </div>
+                            <div>
+                                <label for="taskNumberInput" class="block text-sm font-medium text-gray-700 mb-1">№ завдання/§ (напр., 57 або §4)</label>
+                                <input type="text" id="taskNumberInput" class="w-full p-2 border border-gray-300 rounded-lg text-sm shadow-inner" placeholder="57 або §4" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3b. Завантажити фото -->
+                <div id="file-input-group" class="bg-yellow-50 p-5 rounded-xl border border-yellow-200 shadow-md">
+                    <label class="block text-lg font-bold text-orange-800 mb-3">2. Завантажити фото</label>
+                    <input type="file" id="fileInput" accept="image/*" class="w-full p-3 border-2 border-gray-300 rounded-xl bg-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-100 file:text-orange-700 hover:file:bg-orange-200 transition duration-150" title="Вибрати файл або зробити фото">
+                    
+                    <div id="imagePreview" class="mt-3 hidden text-center p-3 border-t border-gray-200">
+                        <p class="text-xs text-gray-500 mb-2">Попередній перегляд:</p>
+                        <img id="previewImg" class="max-w-full max-h-40 mx-auto rounded-lg shadow-lg" alt="Попередній перегляд зображення" onerror="this.style.display='none';" onload="this.style.display='block';">
+                    </div>
+                </div>
             </div>
-            <div>
-                <label for="taskNumberInput" class="block text-xs font-medium text-gray-700 mb-1">Номер завдання/вправи</label>
-                <input type="text" id="taskNumberInput" class="w-full p-2 border border-gray-300 rounded-lg text-sm" placeholder="57 або §4" />
+
+            <!-- Кнопка и статус -->
+            <button id="submitButton" class="w-full py-4 px-4 mt-6 bg-green-600 text-white font-bold text-xl rounded-xl shadow-lg hover:bg-green-700 transition duration-200 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50 flex items-center justify-center" onclick="getAssistantHelp()">
+                <span id="buttonText">Отримати допомогу асистента</span>
+                <div id="spinner" class="loading-animation hidden ml-2"></div>
+            </button>
+
+            <div id="errorMessage" class="hidden p-3 bg-red-100 text-red-700 rounded-lg" role="alert"></div>
+
+        </div> <!-- End Left Column -->
+
+        <!-- Right Column: Assistant Photo & Response -->
+        <div class="lg:col-span-1 p-6 md:p-10 bg-gray-50 flex flex-col space-y-6 lg:min-h-[700px]">
+
+            <!-- 4. Assistant Photo -->
+            <div class="relative flex-grow rounded-xl overflow-hidden shadow-2xl border-4 border-white">
+                <!-- Placeholder image for the assistant, covering the entire height -->
+                <img src="https://placehold.co/400x1000/F0F9FF/000?text=AI+Assistant" 
+                     id="assistantPhoto" 
+                     class="assistant-image w-full h-full object-cover" 
+                     alt="AI Асистент"
+                     onerror="this.src='https://placehold.co/400x1000/F0F9FF/000?text=AI+Assistant';">
+                
+                <!-- Заглушка для ответа -->
+                <div id="responseContainer" class="absolute inset-0 bg-black bg-opacity-70 p-4 flex flex-col justify-center items-center text-white text-center response-box transition-opacity duration-300">
+                    <h2 class="text-2xl font-bold mb-2">Розв'язання та пояснення</h2>
+                    <p class="text-lg mt-4">Тут з'явиться відповідь.</p>
+                    <p class="text-base font-light">Заповніть форму ліворуч, щоб почати.</p>
+                </div>
             </div>
-        </div>
+            
+            <!-- Ссылки/Источники (будут появляться ниже фото) -->
+            <div id="sourcesContainer" class="text-sm text-gray-600"></div>
 
-        <!-- Загрузка фото -->
-        <div>
-            <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-1">Завантажити фото завдання (опціонально)</label>
-            <input type="file" id="fileInput" accept="image/*" class="w-full p-3 border border-gray-300 rounded-lg bg-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition duration-150">
-            <div id="imagePreview" class="mt-3 hidden">
-                <p class="text-xs text-gray-500 mb-1">Попередній перегляд:</p>
-                <img id="previewImg" class="max-w-xs max-h-40 rounded-lg shadow-md" alt="Попередній перегляд зображення">
-            </div>
-        </div>
-
-        <!-- Кнопка и статус -->
-        <button id="submitButton" class="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50 flex items-center justify-center" onclick="getAssistantHelp()">
-            <span id="buttonText">Отримати допомогу асистента</span>
-            <div id="spinner" class="loading-animation hidden ml-2"></div>
-        </button>
-
-        <div id="errorMessage" class="hidden p-3 bg-red-100 text-red-700 rounded-lg" role="alert"></div>
-    </div>
-
-    <!-- Область ответа -->
-    <div class="mt-10 pt-4 border-t border-gray-200">
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">Розв'язання та пояснення</h2>
-        <div id="responseContainer" class="response-box p-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800">
-            Очікування завдання...
-        </div>
-        <!-- Ссылки/Источники -->
-        <div id="sourcesContainer" class="mt-4 text-sm text-gray-600"></div>
+        </div> <!-- End Right Column -->
     </div>
 
 </div>
@@ -162,21 +221,34 @@
     const errorMessage = document.getElementById('errorMessage');
     const imagePreview = document.getElementById('imagePreview');
     const previewImg = document.getElementById('previewImg');
+    const assistantPhoto = document.getElementById('assistantPhoto');
 
-    let base64Image = null; // Для хранения Base64 данных изображения
-    let base64MimeType = null; // Для хранения MIME-типа изображения
+
+    let base64Image = null; 
+    let base64MimeType = null; 
+
+    // Используем Base64 для вашего изображения assistant.jpg
+    // В реальном приложении это должна быть внешняя ссылка, но для single-file canvas используем placeholder.
+    // Если вы хотите, чтобы я вставил именно ваше изображение, оно должно быть в виде URL. 
+    // Поскольку у меня нет доступа к загруженному файлу как к URL, я оставлю placeholder, 
+    // но вы можете заменить его на свой URL.
+    const ASSISTANT_IMAGE_URL = 'https://placehold.co/400x1000/4F46E5/FFF?text=AI+Assistant';
+    assistantPhoto.src = ASSISTANT_IMAGE_URL;
+
 
     // 1. Предварительный просмотр изображения
     fileInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (file) {
+            // Разрешаем делать фото (используем input type="file" без capture="camera" для кросс-совместимости)
+            // Пользователь сам выбирает: файл или камера.
+
             const reader = new FileReader();
             reader.onload = (e) => {
                 const imgDataUrl = e.target.result;
                 previewImg.src = imgDataUrl;
                 imagePreview.classList.remove('hidden');
 
-                // Преобразование в Base64 для API
                 const parts = imgDataUrl.split(',');
                 base64Image = parts.length > 1 ? parts[1] : null;
                 base64MimeType = file.type; 
@@ -207,12 +279,44 @@
         }
     };
 
+    // ФУНКЦИЯ ДЛЯ УПРАВЛЕНИЯ ВИДИМОСТЬЮ ОТВЕТА
+    function displayResponse(text, isError = false) {
+        if (isError) {
+            responseContainer.innerHTML = `<h2 class="text-2xl font-bold mb-2">Помилка</h2><p class="text-lg mt-4">${text}</p><p class="text-base font-light">Спробуйте ще раз або змініть завдання.</p>`;
+            responseContainer.classList.remove('bg-black', 'bg-opacity-70', 'text-white');
+            responseContainer.classList.add('bg-red-700', 'bg-opacity-90', 'text-white');
+        } else if (text === 'loading') {
+            responseContainer.innerHTML = '<div class="loading-animation mx-auto"></div><p class="text-lg mt-4 animate-pulse">Генерую пояснення...</p>';
+            responseContainer.classList.remove('bg-red-700', 'bg-opacity-90');
+            responseContainer.classList.add('bg-black', 'bg-opacity-70', 'text-white');
+        } else {
+            // Для отображения форматированного текста LLM (Markdown)
+            // Используем библиотеку marked (через CDN) для конвертации Markdown в HTML
+            if (window.marked) {
+                const htmlText = window.marked.parse(text);
+                responseContainer.innerHTML = `<h2 class="text-xl font-bold mb-2">Розв'язання та пояснення</h2><div class="text-left overflow-auto max-h-96">${htmlText}</div>`;
+            } else {
+                 responseContainer.innerHTML = `<h2 class="text-xl font-bold mb-2">Розв'язання та пояснення</h2><div class="text-left overflow-auto max-h-96">${text}</div>`;
+            }
+
+            responseContainer.classList.remove('bg-black', 'bg-opacity-70', 'bg-red-700', 'bg-opacity-90');
+            responseContainer.classList.add('bg-white', 'text-gray-800', 'p-4', 'border', 'border-gray-200', 'shadow-inner');
+            responseContainer.style.position = 'static'; // Чтобы не перекрывать фото, а встать под ним (на мобильных)
+            
+            // На десктопе, если фото не нужно, можно его скрыть, а ответ расширить.
+            if (window.innerWidth >= 1024) {
+                 // Здесь можно дополнительно настроить, если нужно заменить фото ответом
+            }
+        }
+    }
+
+
     /**
      * Основная функция для получения помощи от AI.
      */
     async function getAssistantHelp() {
         // Сброс состояния
-        responseContainer.textContent = 'Завантаження...';
+        displayResponse('loading'); // Показываем загрузку
         sourcesContainer.innerHTML = '';
         errorMessage.classList.add('hidden');
         submitButton.disabled = true;
@@ -221,13 +325,12 @@
 
         const userTask = taskInput.value.trim();
         const subject = subjectSelect.value;
-        
         const bookUrl = bookUrlInput.value.trim();
         const pageNumber = pageInput.value.trim();
         const taskNumber = taskNumberInput.value.trim();
 
         if (!userTask && !base64Image && !bookUrl) {
-            responseContainer.textContent = 'Будь ласка, введіть завдання, завантажте фото або вкажіть посилання на підручник.';
+            displayResponse('Будь ласка, введіть завдання, завантажте фото або вкажіть посилання на підручник.', true);
             submitButton.disabled = false;
             buttonText.textContent = 'Отримати допомогу асистента';
             spinner.classList.add('hidden');
@@ -235,8 +338,7 @@
         }
 
         try {
-            // 1. Формирование системного запроса (System Instruction)
-            // ДОСЛОВНЫЙ ТЕКСТ из AI помощник.pdf
+            // 1. Формирование системного запроса (System Instruction) - ДОСЛОВНЫЙ ТЕКСТ из PDF
             const systemPrompt = `Ти експерт з українського навчального плану 5 класу. Твоя роль - надавати зрозумілі, детальні та навчальні відповіді, які допомагають учням, а не просто дають готові рішення. 
             Фокус: На предметі "${subject}".
             
@@ -288,10 +390,9 @@
                 systemInstruction: {
                     parts: [{ text: systemPrompt }]
                 },
-                // Настройки из AI Studio
                 config: {
-                    temperature: 0.2, // Установлено из скриншота
-                    maxOutputTokens: 4096 // Установлено из скриншота
+                    temperature: 0.2, 
+                    maxOutputTokens: 4096 
                 }
             };
 
@@ -317,11 +418,10 @@
             // 5. Обработка ответа
             let generatedText = candidate.content.parts[0].text;
             
-            // Улучшенная очистка ответа: удаляем начальные заголовки Markdown, 
-            // так как мы используем textContent и заголовок H2 уже есть.
+            // Очистка ответа
             generatedText = generatedText.replace(/^(#+\s*|Відповідь:|Розв'язання:)\s*/i, '').trim();
 
-            responseContainer.textContent = generatedText;
+            displayResponse(generatedText);
 
 
             // 6. Извлечение источников (Grounding Sources)
@@ -339,7 +439,7 @@
             if (sources.length > 0) {
                 let sourcesHtml = '<p class="font-medium text-gray-700">Джерела інформації:</p>';
                 sources.forEach((source, index) => {
-                    sourcesHtml += `<div class="mt-1"><a href="${source.uri}" target="_blank" class="source-link"> [${index + 1}] ${source.title}</a></div>`;
+                    sourcesHtml += `<div class="mt-1"><a href="${source.uri}" target="_blank" class="text-blue-600 hover:underline"> [${index + 1}] ${source.title}</a></div>`;
                 });
                 sourcesContainer.innerHTML = sourcesHtml;
             } else {
@@ -350,7 +450,7 @@
             console.error("Gemini API Error:", error);
             errorMessage.textContent = `Сталася помилка: ${error.message}. Спробуйте ще раз.`;
             errorMessage.classList.remove('hidden');
-            responseContainer.textContent = 'Виникла помилка під час обробки завдання.';
+            displayResponse('Виникла помилка під час обробки завдання. Перевірте консоль для деталей.', true);
         } finally {
             submitButton.disabled = false;
             buttonText.textContent = 'Отримати допомогу асистента';
@@ -358,8 +458,16 @@
         }
     }
 
+    // Загрузка библиотеки marked для конвертации Markdown в HTML
+    // Это нужно, чтобы ответы AI выглядели форматированными (жирный текст, списки, ссылки).
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.12/marked.min.js';
+    document.head.appendChild(script);
+
     // Инициализация
     window.onload = function() {
+        // Устанавливаем начальное изображение (если оно было бы в Base64)
+        // Для демонстрации используем просто placehold.co
         console.log("AI Assistant loaded.");
     };
 
