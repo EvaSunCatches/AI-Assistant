@@ -1,34 +1,305 @@
-<!DOCTYPE html>
-<html lang="en">
+<!--
+  AI Ассистент для 5-го Класса
+  Реализован на чистом HTML/Tailwind CSS/JavaScript
+  Использует Gemini-2.5-flash-preview-09-2025 для мультимодальной помощи.
+-->
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Освітній Асистент 5-й Клас</title>
-    <!-- Tailwind CSS CDN for styling -->
+    <!-- Загрузка Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Inter -->
+    <!-- Загрузка шрифта Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-    </style>
-    <!-- Essential configuration for Angular Standalone Components in the browser -->
-    <script type="importmap">
-        {
-            "imports": {
-                "@angular/core": "https://cdn.jsdelivr.net/npm/@angular/core@18.0.0/fesm2022/core.mjs",
-                "@angular/common": "https://cdn.jsdelivr.net/npm/@angular/common@18.0.0/fesm2022/common.mjs",
-                "@angular/platform-browser": "https://cdn.jsdelivr.net/npm/@angular/platform-browser@18.0.0/fesm2022/platform-browser.mjs",
-                "@angular/common/http": "https://cdn.jsdelivr.net/npm/@angular/common@18.0.0/fesm2022/http.mjs",
-                "rxjs": "https://cdn.jsdelivr.net/npm/rxjs@7.8.1/dist/esm/index.js",
-                "rxjs/operators": "https://cdn.jsdelivr.net/npm/rxjs@7.8.1/dist/esm/operators/index.js"
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background-color: #ffffff;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        .response-box {
+            white-space: pre-wrap;
+            min-height: 150px;
+            overflow-wrap: break-word;
+        }
+        .loading-animation {
+            border: 4px solid rgba(0, 0, 0, .1);
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .source-link {
+            color: #1e40af; /* Tailwind blue-800 */
+            text-decoration: none;
+            font-size: 0.875rem; /* sm */
+        }
+        .source-link:hover {
+            text-decoration: underline;
+        }
+        /* Mobile adjustments */
+        @media (max-width: 640px) {
+            body {
+                padding: 10px;
             }
         }
-    </script>
+    </style>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
-    <!-- Angular app selector -->
-    <app-root></app-root>
-    <!-- Main entry point for the application, changed from .tsx to .js -->
-    <script type="module" src="./index.js"></script>
+<body>
+
+<div class="container rounded-xl p-6 md:p-10">
+
+    <h1 class="text-3xl font-bold text-center text-blue-800 mb-6">AI Освітній Асистент 5-й Клас</h1>
+    <p class="text-center text-gray-600 mb-8">Ваш персональний помічник у навчанні</p>
+
+    <!-- Форма запроса -->
+    <div class="space-y-4">
+        <!-- Ввод задания -->
+        <div>
+            <label for="taskInput" class="block text-sm font-medium text-gray-700 mb-1">Введіть ваше завдання</label>
+            <textarea id="taskInput" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150" placeholder="Наприклад: 'Розв'яжи задачу 57 на сторінці 25 підручника'"></textarea>
+        </div>
+
+        <!-- Выбор предмета -->
+        <div>
+            <label for="subjectSelect" class="block text-sm font-medium text-gray-700 mb-1">Виберіть предмет</label>
+            <select id="subjectSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                <option value="Математика">Математика</option>
+                <option value="Українська мова">Українська мова</option>
+                <option value="Історія">Історія</option>
+                <option value="Природознавство">Природознавство</option>
+                <option value="Інший">Інший</option>
+            </select>
+        </div>
+
+        <!-- Загрузка фото -->
+        <div>
+            <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-1">Завантажити фото завдання (опціонально)</label>
+            <input type="file" id="fileInput" accept="image/*" class="w-full p-3 border border-gray-300 rounded-lg bg-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition duration-150">
+            <div id="imagePreview" class="mt-3 hidden">
+                <p class="text-xs text-gray-500 mb-1">Попередній перегляд:</p>
+                <img id="previewImg" class="max-w-xs max-h-40 rounded-lg shadow-md" alt="Попередній перегляд зображення">
+            </div>
+        </div>
+
+        <!-- Кнопка и статус -->
+        <button id="submitButton" class="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-200 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50 flex items-center justify-center" onclick="getAssistantHelp()">
+            <span id="buttonText">Отримати допомогу асистента</span>
+            <div id="spinner" class="loading-animation hidden ml-2"></div>
+        </button>
+
+        <div id="errorMessage" class="hidden p-3 bg-red-100 text-red-700 rounded-lg" role="alert"></div>
+    </div>
+
+    <!-- Область ответа -->
+    <div class="mt-10 pt-4 border-t border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Розв'язання та пояснення</h2>
+        <div id="responseContainer" class="response-box p-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-800">
+            Очікування завдання...
+        </div>
+        <!-- Ссылки/Источники -->
+        <div id="sourcesContainer" class="mt-4 text-sm text-gray-600"></div>
+    </div>
+
+</div>
+
+<script>
+    // Глобальные переменные для конфигурации
+    const API_MODEL = 'gemini-2.5-flash-preview-09-2025';
+    const API_KEY = ""; // Будет предоставлен Canvas
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${API_KEY}`;
+    
+    // Элементы DOM
+    const taskInput = document.getElementById('taskInput');
+    const subjectSelect = document.getElementById('subjectSelect');
+    const fileInput = document.getElementById('fileInput');
+    const submitButton = document.getElementById('submitButton');
+    const buttonText = document.getElementById('buttonText');
+    const spinner = document.getElementById('spinner');
+    const responseContainer = document.getElementById('responseContainer');
+    const sourcesContainer = document.getElementById('sourcesContainer');
+    const errorMessage = document.getElementById('errorMessage');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+
+    let base64Image = null; // Для хранения Base64 изображения
+
+    // 1. Предварительный просмотр изображения
+    fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const imgDataUrl = e.target.result;
+                previewImg.src = imgDataUrl;
+                imagePreview.classList.remove('hidden');
+
+                // Преобразование в Base64 для API (удаление префикса data:image/jpeg;base64,)
+                base64Image = imgDataUrl.split(',')[1];
+            };
+            reader.readAsDataURL(file);
+        } else {
+            imagePreview.classList.add('hidden');
+            previewImg.src = '';
+            base64Image = null;
+        }
+    });
+
+    /**
+     * Повторные попытки с экспоненциальным откатом для вызова API.
+     * @param {function} fn - Асинхронная функция для выполнения.
+     * @param {number} retries - Максимальное количество попыток.
+     */
+    const retryFetch = async (fn, retries = 3) => {
+        for (let i = 0; i < retries; i++) {
+            try {
+                return await fn();
+            } catch (error) {
+                if (i === retries - 1) throw error;
+                const delay = Math.pow(2, i) * 1000;
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+    };
+
+    /**
+     * Основная функция для получения помощи от AI.
+     */
+    async function getAssistantHelp() {
+        // Сброс состояния
+        responseContainer.innerHTML = 'Завантаження...';
+        sourcesContainer.innerHTML = '';
+        errorMessage.classList.add('hidden');
+        submitButton.disabled = true;
+        buttonText.textContent = 'Очікування відповіді...';
+        spinner.classList.remove('hidden');
+
+        const userTask = taskInput.value.trim();
+        const subject = subjectSelect.value;
+
+        if (!userTask && !base64Image) {
+            responseContainer.innerHTML = 'Будь ласка, введіть завдання або завантажте фото.';
+            submitButton.disabled = false;
+            buttonText.textContent = 'Отримати допомогу асистента';
+            spinner.classList.add('hidden');
+            return;
+        }
+
+        try {
+            // 1. Формирование системного запроса (System Instruction)
+            const systemPrompt = `Ви — AI освітній асистент для учнів 5-го класу, що спеціалізується на навчальних матеріалах України. Ваша мета — надавати зрозумілі, детальні розв'язання, пояснення та освітні посилання. 
+            Мова відповіді: Українська.
+            Роль: Вчитель/помічник. 
+            Інструкції:
+            1. Завжди спочатку надайте чітке розв'язання або відповідь.
+            2. Після відповіді надайте пояснення 'Чому це так?'
+            3. Якщо користувач надає зображення, обов'язково проаналізуйте його.
+            4. Звертайте особливу увагу на предмет: ${subject}.`;
+
+            // 2. Формирование пользовательского запроса (Contents)
+            const userQuery = `Допоможи мені з предметом "${subject}". Моє завдання: ${userTask}`;
+            
+            const contents = [
+                {
+                    role: "user",
+                    parts: [{ text: userQuery }]
+                }
+            ];
+
+            // Если есть изображение, добавляем его в части
+            if (base64Image) {
+                const imagePart = {
+                    inlineData: {
+                        mimeType: fileInput.files[0].type,
+                        data: base64Image
+                    }
+                };
+                contents[0].parts.push(imagePart);
+            }
+
+
+            // 3. Формирование Payload
+            const payload = {
+                contents: contents,
+                tools: [{ "google_search": {} }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+
+            // 4. Вызов API с повторами
+            const response = await retryFetch(async () => {
+                return await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            });
+
+            const result = await response.json();
+            const candidate = result.candidates?.[0];
+
+            if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                throw new Error("Не вдалося отримати коректну відповідь від AI.");
+            }
+
+            // 5. Обработка ответа
+            const generatedText = candidate.content.parts[0].text;
+            responseContainer.innerHTML = generatedText;
+
+            // 6. Извлечение источников (Grounding Sources)
+            let sources = [];
+            const groundingMetadata = candidate.groundingMetadata;
+            if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                sources = groundingMetadata.groundingAttributions
+                    .map(attribution => ({
+                        uri: attribution.web?.uri,
+                        title: attribution.web?.title,
+                    }))
+                    .filter(source => source.uri && source.title);
+            }
+
+            if (sources.length > 0) {
+                let sourcesHtml = '<p class="font-medium text-gray-700">Джерела інформації:</p>';
+                sources.forEach((source, index) => {
+                    sourcesHtml += `<div class="mt-1"><a href="${source.uri}" target="_blank" class="source-link"> [${index + 1}] ${source.title}</a></div>`;
+                });
+                sourcesContainer.innerHTML = sourcesHtml;
+            }
+
+        } catch (error) {
+            console.error("Gemini API Error:", error);
+            errorMessage.textContent = `Сталася помилка: ${error.message}. Спробуйте ще раз.`;
+            errorMessage.classList.remove('hidden');
+            responseContainer.innerHTML = 'Виникла помилка під час обробки завдання.';
+        } finally {
+            submitButton.disabled = false;
+            buttonText.textContent = 'Отримати допомогу асистента';
+            spinner.classList.add('hidden');
+        }
+    }
+
+    // Инициализация
+    window.onload = function() {
+        console.log("AI Assistant loaded.");
+    };
+
+</script>
 </body>
 </html>
