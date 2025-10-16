@@ -1,11 +1,10 @@
 import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './src/app/app.component.ts'; 
 
-// Динамический импорт, чтобы избежать циклической зависимости (Uncaught ReferenceError)
-// Этот метод гарантирует, что AppComponent будет доступен после инициализации Angular.
-import('./src/app/app.component.ts')
-  .then(module => {
-    // В случае динамического импорта, компонент находится в .AppComponent
-    bootstrapApplication(module.AppComponent)
+// Самый чистый и надежный статический бутстрап, обернутый в setTimeout(0).
+// Это критически важно для обхода циклической зависимости, которая мешает компилятору
+// найти AppComponent и запустить приложение в этой среде.
+setTimeout(() => {
+    bootstrapApplication(AppComponent)
       .catch((err) => console.error('Ошибка бутстраппинга:', err));
-  })
-  .catch((err) => console.error('Ошибка загрузки компонента:', err));
+}, 0);
