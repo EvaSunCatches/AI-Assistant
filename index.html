@@ -6,7 +6,7 @@
     <title>AI Освітній Асистент</title>
     <!-- Загрузка Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Загрузка шрифта Nunito -->
+    <!-- Загрузка шрифта Nunito (Тот, что использовался ранее) -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         /* Применение шрифта Nunito ко всему документу */
@@ -59,11 +59,15 @@
             animation: pulse-opacity-interactive 1s infinite alternate ease-in-out;
         }
 
-        /* Надпись: белый фон, темно-ледяной цвет текста */
+        /* --- ИСПРАВЛЕНИЕ: БЕЛЫЙ ШРИФТ И ПОЛУПРОЗРАЧНЫЙ ФОН --- */
         .assistant-label {
-            background-color: rgba(255, 255, 255, 0.7); /* Чистый белый с прозрачностью */
-            color: #006064; /* Темный ледяной цвет для контраста */
+            /* Полупрозрачная темная заливка для контраста с белым текстом */
+            background-color: rgba(0, 0, 0, 0.5); 
+            color: #fff; /* Белый цвет текста */
             backdrop-filter: blur(4px);
+            /* Убеждаемся, что подпись не выйдет за границы */
+            max-width: 90%; 
+            width: fit-content;
         }
         
         /* Стиль для индикатора прогресса */
@@ -95,22 +99,21 @@
 </head>
 <body>
 
-<!-- lg:flex-row-reverse: фото справа, форма слева -->
+<!-- min-h-screen: гарантирует, что страница занимает всю высоту экрана -->
 <div class="min-h-screen flex flex-col lg:flex-row-reverse">
 
     <!-- Правая панель - Фото Ассистента (Ледяной фон) -->
     <div class="lg:w-1/3 flex flex-col justify-center items-center relative overflow-hidden text-gray-800 assistant-container"
          style="min-height: 250px;">
         
-        <!-- Заменено на локальное изображение-заглушку, если не работает ссылка -->
         <img id="assistant-photo"
              src="https://raw.githubusercontent.com/EvaSunCatches/AI-Assistant/main/assets/assistant.png"
              alt="AI Асистент" 
-             class="absolute inset-0 w-full h-full object-cover" 
+             class="assistant-image absolute inset-0 w-full h-full object-cover" 
              onerror="this.style.display='none'; this.closest('div').style.backgroundImage='linear-gradient(to bottom, #e0f7fa 0%, #ffffff 100%)'">
 
-        <!-- Заголовок с ледяным стилем -->
-        <div class="relative z-10 text-center p-4 rounded-xl assistant-label mt-auto mb-8 mx-4 shadow-xl">
+        <!-- --- ИСПРАВЛЕНИЕ: ПОДПИСЬ БОЛЬШЕ НЕ ВЫХОДИТ ЗА КРАЙ И ИСПОЛЬЗУЕТ БЕЛЫЙ ШРИФТ --- -->
+        <div class="relative z-10 text-center p-4 rounded-xl assistant-label mt-auto mb-8 shadow-xl" style="padding-left: 1.5rem; padding-right: 1.5rem;">
             <h1 class="text-3xl font-extrabold mb-1">AI Освітній Асистент</h1>
             <p class="text-lg">Ваш персональний помічник у навчанні</p>
         </div>
@@ -204,10 +207,12 @@
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.218A2 2 0 0110.69 4h2.62a2 2 0 011.664.89l.812 1.218a2 2 0 001.664.89H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         Зробити фото
                     </button>
-                    <!-- Input с атрибутом capture="camera" -->
+                    <!-- Input с атрибутом capture="camera" (обязателен для запуска камеры) -->
                     <input type="file" id="photo-camera-input" accept="image/*" capture="camera" class="hidden">
                 </div>
-                <div id="photo-status" class="text-sm text-gray-500 text-center">Фото не вибрано. (Функція камери може бути заблокована браузером)</div>
+                <div id="photo-status" class="text-sm text-gray-500 text-center">
+                    Фото не вибрано. (Функція камери може бути заблокована браузером, але виклик камери обов'язково налаштований)
+                </div>
             </div>
 
             <!-- Секция: Укажите, что необходимо сделать -->
@@ -312,7 +317,7 @@
         let selectedInputType = 'url';
         let selectedFile = null;
 
-        // 1. Логика обработки загрузки фото (Перемещена для исправления ReferenceError)
+        // 1. Логика обработки загрузки фото
         const updatePhotoStatus = (file) => {
             selectedFile = file;
             if (file) {
@@ -320,7 +325,7 @@
                 photoStatus.classList.remove('text-gray-500');
                 photoStatus.classList.add('text-cyan-700', 'font-semibold');
             } else {
-                photoStatus.textContent = 'Фото не вибрано. (Функція камери може бути заблокована браузером)';
+                photoStatus.textContent = 'Фото не вибрано. (Функція камери може бути заблокована браузером, але виклик камери обов\'язково налаштований)';
                 photoStatus.classList.add('text-gray-500');
                 photoStatus.classList.remove('text-cyan-700', 'font-semibold');
             }
