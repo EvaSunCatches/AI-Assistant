@@ -14,62 +14,82 @@
             font-family: 'Nunito', sans-serif;
             background-color: #f3f4f6; /* Светлый фон для основного контента */
         }
+        
         /* Анимация пульсации для имитации активности AI */
-        @keyframes pulse-opacity {
-            0%, 100% { opacity: 0.9; }
-            50% { opacity: 1; }
+        @keyframes pulse-opacity-interactive {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.02); opacity: 1; }
         }
         
-        /* СТИЛЬ КНОПОК: ХОЛОДНЫЙ/ЛЕДЯНОЙ ТОН (ЦИАН/СВЕТЛО-ГОЛУБОЙ) */
+        /* Анимация для плавного появления фото */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* СТИЛЬ КНОПОК: СНЕЖНЫЙ/ЛЕДЯНОЙ ТОН */
         .btn-primary {
-            /* Холодный ледяной градиент: от циан до светло-голубого */
-            background-image: linear-gradient(to right, #4dd0e1 0%, #00bcd4 100%); 
+            /* Очень светлый, ледяной градиент: от светлого циан до очень светлого голубого */
+            background-image: linear-gradient(to right, #B2EBF2 0%, #E0F7FA 100%); 
+            color: #006064; /* Темный циан для текста */
             transition: all 0.3s ease;
+            border: 1px solid #80DEEA;
         }
         .btn-primary:hover {
             opacity: 0.95;
-            box-shadow: 0 6px 20px rgba(0, 188, 212, 0.4);
+            box-shadow: 0 6px 20px rgba(178, 235, 242, 0.6);
             transform: translateY(-1px);
         }
 
-        /* Контейнер для фото с ледяным градиентным фоном */
+        /* Контейнер для фото с ледяным градиентным фоном и тенью */
         .assistant-container {
-            /* Очень светлый, ледяной фон */
+            /* Фон: светлый ледяной градиент */
             background-image: linear-gradient(to bottom, #e0f7fa 0%, #ffffff 100%);
             position: relative;
+            /* Добавляем внутреннюю тень для плавного перехода к белому фону */
+            box-shadow: inset 0px 0px 30px rgba(0, 0, 0, 0.1); 
         }
+        
         .assistant-image {
-            animation: pulse-opacity 4s infinite ease-in-out;
-            /* Плавное наложение градиента по краю фото для гармоничного перехода */
-            mask-image: linear-gradient(to left, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
-            -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
-            
-            /* Уменьшаем непрозрачность фото, чтобы оно выглядело более "ледяным" */
-            opacity: 0.9; 
+            opacity: 0; /* Начальное состояние для анимации появления */
+            animation: fadeIn 1.5s ease-out forwards; /* Плавное появление */
         }
+        
+        .assistant-image.pulsing {
+            animation: pulse-opacity-interactive 1s infinite alternate ease-in-out;
+        }
+
+        /* Надпись: белый фон, темно-ледяной цвет текста */
+        .assistant-label {
+            background-color: rgba(255, 255, 255, 0.7); /* Чистый белый с прозрачностью */
+            color: #006064; /* Темный ледяной цвет для контраста */
+            backdrop-filter: blur(4px);
+        }
+        
         /* Стиль для индикатора прогресса */
         .progress-bar {
             height: 10px;
-            background-color: #e5e7eb;
+            background-color: #e5f5f7;
             border-radius: 9999px;
             overflow: hidden;
         }
         /* Градиент прогресса в ледяных тонах */
         .progress-fill {
             height: 100%;
-            background-image: linear-gradient(to right, #00bcd4, #4dd0e1); /* Холодный градиент */
+            background-image: linear-gradient(to right, #00BCD4, #4DD0E1); /* Холодный градиент */
             transition: width 0.5s ease;
         }
 
         /* СТИЛЬ ПЕРЕКЛЮЧАТЕЛЕЙ: ХОЛОДНЫЙ ТОН */
-        .input-switcher.active {
-            background-color: #e0f7fa !important; /* Очень светло-голубой фон */
-            border-color: #00bcd4 !important; /* Циан рамка */
-            color: #00838f !important; /* Темный циан текст */
-        }
         .input-switcher {
             /* Базовый стиль для неактивных кнопок */
              transition: all 0.3s ease;
+        }
+        .input-switcher.active {
+            background-color: #E0F7FA !important; /* Очень светло-голубой фон */
+            border-color: #00BCD4 !important; /* Циан рамка */
+            color: #006064 !important; /* Темный циан текст */
+            box-shadow: 0 2px 4px rgba(0, 188, 212, 0.2);
         }
     </style>
 </head>
@@ -86,13 +106,13 @@
         <img id="assistant-photo"
              src="https://raw.githubusercontent.com/EvaSunCatches/AI-Assistant/main/assets/assistant.png"
              alt="AI Асистент" 
-             class="absolute inset-0 w-full h-full object-cover assistant-image" 
-             onerror="this.style.display='none'; this.closest('div').style.backgroundImage='linear-gradient(to bottom, #e0f7fa, #ffffff)'">
+             class="absolute inset-0 w-full h-full object-cover" 
+             onerror="this.style.display='none'; this.closest('div').style.backgroundImage='linear-gradient(to bottom, #e0f7fa 0%, #ffffff 100%)'">
 
-        <!-- Заголовок опущен вниз, чтобы не закрывать лицо -->
-        <div class="relative z-10 text-center p-4 rounded-xl backdrop-blur-sm bg-white bg-opacity-50 mt-auto mb-8 mx-4 shadow-xl">
-            <h1 class="text-3xl font-extrabold mb-1 text-gray-800">AI Освітній Асистент</h1>
-            <p class="text-lg text-gray-600">Ваш персональний помічник у навчанні</p>
+        <!-- Заголовок с ледяным стилем -->
+        <div class="relative z-10 text-center p-4 rounded-xl assistant-label mt-auto mb-8 mx-4 shadow-xl">
+            <h1 class="text-3xl font-extrabold mb-1">AI Освітній Асистент</h1>
+            <p class="text-lg">Ваш персональний помічник у навчанні</p>
         </div>
     </div>
 
@@ -169,7 +189,7 @@
                 <div class="flex space-x-4">
                     <!-- Кнопка "Browse" -->
                     <button type="button" onclick="document.getElementById('photo-upload-input').click()"
-                            class="flex-1 p-3 rounded-xl font-semibold text-white bg-cyan-500 hover:bg-cyan-600 transition duration-150 ease-in-out shadow-lg flex items-center justify-center">
+                            class="flex-1 p-3 rounded-xl font-bold text-gray-800 shadow-lg flex items-center justify-center btn-primary">
                         <!-- SVG для загрузки -->
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         Вибрати файл
@@ -179,7 +199,7 @@
                     
                     <!-- Кнопка "Сделать фото" (с capture="camera") -->
                     <button type="button" onclick="document.getElementById('photo-camera-input').click()"
-                            class="flex-1 p-3 rounded-xl font-semibold text-white bg-teal-500 hover:bg-teal-600 transition duration-150 ease-in-out shadow-lg flex items-center justify-center">
+                            class="flex-1 p-3 rounded-xl font-bold text-gray-800 shadow-lg flex items-center justify-center btn-primary">
                         <!-- SVG для камеры -->
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.218A2 2 0 0110.69 4h2.62a2 2 0 011.664.89l.812 1.218a2 2 0 001.664.89H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         Зробити фото
@@ -187,7 +207,7 @@
                     <!-- Input с атрибутом capture="camera" -->
                     <input type="file" id="photo-camera-input" accept="image/*" capture="camera" class="hidden">
                 </div>
-                <div id="photo-status" class="text-sm text-gray-500 text-center">Фото не вибрано.</div>
+                <div id="photo-status" class="text-sm text-gray-500 text-center">Фото не вибрано. (Функція камери може бути заблокована браузером)</div>
             </div>
 
             <!-- Секция: Укажите, что необходимо сделать -->
@@ -201,7 +221,7 @@
 
             <!-- Кнопка "Получить помощь ассистента" -->
             <button id="get-help-button" type="button"
-                    class="btn-primary w-full py-3 rounded-xl text-lg font-bold text-white shadow-lg flex items-center justify-center">
+                    class="btn-primary w-full py-3 rounded-xl text-lg font-bold shadow-lg flex items-center justify-center">
                 Отримати допомогу асистента
             </button>
             
@@ -227,14 +247,11 @@
 
 <script>
     // API Key теперь берется из глобальной переменной, предоставленной средой Canvas
-    // Используем `__api_key` для работы с секретами.
     const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
     // === УТИЛИТЫ ДЛЯ API ===
     
-    // ... [Остальные утилиты fileToBase64 и fetchWithRetry остаются без изменений] ...
-
     /**
      * Конвертирует File (Blob) в base64 строку для API
      * @param {File} file 
@@ -261,6 +278,7 @@
                 }
                 if (response.status === 429 && i < maxRetries - 1) { // 429 Too Many Requests
                     const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                    // console.warn(\`API request failed (status \${response.status}), retrying in \${(delay / 1000).toFixed(1)}s...\`);
                     await new Promise(resolve => setTimeout(resolve, delay));
                     continue;
                 }
@@ -289,6 +307,7 @@
         const photoStatus = document.getElementById('photo-status');
         const subjectSelect = document.getElementById('subject-select');
         const taskDescription = document.getElementById('task-description');
+        const assistantPhoto = document.getElementById('assistant-photo'); // Ссылка на фото
         
         let selectedInputType = 'url';
         let selectedFile = null;
@@ -299,11 +318,11 @@
             if (file) {
                 photoStatus.textContent = `Вибрано файл: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
                 photoStatus.classList.remove('text-gray-500');
-                photoStatus.classList.add('text-cyan-600', 'font-semibold');
+                photoStatus.classList.add('text-cyan-700', 'font-semibold');
             } else {
-                photoStatus.textContent = 'Фото не вибрано.';
+                photoStatus.textContent = 'Фото не вибрано. (Функція камери може бути заблокована браузером)';
                 photoStatus.classList.add('text-gray-500');
-                photoStatus.classList.remove('text-cyan-600', 'font-semibold');
+                photoStatus.classList.remove('text-cyan-700', 'font-semibold');
             }
         };
 
@@ -312,12 +331,12 @@
             selectedInputType = type;
             const allSwitchers = document.querySelectorAll('.input-switcher');
             allSwitchers.forEach(btn => {
-                btn.classList.remove('active', 'bg-cyan-50', 'text-cyan-700', 'border-cyan-400');
+                btn.classList.remove('active', 'bg-cyan-50', 'text-cyan-700', 'border-cyan-400', 'shadow-md');
                 btn.classList.add('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-gray-100');
             });
 
             const activeBtn = type === 'url' ? urlButton : photoButton;
-            activeBtn.classList.add('active', 'bg-cyan-50', 'text-cyan-700', 'border-cyan-400');
+            activeBtn.classList.add('active', 'bg-cyan-50', 'text-cyan-700', 'border-cyan-400', 'shadow-md');
             activeBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-gray-100');
 
             urlFields.classList.toggle('hidden', type !== 'url');
@@ -373,6 +392,9 @@
             progressContainer.classList.remove('hidden');
             resultMessage.classList.remove('bg-red-100', 'text-red-700');
             resultMessage.classList.add('bg-white', 'text-gray-800');
+            
+            // Активация пульсации фото
+            assistantPhoto.classList.add('pulsing');
             
             // --- Симуляция/Реальный Прогресс ---
             let progressInterval;
@@ -478,6 +500,7 @@
                     resultContainer.classList.remove('hidden');
                     getHelpButton.disabled = false;
                     getHelpButton.textContent = 'Отримати допомогу асистента';
+                    assistantPhoto.classList.remove('pulsing'); // Деактивация пульсации
                 }, 1000);
             }
         });
