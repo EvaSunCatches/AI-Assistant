@@ -29,9 +29,11 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
         .response-box {
+            /* Используем pre-wrap для сохранения форматирования и переносов строк от LLM */
             white-space: pre-wrap;
             min-height: 150px;
             overflow-wrap: break-word;
+            text-align: left; /* Убедимся, что текст выравнивается по левому краю */
         }
         .loading-animation {
             border: 4px solid rgba(0, 0, 0, .1);
@@ -72,8 +74,8 @@
     <div class="space-y-4">
         <!-- Ввод задания -->
         <div>
-            <label for="taskInput" class="block text-sm font-medium text-gray-700 mb-1">Введіть ваше завдання</label>
-            <textarea id="taskInput" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150" placeholder="Наприклад: 'Розв'яжи задачу 57 на сторінці 25 підручника'"></textarea>
+            <label for="taskInput" class="block text-sm font-medium text-gray-700 mb-1">Введіть формулювання завдання або опис (якщо немає фото)</label>
+            <textarea id="taskInput" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150" placeholder="Наприклад: 'Розв'яжи задачу. Потяг їхав зі швидкістю 60 км/год...'"></textarea>
         </div>
 
         <!-- Выбор предмета -->
@@ -86,6 +88,25 @@
                 <option value="Природознавство">Природознавство</option>
                 <option value="Інший">Інший</option>
             </select>
+        </div>
+        
+        <!-- НОВОЕ: Ссылка и параметры задания -->
+        <div id="text-input-group" class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <div class="col-span-3">
+                <label class="block text-sm font-bold text-blue-800 mb-1">Параметри завдання з підручника (опціонально)</label>
+            </div>
+            <div>
+                <label for="bookUrlInput" class="block text-xs font-medium text-gray-700 mb-1">Посилання на підручник (URL)</label>
+                <input type="url" id="bookUrlInput" class="w-full p-2 border border-gray-300 rounded-lg text-sm" placeholder="https://pidruchnik.ua/..." />
+            </div>
+            <div>
+                <label for="pageInput" class="block text-xs font-medium text-gray-700 mb-1">Номер сторінки</label>
+                <input type="number" id="pageInput" class="w-full p-2 border border-gray-300 rounded-lg text-sm" placeholder="25" min="1" />
+            </div>
+            <div>
+                <label for="taskNumberInput" class="block text-xs font-medium text-gray-700 mb-1">Номер завдання/вправи</label>
+                <input type="text" id="taskNumberInput" class="w-full p-2 border border-gray-300 rounded-lg text-sm" placeholder="57 або §4" />
+            </div>
         </div>
 
         <!-- Загрузка фото -->
@@ -129,6 +150,9 @@
     const taskInput = document.getElementById('taskInput');
     const subjectSelect = document.getElementById('subjectSelect');
     const fileInput = document.getElementById('fileInput');
+    const bookUrlInput = document.getElementById('bookUrlInput'); // НОВОЕ
+    const pageInput = document.getElementById('pageInput'); // НОВОЕ
+    const taskNumberInput = document.getElementById('taskNumberInput'); // НОВОЕ
     const submitButton = document.getElementById('submitButton');
     const buttonText = document.getElementById('buttonText');
     const spinner = document.getElementById('spinner');
@@ -138,7 +162,8 @@
     const imagePreview = document.getElementById('imagePreview');
     const previewImg = document.getElementById('previewImg');
 
-    let base64Image = null; // Для хранения Base64 изображения
+    let base64Image = null; // Для хранения Base64 данных изображения
+    let base64MimeType = null; // Для хранения MIME-типа изображения
 
     // 1. Предварительный просмотр изображения
     fileInput.addEventListener('change', (event) => {
@@ -150,14 +175,17 @@
                 previewImg.src = imgDataUrl;
                 imagePreview.classList.remove('hidden');
 
-                // Преобразование в Base64 для API (удаление префикса data:image/jpeg;base64,)
-                base64Image = imgDataUrl.split(',')[1];
+                // Преобразование в Base64 для API
+                const parts = imgDataUrl.split(',');
+                base64Image = parts.length > 1 ? parts[1] : null;
+                base64MimeType = file.type; 
             };
             reader.readAsDataURL(file);
         } else {
             imagePreview.classList.add('hidden');
             previewImg.src = '';
             base64Image = null;
+            base64MimeType = null; 
         }
     });
 
@@ -192,9 +220,14 @@
 
         const userTask = taskInput.value.trim();
         const subject = subjectSelect.value;
+        
+        // НОВЫЕ ПОЛЯ
+        const bookUrl = bookUrlInput.value.trim();
+        const pageNumber = pageInput.value.trim();
+        const taskNumber = taskNumberInput.value.trim();
 
-        if (!userTask && !base64Image) {
-            responseContainer.innerHTML = 'Будь ласка, введіть завдання або завантажте фото.';
+        if (!userTask && !base64Image && !bookUrl) {
+            responseContainer.innerHTML = 'Будь ласка, введіть завдання, завантажте фото або вкажіть посилання на підручник.';
             submitButton.disabled = false;
             buttonText.textContent = 'Отримати допомогу асистента';
             spinner.classList.add('hidden');
@@ -203,18 +236,31 @@
 
         try {
             // 1. Формирование системного запроса (System Instruction)
-            const systemPrompt = `Ви — AI освітній асистент для учнів 5-го класу, що спеціалізується на навчальних матеріалах України. Ваша мета — надавати зрозумілі, детальні розв'язання, пояснення та освітні посилання. 
-            Мова відповіді: Українська.
-            Роль: Вчитель/помічник. 
-            Інструкції:
-            1. Завжди спочатку надайте чітке розв'язання або відповідь.
-            2. Після відповіді надайте пояснення 'Чому це так?'
-            3. Якщо користувач надає зображення, обов'язково проаналізуйте його.
-            4. Звертайте особливу увагу на предмет: ${subject}.`;
+            // ИСПОЛЬЗУЕМ ВАШУ ПОДРОБНУЮ ИНСТРУКЦИЮ ИЗ GOOGLE AI STUDIO
+            const systemPrompt = `Ти — експерт з українського навчального плану 5 класу. Твоя роль — надавати зрозумілі, детальні та навчальні відповіді, які допомагають учням, а не просто дають готові рішення. 
+            Фокус: На предметі "${subject}".
+            Принципи відповіді:
+            1. Розбивай складні завдання на прості кроки.
+            2. Використовуй дружній, заохочувальний тон вчителя.
+            3. Завжди надавай повне пояснення 'Чому це так?' після основної відповіді.
+            4. Якщо є зображення, проаналізуй його та інтегруй в пояснення.
+            5. Посилаєшся на підручник або параграф, якщо ці дані надані.
+            6. Мова відповіді: Українська.`;
 
             // 2. Формирование пользовательского запроса (Contents)
-            const userQuery = `Допоможи мені з предметом "${subject}". Моє завдання: ${userTask}`;
+            let userQuery = `Допоможи мені з предметом "${subject}".`;
             
+            if (userTask) {
+                userQuery += ` Моє завдання: ${userTask}.`;
+            }
+
+            if (bookUrl || pageNumber || taskNumber) {
+                userQuery += "\n\nДеталі підручника:";
+                if (bookUrl) userQuery += ` Посилання: ${bookUrl}.`;
+                if (pageNumber) userQuery += ` Сторінка: ${pageNumber}.`;
+                if (taskNumber) userQuery += ` Номер завдання/параграфа: ${taskNumber}.`;
+            }
+
             const contents = [
                 {
                     role: "user",
@@ -223,10 +269,10 @@
             ];
 
             // Если есть изображение, добавляем его в части
-            if (base64Image) {
+            if (base64Image && base64MimeType) {
                 const imagePart = {
                     inlineData: {
-                        mimeType: fileInput.files[0].type,
+                        mimeType: base64MimeType,
                         data: base64Image
                     }
                 };
@@ -241,6 +287,11 @@
                 systemInstruction: {
                     parts: [{ text: systemPrompt }]
                 },
+                // Настройки из AI Studio
+                config: {
+                    temperature: 0.2, // Установлено из скриншота
+                    maxOutputTokens: 4096 // Установлено из скриншота
+                }
             };
 
             // 4. Вызов API с повторами
@@ -256,12 +307,18 @@
             const candidate = result.candidates?.[0];
 
             if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                if (result.error && result.error.message) {
+                    throw new Error(`Помилка API: ${result.error.message}`);
+                }
                 throw new Error("Не вдалося отримати коректну відповідь від AI.");
             }
 
             // 5. Обработка ответа
             const generatedText = candidate.content.parts[0].text;
-            responseContainer.innerHTML = generatedText;
+            // УДАЛЕНО: .replace(/\n/g, '<br>')
+            // Вместо этого используется CSS white-space: pre-wrap для сохранения форматирования.
+            responseContainer.textContent = generatedText;
+
 
             // 6. Извлечение источников (Grounding Sources)
             let sources = [];
@@ -281,13 +338,15 @@
                     sourcesHtml += `<div class="mt-1"><a href="${source.uri}" target="_blank" class="source-link"> [${index + 1}] ${source.title}</a></div>`;
                 });
                 sourcesContainer.innerHTML = sourcesHtml;
+            } else {
+                sourcesContainer.innerHTML = '';
             }
 
         } catch (error) {
             console.error("Gemini API Error:", error);
             errorMessage.textContent = `Сталася помилка: ${error.message}. Спробуйте ще раз.`;
             errorMessage.classList.remove('hidden');
-            responseContainer.innerHTML = 'Виникла помилка під час обробки завдання.';
+            responseContainer.textContent = 'Виникла помилка під час обробки завдання.';
         } finally {
             submitButton.disabled = false;
             buttonText.textContent = 'Отримати допомогу асистента';
