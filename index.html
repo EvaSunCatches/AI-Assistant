@@ -59,12 +59,15 @@
             animation: pulse-opacity-interactive 1s infinite alternate ease-in-out;
         }
 
-        /* --- ИСПРАВЛЕНИЕ: БЕЛЫЙ ШРИФТ И ПОЛУПРОЗРАЧНЫЙ ФОН --- */
+        /* --- ИСПРАВЛЕНИЕ: МАТОВЫЙ ПРОЗРАЧНЫЙ ФОН (FROSTED GLASS) --- */
         .assistant-label {
-            /* Полупрозрачная темная заливка для контраста с белым текстом */
-            background-color: rgba(0, 0, 0, 0.5); 
+            /* Светлая прозрачная основа (создает эффект матовости) */
+            background-color: rgba(255, 255, 255, 0.2); 
             color: #fff; /* Белый цвет текста */
-            backdrop-filter: blur(4px);
+            /* Эффект матового стекла/размытия фона */
+            backdrop-filter: blur(10px) saturate(180%);
+            -webkit-backdrop-filter: blur(10px) saturate(180%); /* Для Safari */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             /* Убеждаемся, что подпись не выйдет за границы */
             max-width: 90%; 
             width: fit-content;
@@ -112,7 +115,7 @@
              class="assistant-image absolute inset-0 w-full h-full object-cover" 
              onerror="this.style.display='none'; this.closest('div').style.backgroundImage='linear-gradient(to bottom, #e0f7fa 0%, #ffffff 100%)'">
 
-        <!-- --- ИСПРАВЛЕНИЕ: ПОДПИСЬ БОЛЬШЕ НЕ ВЫХОДИТ ЗА КРАЙ И ИСПОЛЬЗУЕТ БЕЛЫЙ ШРИФТ --- -->
+        <!-- КОНТЕЙНЕР ПОДПИСИ: Применяет матовый эффект -->
         <div class="relative z-10 text-center p-4 rounded-xl assistant-label mt-auto mb-8 shadow-xl" style="padding-left: 1.5rem; padding-right: 1.5rem;">
             <h1 class="text-3xl font-extrabold mb-1">AI Освітній Асистент</h1>
             <p class="text-lg">Ваш персональний помічник у навчанні</p>
@@ -188,7 +191,7 @@
             </div>
 
             <!-- Динамический блок полей: Фото (Скрыт по умолчанию) -->
-            <div id="photo-fields" class="space-y-4 mb-5 hidden p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div id="photo-fields" class="space-y-4 mb-5 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div class="flex space-x-4">
                     <!-- Кнопка "Browse" -->
                     <button type="button" onclick="document.getElementById('photo-upload-input').click()"
