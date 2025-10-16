@@ -12,32 +12,39 @@
         /* Применение шрифта Nunito ко всему документу */
         body {
             font-family: 'Nunito', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #f3f4f6; /* Светлый фон для основного контента */
         }
         /* Анимация пульсации для имитации активности AI */
         @keyframes pulse-opacity {
-            0%, 100% { opacity: 0.85; }
+            0%, 100% { opacity: 0.9; }
             50% { opacity: 1; }
         }
-        /* Стиль для градиентной кнопки */
+        /* Стиль для градиентной кнопки (теперь в ледяных тонах) */
         .btn-primary {
-            background-image: linear-gradient(to right, #4f46e5 0%, #a855f7 100%);
+            /* Ледяной, светло-голубой градиент */
+            background-image: linear-gradient(to right, #60a5fa 0%, #3b82f6 100%); 
             transition: all 0.3s ease;
         }
         .btn-primary:hover {
             opacity: 0.95;
-            box-shadow: 0 6px 20px rgba(135, 90, 255, 0.4);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
             transform: translateY(-1px);
         }
-        /* Контейнер для фото с градиентным наложением и анимацией */
+
+        /* Контейнер для фото с ледяным градиентным фоном */
         .assistant-container {
+            /* Очень светлый, ледяной фон */
+            background-image: linear-gradient(to bottom, #e0f7fa 0%, #ffffff 100%);
             position: relative;
-            background-color: #1f2937;
         }
         .assistant-image {
             animation: pulse-opacity 4s infinite ease-in-out;
-            /* Добавление градиента по краю фото для мягкого перехода */
-            mask-image: linear-gradient(to left, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
+            /* Плавное наложение градиента по краю фото для гармоничного перехода */
+            mask-image: linear-gradient(to left, rgba(0,0,0,1) 90%, rgba(0,0,0,0) 100%);
+            -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 90%, rgba(0,0,0,0) 100%);
+            
+            /* Уменьшаем непрозрачность фото, чтобы оно выглядело более "ледяным" */
+            opacity: 0.9; 
         }
         /* Стиль для индикатора прогресса */
         .progress-bar {
@@ -46,32 +53,40 @@
             border-radius: 9999px;
             overflow: hidden;
         }
+        /* Градиент прогресса в ледяных тонах */
         .progress-fill {
             height: 100%;
-            background-image: linear-gradient(to right, #4f46e5, #a855f7);
+            background-image: linear-gradient(to right, #3b82f6, #60a5fa);
             transition: width 0.5s ease;
+        }
+
+        /* Стиль для активной кнопки переключателя (URL/Фото) в ледяных тонах */
+        .input-switcher.active {
+            background-color: #eff6ff !important; /* Светло-голубой фон */
+            border-color: #3b82f6 !important; /* Голубая рамка */
+            color: #1d4ed8 !important; /* Темно-голубой текст */
         }
     </style>
 </head>
 <body>
 
-<!-- lg:flex-row-reverse меняет порядок, чтобы фото было справа -->
+<!-- lg:flex-row-reverse: фото справа, форма слева -->
 <div class="min-h-screen flex flex-col lg:flex-row-reverse">
 
-    <!-- Правая панель - Фото Ассистента (растянуто от самого верха) -->
-    <div class="lg:w-1/3 flex flex-col justify-center items-center relative overflow-hidden text-white assistant-container"
+    <!-- Правая панель - Фото Ассистента (Ледяной фон) -->
+    <div class="lg:w-1/3 flex flex-col justify-center items-center relative overflow-hidden text-gray-800 assistant-container"
          style="min-height: 250px;">
         
         <img id="assistant-photo"
              src="https://raw.githubusercontent.com/EvaSunCatches/AI-Assistant/main/assets/assistant.png"
              alt="AI Асистент" 
              class="absolute inset-0 w-full h-full object-cover assistant-image" 
-             onerror="this.style.display='none'; this.closest('div').style.backgroundImage='linear-gradient(to bottom, #1f2937, #374151)'">
+             onerror="this.style.display='none'; this.closest('div').style.backgroundImage='linear-gradient(to bottom, #e0f7fa, #ffffff)'">
 
-        <!-- Заголовок поверх фото -->
-        <div class="relative z-10 text-center p-4 rounded-xl backdrop-blur-sm bg-black bg-opacity-30">
-            <h1 class="text-3xl font-extrabold mb-2">AI Освітній Асистент</h1>
-            <p class="text-lg text-gray-200">Ваш персональний помічник у навчанні</p>
+        <!-- Заголовок опущен вниз, чтобы не закрывать лицо -->
+        <div class="relative z-10 text-center p-4 rounded-xl backdrop-blur-sm bg-white bg-opacity-50 mt-auto mb-8 mx-4 shadow-xl">
+            <h1 class="text-3xl font-extrabold mb-1 text-gray-800">AI Освітній Асистент</h1>
+            <p class="text-lg text-gray-600">Ваш персональний помічник у навчанні</p>
         </div>
     </div>
 
@@ -85,7 +100,7 @@
                 <label for="subject-select" class="block text-sm font-medium text-gray-700 mb-2">
                     Правильно вибрати предмет
                 </label>
-                <select id="subject-select" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm bg-white focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out">
+                <select id="subject-select" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm bg-white focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
                     <option value="" disabled selected>Виберіть предмет...</option>
                     <option value="Математика">Математика</option>
                     <option value="Українська мова">Українська мова</option>
@@ -94,20 +109,20 @@
                 </select>
             </div>
 
-            <!-- Раздел 1: Выбор типа ввода (URL/Фото) - Единый стиль -->
+            <!-- Раздел 1: Выбор типа ввода (URL/Фото) - Ледяной стиль -->
             <div class="mb-5">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     Розділ 1: Джерело завдання
                 </label>
                 <div class="flex space-x-4">
                     <button id="input-type-url" type="button" 
-                            class="input-switcher active flex-1 p-3 rounded-xl font-semibold transition duration-150 ease-in-out border border-indigo-400 bg-indigo-50 text-indigo-700 shadow-md flex items-center justify-center">
+                            class="input-switcher active flex-1 p-3 rounded-xl font-semibold transition duration-150 ease-in-out border border-blue-400 bg-blue-50 text-blue-700 shadow-md flex items-center justify-center">
                         <!-- SVG для URL -->
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.811a4 4 0 00-.585-.585m-4.66-2.115a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.5-4.5"></path></svg>
                         По посиланню (URL)
                     </button>
                     <button id="input-type-photo" type="button" 
-                            class="input-switcher flex-1 p-3 rounded-xl font-semibold transition duration-150 ease-in-out border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-md flex items-center justify-center">
+                            class="input-switcher flex-1 p-3 rounded-xl font-semibold transition duration-150 ease-in-out border border-gray-300 text-gray-700 hover:bg-gray-100 shadow-md flex items-center justify-center">
                         <!-- SVG для Фото -->
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         Завантажити фото
@@ -121,24 +136,24 @@
                     <div class="flex-1">
                         <label for="task-url" class="block text-xs font-medium text-gray-500 mb-1">URL (Посилання)</label>
                         <input type="url" id="task-url" placeholder="https://pidruchnik.ua/..."
-                               class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                               class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
                         <label for="task-section" class="block text-xs font-medium text-gray-500 mb-1">Розділ</label>
                         <input type="text" id="task-section" placeholder="Напр. 1"
-                               class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                               class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
                     </div>
                 </div>
                 <div class="flex space-x-4">
                     <div class="flex-1">
                         <label for="task-page" class="block text-xs font-medium text-gray-500 mb-1">Сторінка</label>
                         <input type="number" id="task-page" placeholder="Напр. 54"
-                               class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                               class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div class="flex-1">
                         <label for="task-number" class="block text-xs font-medium text-gray-500 mb-1">Номер завдання</label>
                         <input type="text" id="task-number" placeholder="Напр. 54 або §3"
-                               class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                               class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
                     </div>
                 </div>
             </div>
@@ -148,7 +163,7 @@
                 <div class="flex space-x-4">
                     <!-- Кнопка "Browse" -->
                     <button type="button" onclick="document.getElementById('photo-upload-input').click()"
-                            class="flex-1 p-3 rounded-xl font-semibold text-white bg-indigo-500 hover:bg-indigo-600 transition duration-150 ease-in-out shadow-lg flex items-center justify-center">
+                            class="flex-1 p-3 rounded-xl font-semibold text-white bg-blue-500 hover:bg-blue-600 transition duration-150 ease-in-out shadow-lg flex items-center justify-center">
                         <!-- SVG для загрузки -->
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         Вибрати файл
@@ -158,7 +173,7 @@
                     
                     <!-- Кнопка "Сделать фото" -->
                     <button type="button" onclick="document.getElementById('photo-camera-input').click()"
-                            class="flex-1 p-3 rounded-xl font-semibold text-white bg-purple-500 hover:bg-purple-600 transition duration-150 ease-in-out shadow-lg flex items-center justify-center">
+                            class="flex-1 p-3 rounded-xl font-semibold text-white bg-indigo-500 hover:bg-indigo-600 transition duration-150 ease-in-out shadow-lg flex items-center justify-center">
                         <!-- SVG для камеры -->
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.218A2 2 0 0110.69 4h2.62a2 2 0 011.664.89l.812 1.218a2 2 0 001.664.89H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         Зробити фото
@@ -174,7 +189,7 @@
                     Секція: Укажіть, що необхідно зробити (деталі)
                 </label>
                 <textarea id="task-description" rows="4" placeholder="Наприклад: 'Допоможи мені зрозуміти, як розв'язати це завдання, та поясни правило, яке використовується.' Це дуже важливо!"
-                          class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-none"></textarea>
+                          class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
             </div>
 
             <!-- Кнопка "Получить помощь ассистента" -->
@@ -189,12 +204,12 @@
                 <div class="progress-bar">
                     <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
                 </div>
-                <p id="progress-text" class="text-center mt-2 text-indigo-600 font-bold">0% виконано</p>
+                <p id="progress-text" class="text-center mt-2 text-blue-600 font-bold">0% виконано</p>
             </div>
             
             <div id="result-container" class="mt-6 hidden">
                 <h3 class="text-xl font-bold text-gray-800 mb-3">Відповідь Асистента</h3>
-                <div id="result-message" class="p-4 bg-white border border-indigo-200 text-gray-800 rounded-lg shadow-md whitespace-pre-wrap">
+                <div id="result-message" class="p-4 bg-white border border-blue-200 text-gray-800 rounded-lg shadow-md whitespace-pre-wrap">
                     <!-- Сюда будет вставляться ответ AI -->
                 </div>
             </div>
@@ -204,9 +219,9 @@
 </div>
 
 <script>
-    // === КОНФИГУРАЦИЯ API ===
-    // !!! ВАЖНО !!! Для тестирования с реальным AI-ассистентом замените "" на ваш API-ключ.
-    const apiKey = ""; 
+    // API Key теперь берется из глобальной переменной, предоставленной средой Canvas
+    // Это безопасный способ работы с секретами.
+    const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
     // === УТИЛИТЫ ДЛЯ API ===
@@ -273,20 +288,27 @@
             selectedInputType = type;
             const allSwitchers = document.querySelectorAll('.input-switcher');
             allSwitchers.forEach(btn => {
-                btn.classList.remove('active', 'bg-indigo-50', 'text-indigo-700', 'border-indigo-400');
-                btn.classList.add('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-gray-50');
+                btn.classList.remove('active', 'bg-blue-50', 'text-blue-700', 'border-blue-400');
+                btn.classList.add('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-gray-100');
             });
 
             const activeBtn = type === 'url' ? urlButton : photoButton;
-            activeBtn.classList.add('active', 'bg-indigo-50', 'text-indigo-700', 'border-indigo-400');
-            activeBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-gray-50');
+            activeBtn.classList.add('active', 'bg-blue-50', 'text-blue-700', 'border-blue-400');
+            activeBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-gray-100');
 
             urlFields.classList.toggle('hidden', type !== 'url');
             photoFields.classList.toggle('hidden', type !== 'photo');
+            
+            // Сброс выбранного файла при переключении режима
+            selectedFile = null;
+            updatePhotoStatus(null);
         };
 
         urlButton.addEventListener('click', () => toggleInputType('url'));
         photoButton.addEventListener('click', () => toggleInputType('photo'));
+        
+        // Устанавливаем начальное состояние
+        toggleInputType('url');
         
         // 2. Логика обработки загрузки фото
         const updatePhotoStatus = (file) => {
@@ -294,11 +316,11 @@
             if (file) {
                 photoStatus.textContent = `Вибрано файл: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
                 photoStatus.classList.remove('text-gray-500');
-                photoStatus.classList.add('text-indigo-600', 'font-semibold');
+                photoStatus.classList.add('text-blue-600', 'font-semibold');
             } else {
                 photoStatus.textContent = 'Фото не вибрано.';
                 photoStatus.classList.add('text-gray-500');
-                photoStatus.classList.remove('text-indigo-600', 'font-semibold');
+                photoStatus.classList.remove('text-blue-600', 'font-semibold');
             }
         };
 
@@ -326,6 +348,13 @@
                 resultMessage.classList.add('bg-red-100', 'text-red-700');
                 return;
             }
+            if (selectedInputType === 'photo' && !selectedFile) {
+                 resultMessage.textContent = 'Ви вибрали режим "Завантажити фото", але не прикріпили файл.';
+                 resultContainer.classList.remove('hidden');
+                 resultMessage.classList.add('bg-red-100', 'text-red-700');
+                 return;
+            }
+
 
             // Настройка UI для прогресса
             getHelpButton.disabled = true;
@@ -358,7 +387,7 @@
 
             try {
                 if (apiKey === "") {
-                    // Симуляция ответа, если API-ключ не установлен
+                    // Симуляция ответа, если API-ключ не установлен (как запасной вариант)
                     await new Promise(resolve => setTimeout(resolve, 5000));
                     resultMessage.textContent = `[СИМУЛЯЦІЯ] Відповідь AI-асистента з предмету "${subject}":
                     
@@ -370,7 +399,7 @@
                     
                     **Крок 3: Пояснення.** Це зроблено, щоб допомогти вам не просто списати, а зрозуміти суть матеріалу! 🚀
                     
-                    P.S. Для реальної роботи додайте ваш Google API Key в код.
+                    P.S. Для реальної роботи додайте ваш Google API Key в налаштуваннях секретів Canvas.
                     `;
                 } else {
                     // --- РЕАЛЬНЫЙ API-ЗАПРОС ---
@@ -393,6 +422,7 @@
                          parts.push({ text: userPrompt });
                     } else if (selectedInputType === 'photo' && selectedFile) {
                         const base64Data = await fileToBase64(selectedFile);
+                        // Добавляем изображение как часть запроса
                         parts.push({
                             inlineData: {
                                 mimeType: selectedFile.type,
@@ -400,10 +430,7 @@
                             }
                         });
                         userPrompt += `[Завантажене фото].`;
-                        parts.push({ text: userPrompt });
-                    } else {
-                         // Если режим Фото, но файла нет, возвращаем ошибку
-                         throw new Error("Не вибрано жодного фото для аналізу.");
+                        parts.push({ text: userPrompt }); // Добавляем текстовый промпт после изображения
                     }
 
                     const payload = {
