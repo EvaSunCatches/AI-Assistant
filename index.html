@@ -2,6 +2,7 @@
   AI Ассистент для 5-го Класса
   Реализован на чистом HTML/Tailwind CSS/JavaScript
   Использует Gemini-2.5-flash-preview-09-2025 для мультимодальной помощи.
+  Логика и Системная Инструкция строго соответствуют настройкам пользователя в Google AI Studio.
 -->
 <html lang="ru">
 <head>
@@ -90,7 +91,7 @@
             </select>
         </div>
         
-        <!-- НОВОЕ: Ссылка и параметры задания -->
+        <!-- Параметры задания -->
         <div id="text-input-group" class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-blue-50 p-4 rounded-lg border border-blue-200">
             <div class="col-span-3">
                 <label class="block text-sm font-bold text-blue-800 mb-1">Параметри завдання з підручника (опціонально)</label>
@@ -150,9 +151,9 @@
     const taskInput = document.getElementById('taskInput');
     const subjectSelect = document.getElementById('subjectSelect');
     const fileInput = document.getElementById('fileInput');
-    const bookUrlInput = document.getElementById('bookUrlInput'); // НОВОЕ
-    const pageInput = document.getElementById('pageInput'); // НОВОЕ
-    const taskNumberInput = document.getElementById('taskNumberInput'); // НОВОЕ
+    const bookUrlInput = document.getElementById('bookUrlInput'); 
+    const pageInput = document.getElementById('pageInput'); 
+    const taskNumberInput = document.getElementById('taskNumberInput'); 
     const submitButton = document.getElementById('submitButton');
     const buttonText = document.getElementById('buttonText');
     const spinner = document.getElementById('spinner');
@@ -211,7 +212,7 @@
      */
     async function getAssistantHelp() {
         // Сброс состояния
-        responseContainer.innerHTML = 'Завантаження...';
+        responseContainer.textContent = 'Завантаження...';
         sourcesContainer.innerHTML = '';
         errorMessage.classList.add('hidden');
         submitButton.disabled = true;
@@ -221,13 +222,12 @@
         const userTask = taskInput.value.trim();
         const subject = subjectSelect.value;
         
-        // НОВЫЕ ПОЛЯ
         const bookUrl = bookUrlInput.value.trim();
         const pageNumber = pageInput.value.trim();
         const taskNumber = taskNumberInput.value.trim();
 
         if (!userTask && !base64Image && !bookUrl) {
-            responseContainer.innerHTML = 'Будь ласка, введіть завдання, завантажте фото або вкажіть посилання на підручник.';
+            responseContainer.textContent = 'Будь ласка, введіть завдання, завантажте фото або вкажіть посилання на підручник.';
             submitButton.disabled = false;
             buttonText.textContent = 'Отримати допомогу асистента';
             spinner.classList.add('hidden');
@@ -236,13 +236,14 @@
 
         try {
             // 1. Формирование системного запроса (System Instruction)
-            // ИСПОЛЬЗУЕМ ВАШУ ПОДРОБНУЮ ИНСТРУКЦИЮ ИЗ GOOGLE AI STUDIO
-            const systemPrompt = `Ти — експерт з українського навчального плану 5 класу. Твоя роль — надавати зрозумілі, детальні та навчальні відповіді, які допомагають учням, а не просто дають готові рішення. 
+            // ДОСЛОВНЫЙ ТЕКСТ из AI помощник.pdf
+            const systemPrompt = `Ти експерт з українського навчального плану 5 класу. Твоя роль - надавати зрозумілі, детальні та навчальні відповіді, які допомагають учням, а не просто дають готові рішення. 
             Фокус: На предметі "${subject}".
+            
             Принципи відповіді:
             1. Розбивай складні завдання на прості кроки.
             2. Використовуй дружній, заохочувальний тон вчителя.
-            3. Завжди надавай повне пояснення 'Чому це так?' після основної відповіді.
+            3. Завжди надавай повне пояснення "Чому це так?" після основної відповіді.
             4. Якщо є зображення, проаналізуй його та інтегруй в пояснення.
             5. Посилаєшся на підручник або параграф, якщо ці дані надані.
             6. Мова відповіді: Українська.`;
@@ -314,9 +315,12 @@
             }
 
             // 5. Обработка ответа
-            const generatedText = candidate.content.parts[0].text;
-            // УДАЛЕНО: .replace(/\n/g, '<br>')
-            // Вместо этого используется CSS white-space: pre-wrap для сохранения форматирования.
+            let generatedText = candidate.content.parts[0].text;
+            
+            // Улучшенная очистка ответа: удаляем начальные заголовки Markdown, 
+            // так как мы используем textContent и заголовок H2 уже есть.
+            generatedText = generatedText.replace(/^(#+\s*|Відповідь:|Розв'язання:)\s*/i, '').trim();
+
             responseContainer.textContent = generatedText;
 
 
