@@ -1,0 +1,16 @@
+{
+  "name": "ai-assistant",
+  "version": "0.0.1",
+  "description": "AI Educational Assistant for 5th Grade (Ukrainian Curriculum) built with Angular 20.x and Gemini API.",
+  "scripts": {},
+  "private": true,
+  "dependencies": {
+    "@angular/common": "^20.3.3",
+    "@angular/compiler": "^20.3.3",
+    "@angular/core": "^20.3.3",
+    "@angular/forms": "^20.3.3",
+    "@angular/platform-browser": "^20.3.3",
+    "@google/genai": "^1.22.0",
+    "rxjs": "^7.8.2"
+  }
+}
