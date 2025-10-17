@@ -1,0 +1,15 @@
+{
+  "title": "AI Educational Assistant (Angular Standalone)",
+  "language": "TypeScript",
+  "framework": "Angular",
+  "description": "Educational assistant tailored for 5th-grade students (Ukrainian curriculum) using Angular and the Gemini API.",
+  "dependencies": [
+    "@angular/common",
+    "@angular/compiler",
+    "@angular/core",
+    "@angular/forms",
+    "@angular/platform-browser",
+    "@google/genai",
+    "rxjs"
+  ]
+}

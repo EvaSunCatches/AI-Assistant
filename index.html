@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Освітній Асистент</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Підключення шрифтів для оригінального вигляду */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f7f7f7;
+        }
+        /* ВАЖЛИВО: Виправлено шлях до зображення assistant.png, яке знаходиться у папці assets */
+        .assistant-image {
+            background: url('assets/assistant.png') no-repeat center center; 
+            background-size: cover;
+            min-height: 100vh; 
+            position: relative;
+        }
+        .assistant-text-box {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 300px;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            text-align: center;
+        }
+        #progress-bar {
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        #progress-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #4CAF50; /* Зелений */
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+        .pulse {
+            animation: pulse-animation 2s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        
+        <div class="w-full lg:w-1/2 p-6 md:p-12 lg:p-20 flex items-center justify-center">
+            <div class="w-full max-w-lg">
+                <h1 class="text-3xl font-bold mb-8 text-gray-800">Введіть ваше завдання</h1>
+
+                <div class="bg-white p-6 rounded-lg shadow-xl">
+                    <div class="mb-4">
+                        <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">Правильно вибрати предмет</label>
+                        <select id="subject" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            <option value="Математика">Математика</option>
+                            <option value="Фізика">Фізика</option>
+                            <option value="Хімія">Хімія</option>
+                            <option value="Біологія">Біологія</option>
+                            <option value="Географія">Географія</option>
+                            <option value="Історія">Історія</option>
+                            <option value="Література">Література</option>
+                            <option value="Інше">Інше (деталізуйте в полі нижче)</option>
+                        </select>
+                    </div>
+
+                    <h2 class="text-lg font-semibold mt-6 mb-3 text-gray-700">Розділ 1: Джерело завдання</h2>
+                    <div class="flex space-x-4 mb-4">
+                        <button id="url-tab" class="px-4 py-2 bg-blue-100 text-blue-600 font-semibold rounded-lg border border-blue-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656-5.656l-4 4a4 4 0 105.656 5.656l1.102-1.102m2.828-2.828l1.102-1.102m-5.656-5.656l4 4m-2.828-2.828l4 4m2.828 2.828a4 4 0 005.656-5.656l-4-4a4 4 0 10-5.656 5.656l1.102 1.102"/></svg>
+                            За посиланням (URL)
+                        </button>
+                        <button id="photo-tab" class="px-4 py-2 bg-gray-100 text-gray-600 font-semibold rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-8-4v8m-4-4h8m-1-5h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg>
+                            Завантажити фото
+                        </button>
+                    </div>
+
+                    <div id="url-container">
+                        <label for="url-link" class="block text-xs font-medium text-gray-500">URL (Посилання)</label>
+                        <input type="url" id="url-link" value="" placeholder="https://..." class="w-full p-2 border border-gray-300 rounded-lg mb-3 focus:ring-blue-500 focus:border-blue-500">
+                        
+                        <div class="flex space-x-4 mb-4">
+                            <div>
+                                <label for="page-number" class="block text-xs font-medium text-gray-500">Сторінка</label>
+                                <input type="text" id="page-number" value="" placeholder="54" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label for="task-number" class="block text-xs font-medium text-gray-500">Номер завдання</label>
+                                <input type="text" id="task-number" value="" placeholder="181 або §3" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="photo-container" class="hidden">
+                        <label for="file-upload" class="block text-xs font-medium text-gray-500 mb-2">Завантажити зображення завдання</label>
+                        <input type="file" id="file-upload" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        <div id="image-preview" class="mt-3 hidden">
+                            <p class="text-sm text-gray-500">Завантажене зображення:</p>
+                            <img id="preview-image" src="" alt="Image Preview" class="max-w-full h-auto rounded-lg mt-2 border border-gray-300">
+                        </div>
+                    </div>
+
+                    <h2 class="text-lg font-semibold mt-6 mb-3 text-gray-700">Секція: Укажіть, що необхідно зробити (деталі)</h2>
+                    <textarea id="task-details" rows="3" placeholder="Наприклад: 'Допоможи мені зрозуміти, як розв'язати це завдання, та поясни правило, яке використовується.' Це дуже важливо!" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 resize-none mb-4"></textarea>
+                    
+                    <button id="submit-button" class="w-full px-6 py-3 text-lg font-semibold rounded-lg text-white bg-blue-500 hover:bg-blue-600 transition duration-150 ease-in-out shadow-md disabled:bg-gray-400">
+                        Отримати допомогу асистента
+                    </button>
+                    
+                    <div id="progress-container" class="mt-4 hidden">
+                        <p id="progress-text" class="text-sm text-gray-600 mb-1">Очікування відповіді...</p>
+                        <div id="progress-bar">
+                            <div id="progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <h2 class="text-lg font-semibold mt-8 mb-3 text-gray-700">Відповідь Асистента</h2>
+                    <div id="result-message" class="p-4 bg-gray-100 border border-gray-300 rounded-lg min-h-[100px] text-gray-800 whitespace-pre-wrap">
+                        Будь ласка, детально опишіть, що необхідно зробити
+                    </div>
+                    <div id="error-message" class="p-4 bg-red-100 border border-red-400 rounded-lg mt-4 text-red-700 hidden">
+                        На жаль, виникла помилка: <span id="error-text"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full lg:w-1/2 assistant-image flex-shrink-0">
+            <div class="assistant-text-box">
+                <p class="text-2xl font-bold">AI Освітній Асистент</p>
+                <p class="text-sm mt-1">Ваш персональний помічник у навчанні</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 💡 [GEMINI_API_KEY_MARKER]
+        const apiKey = "AIzaSyB8-NfcBCVfrGvvOv4Ip9JxD1r6ZzQFPDU";
+        // ВИПРАВЛЕНО: Додано const apiKey = ''; для запобігання ReferenceError, якщо GitHub Action не спрацює
+        const apiKey = ''; 
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+        // === УТИЛІТИ ДЛЯ API ===
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function fetchWithRetry(url, options, maxRetries = 3) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    
+                    if (response.ok) {
+                        return response.json();
+                    }
+
+                    if (response.status === 429 && i < maxRetries - 1) {
+                        // Rate limit exceeded, wait and retry
+                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue;
+                    } else {
+                        // Other error, throw it
+                        const errorBody = await response.text();
+                        throw new Error(`HTTP error! status: ${response.status}. Body: ${errorBody}`);
+                    }
+                } catch (error) {
+                    if (i === maxRetries - 1) {
+                        throw error;
+                    }
+                    // Wait before the next retry
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        // === ЛОГІКА ДОДАТКУ ===
+
+        const subjectSelect = document.getElementById('subject');
+        const urlTab = document.getElementById('url-tab');
+        const photoTab = document.getElementById('photo-tab');
+        const urlContainer = document.getElementById('url-container');
+        const photoContainer = document.getElementById('photo-container');
+        const fileUpload = document.getElementById('file-upload');
+        const previewImage = document.getElementById('preview-image');
+        const imagePreview = document.getElementById('image-preview');
+        const submitButton = document.getElementById('submit-button');
+        const resultMessage = document.getElementById('result-message');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const taskDetails = document.getElementById('task-details');
+        const urlLink = document.getElementById('url-link');
+        const pageNumber = document.getElementById('page-number');
+        const taskNumber = document.getElementById('task-number');
+        const progressContainer = document.getElementById('progress-container');
+        const progressText = document.getElementById('progress-text');
+        const progressFill = document.getElementById('progress-fill');
+
+        let isUrlMode = true;
+        let base64Image = null;
+        let progressInterval;
+        let currentProgress = 0;
+
+        // --- Ініціалізація та перемикання вкладок ---
+        
+        // Виправлено: Кнопки тепер працюють коректно
+        urlTab.addEventListener('click', () => {
+            isUrlMode = true;
+            urlTab.classList.add('bg-blue-100', 'text-blue-600', 'border-blue-600');
+            urlTab.classList.remove('bg-gray-100', 'text-gray-600', 'border-transparent');
+            photoTab.classList.add('bg-gray-100', 'text-gray-600', 'border-transparent');
+            photoTab.classList.remove('bg-blue-100', 'text-blue-600', 'border-blue-600');
+            urlContainer.classList.remove('hidden');
+            photoContainer.classList.add('hidden');
+            fileUpload.value = ''; // Скидаємо файл
+            imagePreview.classList.add('hidden');
+            base64Image = null;
+        });
+
+        photoTab.addEventListener('click', () => {
+            isUrlMode = false;
+            photoTab.classList.add('bg-blue-100', 'text-blue-600', 'border-blue-600');
+            photoTab.classList.remove('bg-gray-100', 'text-gray-600', 'border-transparent');
+            urlTab.classList.add('bg-gray-100', 'text-gray-600', 'border-transparent');
+            urlTab.classList.remove('bg-blue-100', 'text-blue-600', 'border-blue-600');
+            photoContainer.classList.remove('hidden');
+            urlContainer.classList.add('hidden');
+        });
+
+        // --- Обробка завантаження файлу ---
+
+        fileUpload.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                try {
+                    base64Image = await fileToBase64(file);
+                    previewImage.src = URL.createObjectURL(file);
+                    imagePreview.classList.remove('hidden');
+                } catch (error) {
+                    showError("Помилка завантаження файлу.");
+                    base64Image = null;
+                }
+            } else {
+                imagePreview.classList.add('hidden');
+                base64Image = null;
+            }
+        });
+
+        // --- Управління станом UI та помилками ---
+
+        function startLoading() {
+            submitButton.disabled = true;
+            submitButton.classList.add('opacity-50', 'cursor-not-allowed', 'pulse');
+            resultMessage.textContent = "Очікування відповіді...";
+            errorMessage.classList.add('hidden');
+            progressContainer.classList.remove('hidden');
+            progressText.textContent = "Надсилаємо запит до Gemini...";
+            startProgressSimulation();
+        }
+
+        function stopLoading() {
+            submitButton.disabled = false;
+            submitButton.classList.remove('opacity-50', 'cursor-not-allowed', 'pulse');
+            progressContainer.classList.add('hidden');
+            stopProgressSimulation();
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.remove('hidden');
+            resultMessage.textContent = "";
+        }
+
+        // --- Симуляція прогресу ---
+
+        function startProgressSimulation() {
+            currentProgress = 5;
+            progressFill.style.width = '5%';
+            
+            progressInterval = setInterval(() => {
+                if (currentProgress < 95) {
+                    currentProgress += 1;
+                    progressFill.style.width = currentProgress + '%';
+                }
+                if (currentProgress >= 95) {
+                    progressFill.style.width = '95%';
+                    progressText.textContent = "Відповідь майже готова. Завдання готується...";
+                    clearInterval(progressInterval);
+                }
+            }, 300);
+        }
+
+        function stopProgressSimulation(isSuccess = true) {
+            clearInterval(progressInterval);
+            if (isSuccess) {
+                progressFill.style.width = '100%';
+                progressText.textContent = "100% виконано. Завдання готове!";
+            } else {
+                progressFill.style.width = currentProgress + '%'; // Залишаємо поточний прогрес
+                progressText.textContent = "Помилка. Спробуйте ще раз.";
+            }
+        }
+
+        // --- Головна функція відправки ---
+
+        submitButton.addEventListener('click', async () => {
+            const subject = subjectSelect.value;
+            const details = taskDetails.value.trim();
+            let promptContent = [];
+            let inputType = '';
+            
+            // 1. Валідація
+            if (!details) {
+                showError("Будь ласка, детально опишіть, що необхідно зробити.");
+                return;
+            }
+
+            if (isUrlMode) {
+                const url = urlLink.value.trim();
+                const page = pageNumber.value.trim();
+                const task = taskNumber.value.trim();
+
+                if (!url) {
+                    // Зробив URL необов'язковим, якщо є деталі
+                    // showError("Введіть посилання на підручник.");
+                    // return;
+                }
+
+                inputType = 'URL/Browsing';
+                
+                // Збираємо текстовий промпт для URL
+                promptContent.push(
+                    `У мене є завдання з підручника. Предмет: **${subject}**.\n`,
+                    `Посилання на підручник: ${url ? url : '[Не вказано]'}\n`,
+                    `Сторінка: ${page ? page : '[Не вказано]'}\n`,
+                    `Номер завдання: ${task ? task : '[Не вказано]'}\n`,
+                    `**МОЄ ЗАПИТАННЯ:** ${details}`
+                );
+
+                // Додаємо інструкцію для Gemini про використання інструментів
+                promptContent.push(
+                    "\n\n**ІНСТРУКЦІЯ ДЛЯ ВАС (AI АСИСТЕНТА):**",
+                    "1. Аналіз (URL/Browsing): Використайте інструмент **Google Search (Browsing)** або **Vision** для аналізу джерела (якщо URL надано).",
+                    "2. Рішення: Розв'яжіть завдання, використовуючи надану інформацію та ваш досвід.",
+                    "3. Пояснення правила: Поясніть правило або теорію, що використовується, щоб допомогти користувачеві зрозуміти суть матеріалу."
+                );
+
+            } else { // Режим фото
+                if (!base64Image) {
+                    showError("Завантажте зображення завдання.");
+                    return;
+                }
+                
+                inputType = 'Image/Vision';
+                
+                // Збираємо промпт для зображення
+                promptContent.push(
+                    `У мене є завдання з підручника (див. прикріплене зображення). Предмет: **${subject}**.\n`,
+                    `**МОЄ ЗАПИТАННЯ:** ${details}`
+                );
+
+                // Додаємо інструкцію для Gemini про використання інструментів
+                promptContent.push(
+                    "\n\n**ІНСТРУКЦІЯ ДЛЯ ВАС (AI АСИСТЕНТА):**",
+                    "1. Аналіз (Vision): Використайте **Vision** для аналізу прикріпленого зображення.",
+                    "2. Рішення: Розв'яжіть завдання, використовуючи надану інформацію та ваш досвід.",
+                    "3. Пояснення правила: Поясніть правило або теорію, що використовується, щоб допомогти користувачеві зрозуміти суть матеріалу."
+                );
+
+                // Додаємо зображення
+                promptContent.push({
+                    inlineData: {
+                        data: base64Image,
+                        mimeType: fileUpload.files[0].type
+                    }
+                });
+            }
+
+            startLoading();
+            
+            try {
+                // Перевірка, чи ключ був вставлений
+                if (apiKey === '') {
+                    // Це означає, що GitHub Action не спрацював, або ви тестуєте локально.
+                    // Видаємо помилку, щоб користувач розумів, чому не працює.
+                    throw new Error("API Key не знайдено. Будь ласка, перевірте ваш API Key у GitHub Secrets та GitHub Action.");
+                }
+
+                const response = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: promptContent.filter(p => typeof p === 'string').join('\n') },
+                                ...promptContent.filter(p => typeof p === 'object')
+                            ]
+                        }],
+                        config: {
+                            // Налаштування для включення інструменту Google Search
+                            tools: [{ googleSearch: {} }] 
+                        }
+                    })
+                });
+
+                if (response.candidates && response.candidates.length > 0 && response.candidates[0].content && response.candidates[0].content.parts && response.candidates[0].content.parts.length > 0) {
+                    const text = response.candidates[0].content.parts[0].text;
+                    // Проста заміна Markdown-стилю на HTML для bold
+                    resultMessage.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    errorMessage.classList.add('hidden');
+                } else {
+                    throw new Error("Не вдалося отримати коректну відповідь від AI. Можливо, відповідь була заблокована.");
+                }
+                
+            } catch (error) {
+                console.error("Помилка при виклику API:", error);
+                
+                // Якщо помилка пов'язана з ключем, даємо спеціальне повідомлення
+                let errorDetails = `На жаль, виникла помилка: ${error.message}`;
+                if (error.message.includes("API Key не знайдено")) {
+                    errorDetails = `**API Key не знайдено.** Це означає, що ключ не був вставлений. Будь ласка, перевірте ваш GitHub Action (файл \`.github/workflows/deploy.yml\`) та Секрет (\`GEMINI_API_KEY\`).`;
+                } else if (error.message.includes("400") || error.message.includes("429")) {
+                    errorDetails = `**Помилка API (400/429):** Неправильний запит, або перевищено ліміт. Будь ласка, перевірте, чи коректний ключ вставлено (API Key) і чи не вичерпано ваш ліміт використання.`;
+                }
+
+                showError(errorDetails);
+                resultMessage.textContent = "";
+            } finally {
+                stopLoading();
+            }
+        });
+
+    </script>
+</body>
+</html>
