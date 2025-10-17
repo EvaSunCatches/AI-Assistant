@@ -61,9 +61,8 @@
             animation: pulse-opacity-interactive 1s infinite alternate ease-in-out;
         }
 
-        /* СТИЛЬ МАТОВОГО СТЕКЛА (Скорректированная прозрачность) */
+        /* СТИЛЬ МАТОВОГО СТЕКЛА */
         .assistant-label {
-            /* Темная, но более ПРОЗРАЧНАЯ основа (п. 2) */
             background-color: rgba(0, 0, 0, 0.3); 
             color: #fff; 
             backdrop-filter: blur(15px);
@@ -87,7 +86,7 @@
             transition: width 0.5s ease;
         }
 
-        /* СТИЛЬ ПЕРЕКЛЮЧАТЕЛЕЙ: ХОЛОДНЫЙ ТОН */
+        /* СТИЛЬ ПЕРЕКЛЮЧАТЕЛЕЙ */
         .input-switcher {
             transition: all 0.3s ease;
             border: 1px solid transparent; 
@@ -234,7 +233,7 @@
 </div>
 
 <script>
-    // 💡 ЭТА СЕКЦИЯ БУДЕТ ЗАМЕНЕНА GitHub Action для внедрения ключа
+    // 💡 [GEMINI_API_KEY_MARKER] НЕ УДАЛЯТЬ. ЭТА СТРОКА БУДЕТ ЗАМЕНЕНА GitHub Action!
     const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
@@ -404,7 +403,7 @@
 
             try {
                 if (apiKey === "") {
-                    // Симуляция ответа, если API-ключ не установлен (после настройки GitHub Action это не должно срабатывать)
+                    // Симуляция ответа, если API-ключ не установлен (После шагов 1-3 это не должно срабатывать!)
                     await new Promise(resolve => setTimeout(resolve, 5000));
                     resultMessage.textContent = `[СИМУЛЯЦІЯ] Відповідь AI-асистента з предмету "${subject}":
                     
@@ -416,7 +415,7 @@
                     
 **Пояснення правила:** Це зроблено, щоб допомогти вам зрозуміти суть матеріалу! 🚀
                     
-P.S. Будь ласка, **створіть файл .github/workflows/deploy.yml** за інструкцією, щоб активувати Gemini API.
+P.S. Будь ласка, **зробіть комміт змін у index.html та deploy.yml** за інструкцією, щоб активувати Gemini API.
                     `;
                 } else {
                     // --- РЕАЛЬНЫЙ API-ЗАПРОС С GOOGLE SEARCH/VISION ---
