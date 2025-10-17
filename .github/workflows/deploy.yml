@@ -25,17 +25,13 @@ jobs:
       - name: Checkout 
         uses: actions/checkout@v4
       
-      # *** ДИАГНОСТИКА: ПРОВЕРЯЕМ, ЧТО КЛЮЧ ДОСТУПЕН (будет скрыт звездочками) ***
       - name: Diagnostic: Check GEMINI_KEY visibility
         run: |
           echo "Key length is: $(echo -n "$GEMINI_KEY" | wc -c) characters"
           
-      - name: Inject API Key into index.html (Reliable method)
+      - name: Inject API Key into index.html
         run: |
-          # 1. Выполняем замену ключа (как в предыдущем варианте)
           sed -i "s|// 💡 \\[GEMINI_API_KEY_MARKER\\].*|const __api_key = \"${GEMINI_KEY}\";\n    const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';|" index.html
-          
-          # 2. *** ДИАГНОСТИКА: ПОКАЗЫВАЕМ СТРОКУ, КОТОРАЯ БЫЛА ЗАМЕНЕНА ***
           echo "--- Content after injection: ---"
           grep 'const __api_key' index.html
           echo "---------------------------------"
