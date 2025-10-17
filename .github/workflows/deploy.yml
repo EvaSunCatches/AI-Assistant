@@ -1,0 +1,32 @@
+name: Deploy to GitHub Pages and Inject API Key
+
+on:
+  push:
+    branches:
+      - main  # Убедитесь, что это ваша основная ветка
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 
+        uses: actions/checkout@v4
+
+      - name: Inject API Key into index.html
+        run: |
+          # Внедряем секрет GEMINI_API_KEY в качестве глобальной JS-переменной __api_key
+          sed -i "s|const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';|const __api_key = \"${{ secrets.GEMINI_API_KEY }}\";\nconst apiKey = typeof __api_key !== 'undefined' ? __api_key : '';|" index.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Загружаем все файлы из корня (включая измененный index.html)
+          path: . 
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
