@@ -6,35 +6,19 @@
     <title>AI Освітній Асистент</title>
     <!-- Загрузка Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Загрузка шрифта Nunito (Тот, что использовался ранее) -->
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Загрузка шрифта Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Применение шрифта Nunito ко всему документу */
+        /* Применение шрифта Inter ко всему документу */
         body {
-            font-family: 'Nunito', sans-serif;
-            background-color: #f3f4f6; /* Светлый фон для основного контента */
-            min-height: 100vh;
-            padding: 2rem 1rem;
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Светлый фон */
         }
-
-        /* Основная карточка */
-        .main-card {
-            background-color: white;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
-            max-width: 1200px;
-            width: 95%;
-            margin-left: auto;
-            margin-right: auto;
-            border: 1px solid #e0e0e0;
-        }
-
+        
         /* Анимация пульсации для имитации активности AI */
         @keyframes pulse-opacity-interactive {
             0%, 100% { transform: scale(1); opacity: 0.9; }
             50% { transform: scale(1.02); opacity: 1; }
-        }
-        .pulsing {
-            animation: pulse-opacity-interactive 1.5s infinite;
         }
         
         /* Анимация для плавного появления фото */
@@ -42,523 +26,257 @@
             from { opacity: 0; }
             to { opacity: 1; }
         }
-        .animate-fadeIn {
-            animation: fadeIn 0.5s ease-out;
+
+        .pulsing {
+            animation: pulse-opacity-interactive 1.5s infinite ease-in-out;
         }
 
-        /* СТИЛЬ КНОПОК: СНЕЖНЫЙ/ЛЕДЯНОЙ ТОН */
+        /* Стиль кнопок: Снежный/Льодяний тон */
         .btn-primary {
-            /* Очень светлый, ледяной градиент: от светлого циан до очень светлого голубого */
-            background-image: linear-gradient(180deg, #f0f8ff, #e6f7ff); 
-            color: #007bff; /* Яркий синий текст */
-            border: 1px solid #b3e5fc; /* Светлая голубая рамка */
-            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.1);
-            transition: all 0.2s ease;
-            font-weight: 700;
+            /* Градієнт: від світлого циан до дуже світлого блакитного */
+            background: linear-gradient(145deg, #c7d2fe 0%, #a5b4fc 100%);
+            color: #1e3a8a; /* Темно-синій текст */
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        .btn-primary:hover {
-            background-image: linear-gradient(180deg, #e6f7ff, #d9f0ff);
-            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
-            transform: translateY(-1px);
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(145deg, #a5b4fc 0%, #818cf8 100%);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
         }
-
-        /* СТИЛЬ АКТИВНЫХ КНОПОК/ВКЛАДОК */
-        .tab-active {
-            background-image: linear-gradient(180deg, #00bfff, #007bff) !important; 
-            color: white !important; 
-            border-color: #007bff !important;
-            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.5) !important;
-        }
-        .tab-active:hover {
-             background-image: linear-gradient(180deg, #007bff, #0056b3) !important;
+        .btn-primary:disabled {
+            background: #d1d5db;
+            color: #6b7280;
+            cursor: not-allowed;
+            box-shadow: none;
         }
 
-        /* СТИЛЬ ЗАГОЛОВКА */
-        .heading-gradient {
-            background: linear-gradient(90deg, #007bff 0%, #00bfff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            color: transparent;
-            font-weight: 800;
+        /* Стиль поля для введення тексту */
+        .input-style {
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .input-style:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.5);
         }
 
-        /* СТИЛЬ ИНПУТОВ И ТЕКСТ-АРЕА */
-        input[type="text"], input[type="url"], input[type="number"], textarea, select {
-            background-color: #ffffff !important;
-            border: 1px solid #cceeff !important; /* Светло-голубая рамка */
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
-            color: #333 !important;
-            transition: border-color 0.15s ease-in-out;
-        }
-        input:focus, textarea:focus, select:focus {
-            border-color: #007bff !important;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25) !important;
-            outline: none;
-        }
-
-        /* СТИЛЬ РЕЗУЛЬТАТА И ФОТО АССИСТЕНТА */
-        #result-container {
-            min-height: 150px;
-            background-color: #e6f7ff; /* Очень светлый голубой фон для результата */
-            border: 2px dashed #b3e5fc;
-        }
-        #assistant-photo-container {
-            position: relative;
-            width: 150px;
-            height: 150px;
-            margin: 0 auto 1.5rem;
-        }
-        #assistant-photo {
-            border: 5px solid #00bfff;
-            box-shadow: 0 0 15px rgba(0, 180, 255, 0.6);
+        /* Стиль для індикатора прогресу */
+        .progress-bar {
+            height: 8px;
+            background-color: #4f46e5;
+            width: 0%;
+            transition: width 0.1s linear;
         }
     </style>
 </head>
-<body class="flex justify-center items-center p-4">
+<body class="min-h-screen flex items-start justify-center p-4">
 
-<div class="main-card p-6 md:p-10 rounded-2xl">
-    <!-- Заголовок -->
-    <header class="text-center mb-8">
-        <h1 class="text-3xl md:text-4xl font-extrabold mb-2">
-            <span class="heading-gradient">AI Освітній Асистент 5-й Клас</span>
-        </h1>
-        <p class="text-lg text-gray-500">Ваш персональний помічник у навчанні</p>
-    </header>
-
-    <!-- Основна сітка: Форма (ліворуч) та Результат (праворуч) -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-        <!-- ЛІВА КОЛОНКА: ФОРМА ВВОДУ -->
-        <div id="input-form">
-            <h2 class="text-2xl font-bold mb-4 text-gray-700">Введіть ваше завдання</h2>
-
-            <!-- 1. Введіть ваше завдання (питання) -->
-            <div class="space-y-4 mb-6">
-                <label for="task-input" class="block text-lg font-semibold mb-1 text-gray-600">
-                    Основне завдання:
-                </label>
-                <textarea id="task-input" rows="3" class="w-full p-4 rounded-xl" placeholder="Наприклад: 'Розв'яжи задачу 57, сторінка 45' або 'Поясни закон Архімеда'"></textarea>
-            </div>
-
-            <!-- 2. Оберіть предмет (Випадаючий список) -->
-            <div class="space-y-4 mb-6">
-                <label for="subject-select" class="block text-lg font-semibold mb-1 text-gray-600">
-                    Оберіть предмет:
-                </label>
-                <div class="relative">
-                    <select id="subject-select" class="w-full p-4 rounded-xl appearance-none">
-                        <option value="Математика" selected>📐 Математика</option>
-                        <option value="Українська мова">🗣️ Українська мова</option>
-                        <option value="Українська література">📖 Українська література</option>
-                        <option value="Історія України">📜 Історія України</option>
-                        <option value="Природознавство">🌿 Природознавство</option>
-                        <option value="Інше">💡 Інше</option>
-                    </select>
-                    <!-- Кастомная стрелка для select -->
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-blue-500">
-                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. Розділ: Джерело завдання -->
-            <div class="space-y-4 border-t border-gray-200 pt-6">
-                <h3 class="text-xl font-bold mb-4 heading-gradient">Розділ 1: Джерело завдання</h3>
-
-                <!-- Вкладки (Посилання / Фото) -->
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <button id="tab-link" class="btn-primary p-3 rounded-xl tab-active" onclick="selectSource('link')">
-                        🔗 За посиланням
-                    </button>
-                    <button id="tab-photo" class="btn-primary p-3 rounded-xl" onclick="selectSource('photo')">
-                        📸 Завантажити фото
-                    </button>
-                </div>
-
-                <!-- Поля вводу для посилання (За замовчуванням видимі) -->
-                <div id="link-source-fields" class="space-y-4">
-                    <div>
-                        <label for="url-input" class="block text-sm font-semibold mb-1 text-gray-600">
-                            URL (Посилання) на книгу (PDF/веб-сторінка):
-                        </label>
-                        <input type="url" id="url-input" class="w-full p-3 rounded-xl" placeholder="Напр. https://pidruchnik.ual...">
-                    </div>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label for="page-input" class="block text-sm font-semibold mb-1 text-gray-600">
-                                Сторінка:
-                            </label>
-                            <input type="number" id="page-input" class="w-full p-3 rounded-xl" placeholder="54">
-                        </div>
-                        <div>
-                            <label for="section-input" class="block text-sm font-semibold mb-1 text-gray-600">
-                                Розділ:
-                            </label>
-                            <input type="text" id="section-input" class="w-full p-3 rounded-xl" placeholder="1 або §3">
-                        </div>
-                        <div>
-                            <label for="task-number-input" class="block text-sm font-semibold mb-1 text-gray-600">
-                                Номер завдання:
-                            </label>
-                            <input type="text" id="task-number-input" class="w-full p-3 rounded-xl" placeholder="57 або 5.1">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Поля вводу для фото (За замовчуванням приховані) -->
-                <div id="photo-source-fields" class="hidden space-y-4">
-                    <label class="block text-lg font-semibold text-gray-700">Перетягніть файл або оберіть опцію</label>
-                    
-                    <!-- Область завантаження файлу -->
-                    <div class="border-2 border-dashed border-blue-300 rounded-xl p-6 text-center hover:border-blue-500 transition duration-150 bg-blue-50">
-                        <p class="mb-2 text-gray-600">Перетягніть файл сюди або</p>
-                        <label for="photo-upload-input" class="btn-primary p-2 rounded-xl inline-block cursor-pointer">
-                            Обрати файл
-                        </label>
-                        <input type="file" id="photo-upload-input" accept="image/*" class="hidden">
-                    </div>
-
-                    <button id="take-photo-btn" class="w-full btn-primary p-3 rounded-xl mt-2" onclick="openCameraCapture()">
-                        📷 Зробити фото
-                    </button>
-
-                    <div id="photo-preview-container" class="mt-4 hidden max-w-full">
-                        <img id="photo-preview" class="rounded-xl shadow-md max-w-full h-auto mx-auto border border-blue-300 animate-fadeIn" alt="Попередній перегляд фото">
-                        <p id="photo-name" class="text-center text-sm mt-2 text-gray-600 truncate"></p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4. Що потрібно зробити? (Необов'язково) -->
-            <div class="space-y-4 border-t border-gray-200 pt-6 mt-6">
-                <label for="optional-task-input" class="block text-lg font-semibold mb-1 text-gray-600">
-                    Що потрібно зробити? (необов'язково):
-                </label>
-                <textarea id="optional-task-input" rows="2" class="w-full p-4 rounded-xl" placeholder="Напр. 'Тільки пояснення, без кінцевої відповіді' або 'Сформулюй 3 додаткових питання'"></textarea>
-            </div>
-
-            <!-- Кнопка отримання допомоги -->
-            <button id="get-help-btn" class="w-full text-xl font-bold p-4 rounded-xl transition duration-150 tab-active mt-6 text-white" onclick="getAssistantHelp()">
-                💡 Отримати допомогу асистента
-            </button>
-        </div>
-
-        <!-- ПРАВА КОЛОНКА: ОБЛАСТЬ РЕЗУЛЬТАТУ -->
-        <div id="result-area">
-            <h2 class="text-2xl font-bold mb-4 heading-gradient">Розв'язання та пояснення</h2>
-            
-            <!-- Контейнер для фото асистента и прогресса -->
-            <div id="progress-container" class="flex flex-col items-center justify-center p-6 min-h-[300px] lg:min-h-full h-full">
-                <!-- Фото Ассистента -->
-                <div id="assistant-photo-container">
-                    <!-- Используется placeholder для демонстрации, так как исходный файл assistant.jpg не может быть вставлен в base64 -->
-                    <img id="assistant-photo" 
-                         src="https://placehold.co/150x150/00bfff/ffffff?text=AI" 
-                         onerror="this.onerror=null;this.src='https://placehold.co/150x150/007bff/ffffff?text=AI'"
-                         class="rounded-full mx-auto mb-4 transition duration-300 shadow-xl" 
-                         alt="Фото AI Асистента">
-                </div>
-                <p id="progress-text" class="text-lg text-gray-500 text-center">Очікування завдання...</p>
-                <div id="progress-bar-container" class="w-full h-2 mt-4 bg-blue-100 rounded-full hidden">
-                    <div id="progress-bar" class="h-2 bg-blue-500 rounded-full transition-all duration-300 ease-linear" style="width: 0%;"></div>
-                </div>
-            </div>
-            
-            <!-- Контейнер для готового результата -->
-            <div id="result-container" class="p-6 rounded-xl hidden min-h-[300px] lg:min-h-full h-full animate-fadeIn whitespace-pre-wrap text-gray-700">
-                <p id="result-message" class="text-lg text-gray-700"></p>
+    <div class="w-full max-w-xl bg-white rounded-xl shadow-2xl p-6 md:p-8 mt-4 md:mt-12">
+        
+        <!-- Заголовок та Фото Асистента (Вертикально, як на скріншоті) -->
+        <div class="flex flex-col items-center mb-6 text-center">
+            <h1 class="text-3xl font-extrabold text-blue-900 leading-tight">AI Освітній Асистент 5-й Клас</h1>
+            <p class="text-lg text-blue-500 font-semibold mt-1 mb-4">Ваш персональний помічник у навчанні</p>
+            <!-- Фото асистента внизу -->
+            <div id="assistant-photo" class="w-24 h-24 rounded-full overflow-hidden bg-gray-200 shadow-xl border-4 border-white transition duration-500 hover:scale-105" style="animation: fadeIn 1s ease-out forwards;">
+                <!-- Placeholder image for the assistant -->
+                <img src="https://placehold.co/96x96/6366f1/ffffff?text=🌟AI" alt="Фото асистента" class="w-full h-full object-cover">
             </div>
         </div>
+
+        <!-- Поля вводу -->
+        <form id="assistant-form" class="space-y-6">
+
+            <!-- 1. Введіть ваше завдання -->
+            <div>
+                <label for="user-prompt" class="block text-sm font-medium text-gray-700 mb-2">Введіть ваше завдання</label>
+                <textarea id="user-prompt" rows="3" class="input-style w-full p-3 border border-gray-300 rounded-lg focus:outline-none resize-none" placeholder="Наприклад: 'Допоможи мені зрозуміти тему дроби та як їх додавати.'" required></textarea>
+            </div>
+
+            <!-- 2. Оберіть предмет (Select) -->
+            <div>
+                <label for="subject-select" class="block text-sm font-medium text-gray-700 mb-2">Оберіть предмет</label>
+                <select id="subject-select" class="input-style w-full p-3 border border-gray-300 rounded-lg bg-white focus:outline-none appearance-none cursor-pointer">
+                    <option value="" disabled selected>-- Виберіть предмет --</option>
+                    <option value="Математика">📚 Математика</option>
+                    <option value="Українська мова">✍️ Українська мова</option>
+                    <option value="Інформатика">💻 Інформатика</option>
+                    <option value="Історія">🌟 Історія</option>
+                    <option value="Географія">🌍 Географія</option>
+                    <option value="Природознавство">🔬 Природознавство</option>
+                    <option value="Інше">💡 Інше (загальне питання)</option>
+                </select>
+            </div>
+            
+            <!-- 3. Додаткові опції (Посилання / Фото) - для прикладу залишаємо мінімум -->
+            <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                <div class="w-full sm:w-1/2">
+                    <label for="book-url" class="block text-sm font-medium text-gray-700 mb-2">Посилання на книгу (URL)</label>
+                    <input type="url" id="book-url" class="input-style w-full p-3 border border-gray-300 rounded-lg focus:outline-none" placeholder="https://example.com/pidruchnik">
+                </div>
+                <div class="w-full sm:w-1/2">
+                    <label for="page-and-task" class="block text-sm font-medium text-gray-700 mb-2">Сторінка / Завдання</label>
+                    <input type="text" id="page-and-task" class="input-style w-full p-3 border border-gray-300 rounded-lg focus:outline-none" placeholder="Стр. 45, Завд. 57">
+                </div>
+            </div>
+
+            <!-- 4. Кнопка Отримати допомогу -->
+            <div class="pt-4">
+                <button type="submit" id="get-help-button" class="btn-primary w-full py-3 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transition duration-300">
+                    Отримати допомогу асистента
+                </button>
+            </div>
+        </form>
+
+        <!-- Контейнер для прогресу (скритий за замовчуванням) -->
+        <div id="progress-container" class="hidden mt-8">
+            <p class="text-center text-blue-600 font-semibold mb-3">AI Асистент обробляє ваше завдання...</p>
+            <div class="bg-gray-200 rounded-full overflow-hidden">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+        </div>
+
+        <!-- Контейнер для результату (скритий за замовчуванням) -->
+        <div id="result-container" class="hidden mt-8">
+            <h2 class="text-xl font-bold text-blue-900 mb-4 border-b pb-2">Розв'язання та пояснення</h2>
+            <div id="result-message" class="p-4 bg-blue-50 border border-blue-200 rounded-xl text-gray-800 leading-relaxed whitespace-pre-wrap">
+                Тут буде відображено покрокове пояснення або розв'язання від AI.
+            </div>
+        </div>
+
     </div>
-</div>
 
-<script type="module">
-    // Глобальні змінні елементів
-    const taskIdInput = document.getElementById('task-input');
-    const subjectSelect = document.getElementById('subject-select');
-    const urlInput = document.getElementById('url-input');
-    const pageInput = document.getElementById('page-input');
-    const sectionInput = document.getElementById('section-input'); 
-    const taskNumberInput = document.getElementById('task-number-input');
-    const optionalTaskInput = document.getElementById('optional-task-input'); 
-    const photoUploadInput = document.getElementById('photo-upload-input');
-    
-    const tabLink = document.getElementById('tab-link');
-    const tabPhoto = document.getElementById('tab-photo');
-    const linkSourceFields = document.getElementById('link-source-fields');
-    const photoSourceFields = document.getElementById('photo-source-fields');
-    const photoPreviewContainer = document.getElementById('photo-preview-container');
-    const photoPreview = document.getElementById('photo-preview');
-    const photoName = document.getElementById('photo-name');
+    <script>
+        // Ініціалізація змінних
+        const assistantForm = document.getElementById('assistant-form');
+        const userPrompt = document.getElementById('user-prompt');
+        const subjectSelect = document.getElementById('subject-select');
+        const bookUrl = document.getElementById('book-url');
+        const pageAndTask = document.getElementById('page-and-task');
+        const getHelpButton = document.getElementById('get-help-button');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const resultContainer = document.getElementById('result-container');
+        const resultMessage = document.getElementById('result-message');
+        const assistantPhoto = document.getElementById('assistant-photo');
 
-    const getHelpBtn = document.getElementById('get-help-btn');
+        // --- Імітація прогрес-бару ---
+        let progressInterval;
+        let currentProgress = 0;
 
-    // Результат и прогресс
-    const resultContainer = document.getElementById('result-container');
-    const resultMessage = document.getElementById('result-message');
-    const progressContainer = document.getElementById('progress-container');
-    const progressBar = document.getElementById('progress-bar');
-    const progressText = document.getElementById('progress-text');
-    const assistantPhoto = document.getElementById('assistant-photo');
-
-    // Налаштування API
-    const apiKey = "";
-    const modelName = 'gemini-2.5-flash-preview-09-2025';
-
-    let selectedSource = 'link'; 
-    let progressInterval;
-
-    // --- Допоміжні функції ---
-
-    function startProgressSimulation() {
-        progressContainer.classList.remove('hidden');
-        resultContainer.classList.add('hidden');
-        assistantPhoto.classList.add('pulsing');
-        document.getElementById('progress-bar-container').classList.remove('hidden');
-        
-        // Симуляция прогресса
-        let progress = 0;
-        progressBar.style.width = '0%';
-        progressText.textContent = 'AI-асистент аналізує завдання...';
-
-        progressInterval = setInterval(() => {
-            progress += Math.floor(Math.random() * 15) + 5;
-            if (progress >= 95) {
-                progress = 95;
-                progressText.textContent = 'Отримання фінальної відповіді...';
-            }
-            progressBar.style.width = `${progress}%`;
-        }, 800);
-    }
-
-    function stopProgressSimulation() {
-        clearInterval(progressInterval);
-        progressBar.style.width = '100%';
-        progressText.textContent = 'Готово!';
-        document.getElementById('progress-bar-container').classList.add('hidden');
-        assistantPhoto.classList.remove('pulsing'); 
-    }
-
-    function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result.split(',')[1]);
-            reader.onerror = error => reject(error);
-            reader.readAsDataURL(file);
-        });
-    }
-
-    async function fetchWithRetry(url, options, retries = 3) {
-        for (let i = 0; i < retries; i++) {
-            try {
-                const response = await fetch(url, options);
-                if (!response.ok) {
-                    if (response.status === 429 && i < retries - 1) {
-                         throw new Error(`Помилка HTTP 429: Надто багато запитів. Повтор...`);
-                    }
-                    throw new Error(`Помилка HTTP: ${response.status}`);
+        function startProgressSimulation() {
+            currentProgress = 0;
+            progressBar.style.width = '0%';
+            progressInterval = setInterval(() => {
+                if (currentProgress < 95) {
+                    // Збільшуємо повільно, щоб імітувати очікування
+                    currentProgress += Math.random() * 2; 
+                    progressBar.style.width = `${currentProgress}%`;
                 }
-                return response.json();
-            } catch (error) {
-                if (i < retries - 1) {
-                    const delay = Math.pow(2, i) * 1000;
-                    console.warn(`Помилка запиту, повтор через ${delay / 1000}с...`, error.message);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                } else {
-                    throw error;
+            }, 100);
+        }
+
+        function stopProgressSimulation() {
+            clearInterval(progressInterval);
+            progressBar.style.width = '100%';
+        }
+        
+        // --- Повторний виклик (для обробки помилок мережі) ---
+        async function fetchWithRetry(url, options, retries = 3) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return await response.json();
+                } catch (error) {
+                    console.error(`Attempt ${i + 1} failed:`, error);
+                    if (i === retries - 1) throw error; 
+                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000)); // Експоненційна затримка
                 }
             }
         }
-    }
 
-    // --- Функціональність Інтерфейсу ---
+        // --- Головний обробник форми ---
+        assistantForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
 
-    // Зміна вкладки джерела
-    window.selectSource = function(source) {
-        selectedSource = source;
-
-        // Оновлюємо стилі кнопок
-        tabLink.classList.toggle('tab-active', source === 'link');
-        tabPhoto.classList.toggle('tab-active', source === 'photo');
-
-        // Перемикаємо видимість полів
-        linkSourceFields.classList.toggle('hidden', source !== 'link');
-        photoSourceFields.classList.toggle('hidden', source !== 'photo');
-
-        // Скидаємо відображення результату
-        resultContainer.classList.add('hidden');
-        progressContainer.classList.remove('hidden');
-        progressText.textContent = 'Очікування завдання...';
-        stopProgressSimulation(); 
-    };
-
-    // Обробка попереднього перегляду фото
-    photoUploadInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                photoPreview.src = e.target.result;
-                photoName.textContent = file.name;
-                photoPreviewContainer.classList.remove('hidden');
-            }
-            reader.readAsDataURL(file);
-        } else {
-            photoPreviewContainer.classList.add('hidden');
-            photoPreview.src = '';
-            photoName.textContent = '';
-        }
-    });
-
-    // Імітація відкриття камери 
-    window.openCameraCapture = function() {
-        const tempInput = document.createElement('input');
-        tempInput.type = 'file';
-        tempInput.accept = 'image/*';
-        tempInput.capture = 'user'; 
-        tempInput.style.display = 'none';
-
-        const captureHandler = (e) => {
-            photoUploadInput.files = e.target.files;
-            photoUploadInput.dispatchEvent(new Event('change')); 
-            tempInput.removeEventListener('change', captureHandler);
-            document.body.removeChild(tempInput);
-        };
-        tempInput.addEventListener('change', captureHandler);
-
-        document.body.appendChild(tempInput);
-        tempInput.click();
-    }
-    
-    // --- Головна логіка AI ---
-
-    window.getAssistantHelp = async function() {
-        const userTask = taskIdInput.value.trim();
-        const selectedSubject = subjectSelect.value;
-        const optionalTask = optionalTaskInput.value.trim();
-        let base64Image = null;
-
-        // Початкова перевірка
-        if (!userTask) {
-            resultMessage.textContent = '❌ Будь ласка, введіть ваше основне завдання.';
-            resultContainer.classList.remove('hidden');
-            progressContainer.classList.add('hidden');
-            return;
-        }
-
-        let prompt = `Предмет: ${selectedSubject}.\nОсновне завдання: ${userTask}`;
-        
-        if (optionalTask) {
-            prompt += `\nСПЕЦІАЛЬНА ВИМОГА: ${optionalTask}`;
-        }
-        
-        // Збір даних джерела
-        if (selectedSource === 'link') {
-            const url = urlInput.value.trim();
-            const page = pageInput.value.trim();
-            const section = sectionInput.value.trim();
-            const taskNum = taskNumberInput.value.trim();
-
-            if (url || page || section || taskNum) {
-                 prompt += `\nДжерело: `;
-                 if (url) prompt += `URL-адреса: ${url}`;
-                 if (page) prompt += (url ? ', ' : '') + `Сторінка: ${page}`;
-                 if (section) prompt += (url || page ? ', ' : '') + `Розділ: ${section}`;
-                 if (taskNum) prompt += (url || page || section ? ', ' : '') + `Номер завдання/параграф: ${taskNum}`;
-            } else {
-                prompt += `\n(Додаткові матеріали у вигляді посилання не надані)`;
-            }
-
-        } else if (selectedSource === 'photo') {
-            const file = photoUploadInput.files[0];
-            if (!file) {
-                resultMessage.textContent = '❌ Будь ласка, завантажте фото, або оберіть вкладку "За посиланням".';
+            // Перевірка наявності API Key
+            const apiKey = "" // Залишити порожнім
+            if (!userPrompt.value.trim()) {
+                resultMessage.textContent = "Будь ласка, введіть ваше завдання.";
                 resultContainer.classList.remove('hidden');
-                progressContainer.classList.add('hidden');
+                resultContainer.classList.add('bg-yellow-100', 'border-yellow-300');
                 return;
             }
 
-            if (file.size > 4 * 1024 * 1024) {
-                 resultMessage.textContent = '❌ Фото надто велике. Максимальний розмір - 4MB.';
-                 resultContainer.classList.remove('hidden');
-                 progressContainer.classList.add('hidden');
-                 return;
+            // Збір даних
+            const task = userPrompt.value.trim();
+            const subject = subjectSelect.value;
+            const url = bookUrl.value.trim();
+            const pageTask = pageAndTask.value.trim();
+
+            let fullQuery = `Предмет: ${subject || 'Не вказано'}. `;
+            if (url || pageTask) {
+                fullQuery += `(Контекст: URL книги: ${url || 'Немає'}, Сторінка/Завдання: ${pageTask || 'Немає'}). `;
             }
+            fullQuery += `Основне завдання: ${task}`;
+            
+            // UI підготовка до запиту
+            getHelpButton.disabled = true;
+            getHelpButton.textContent = 'Надсилаємо запит...';
+            resultContainer.classList.add('hidden');
+            progressContainer.classList.remove('hidden');
+            assistantPhoto.classList.add('pulsing'); // Активація пульсації
+            
+            startProgressSimulation();
 
             try {
-                base64Image = await fileToBase64(file);
-                prompt += `\n(Завдання надано у вигляді зображення)`;
-            } catch (error) {
-                console.error("Помилка при перетворенні фото:", error);
-                resultMessage.textContent = '❌ Не вдалося обробити фотографію. Спробуйте інший файл.';
-                resultContainer.classList.remove('hidden');
-                progressContainer.classList.add('hidden');
-                return;
-            }
-        }
-        
-        // --- API-ЗАПИТ ---
-        startProgressSimulation();
-        getHelpBtn.disabled = true;
-        getHelpBtn.textContent = '💡 Очікування відповіді...';
+                // --- Реальний API-ЗАПИТ ---
+                // Використовуємо gemini-2.5-flash-preview-09-2025 та інструмент Google Search
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-
-        // Створення масиву parts для вмісту
-        const parts = [{ text: prompt }];
-        if (base64Image) {
-            parts.push({
-                inlineData: {
-                    mimeType: photoUploadInput.files[0].type,
-                    data: base64Image
-                }
-            });
-        }
-        
-        const payload = {
-            contents: [{ parts: parts }],
-            tools: [{ "google_search": {} }], 
-            systemInstruction: {
-                parts: [{ text: `Ви — доброзичливий, досвідчений вчитель-асистент, який спеціалізується на навчальних матеріалах для 5-го класу (Українська програма). Ваша мета — допомогти учню зрозуміти, як розв'язувати завдання, а не просто дати відповідь. Пояснюйте логіку, правила та кроки детально і заохочувальним тоном. Відповідь надавайте виключно українською мовою.
-
-                Предмет, обраний користувачем: ${selectedSubject}. Якщо користувач вказав спеціальну вимогу, СУВОРО дотримуйтесь її.
+                const systemInstructionText = `Ви — доброзичливий, досвідчений вчитель-асистент для 5-го класу. Ваша мета — допомогти учню зрозуміти, як розв'язувати завдання, а не просто дати відповідь. Пояснюйте логіку, правила та кроки детально і заохочувальним тоном. Надайте відповідь виключно українською мовою.`;
                 
-                Відповідь має бути форматована гарно і мати заохочувальний тон, як від справжнього вчителя.` }]
-            },
-        };
+                const payload = {
+                    contents: [{ parts: [{ text: fullQuery }] }],
+                    tools: [{ "google_search": {} }],
+                    systemInstruction: {
+                        parts: [{ text: systemInstructionText }]
+                    },
+                };
 
-        try {
-            const apiResponse = await fetchWithRetry(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+                const apiResponse = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
 
-            let generatedText = "Не вдалося отримати відповідь від AI.";
+                let generatedText = "Не вдалося отримати відповідь від AI. Спробуйте ще раз.";
 
-            if (apiResponse && apiResponse.candidates && apiResponse.candidates.length > 0 && apiResponse.candidates[0].content.parts[0].text) {
-                generatedText = apiResponse.candidates[0].content.parts[0].text;
+                if (apiResponse && apiResponse.candidates && apiResponse.candidates.length > 0) {
+                    generatedText = apiResponse.candidates[0].content.parts[0].text;
+                }
+                
+                resultMessage.textContent = generatedText;
+                // --- Кінець реального API-ЗАПИТУ ---
+
+            } catch (error) {
+                console.error("Помилка при виконанні запиту до AI:", error);
+                resultMessage.textContent = `Помилка: Не вдалося отримати допомогу. Перевірте, чи правильно вказано API Key. Деталі: ${error.message}`;
+                resultMessage.classList.add('bg-red-100', 'text-red-700', 'border-red-300');
+            } finally {
+                stopProgressSimulation();
+                
+                setTimeout(() => {
+                    progressContainer.classList.add('hidden');
+                    resultContainer.classList.remove('hidden');
+                    getHelpButton.disabled = false;
+                    getHelpButton.textContent = 'Отримати допомогу асистента';
+                    assistantPhoto.classList.remove('pulsing'); // Деактивація пульсації
+                }, 1000);
             }
-            
-            resultMessage.textContent = generatedText;
+        });
+    </script>
 
-        } catch (error) {
-            console.error("Помилка при виконанні запиту до AI:", error);
-            resultMessage.textContent = `❌ Помилка: Не вдалося отримати допомогу. Деталі: ${error.message}`;
-            resultContainer.classList.remove('hidden');
-            progressContainer.classList.add('hidden');
-        } finally {
-            stopProgressSimulation();
-            
-            // Затримка для плавного переходу
-            setTimeout(() => {
-                resultContainer.classList.remove('hidden');
-                progressContainer.classList.add('hidden');
-                getHelpBtn.disabled = false;
-                getHelpBtn.textContent = '💡 Отримати допомогу асистента';
-            }, 500);
-        }
-    }
-</script>
 </body>
 </html>
