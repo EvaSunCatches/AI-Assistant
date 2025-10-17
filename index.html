@@ -4,34 +4,64 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Освітній Асистент 5-й Клас</title>
+
     <!-- Загрузка Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
     <!-- Загрузка шрифта Nunito -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        /* Применение шрифта Nunito ко всему документу */
-        body {
+        /* Убедимся, что тело занимает всю высоту viewport */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
             font-family: 'Nunito', sans-serif;
-            background-color: #f3f4f6; /* Светлый фон для основного контента */
+            background-color: #f3f4f6;
+            overflow: hidden; /* Основной контейнер контролирует прокрутку */
         }
 
-        /* Анимация пульсации для имитации активности AI */
-        @keyframes pulse-opacity-interactive {
-            0%, 100% { transform: scale(1); opacity: 0.9; }
-            50% { transform: scale(1.02); opacity: 1; }
+        /* Контейнер для двух колонок, занимающий всю высоту */
+        #main-layout {
+            display: flex;
+            min-height: 100vh;
         }
 
-        /* Анимация для плавного появления фото */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        /* Левая колонка - рабочая область (форма + результат) */
+        #app-content {
+            flex-grow: 1; /* Занимает доступное пространство */
+            max-width: 100%; /* По умолчанию на мобильных */
+            overflow-y: auto; /* Включает прокрутку для контента формы/результата */
+            padding: 1.5rem;
         }
 
-        /* Стиль кнопок: СНЕЖНЫЙ/ЛЕДЯНОЙ ТОН */
+        /* Правая колонка - изображение ассистента */
+        #assistant-visual {
+            display: none; /* Скрываем по умолчанию на мобильных */
+            position: relative;
+            flex-shrink: 0;
+            width: 40%; /* 40% ширины экрана */
+            max-width: 600px; /* Ограничиваем максимальную ширину */
+            overflow: hidden;
+            background-color: #e0f2fe; /* Светло-голубой фон как заглушка */
+        }
+
+        @media (min-width: 1024px) { /* Начинаем отображать на десктопах (lg) */
+            #app-content {
+                max-width: 60%; /* Принудительно ограничиваем левую панель */
+                padding: 2.5rem;
+            }
+            #assistant-visual {
+                display: block;
+                width: 40%;
+            }
+        }
+        
+        /* Стиль кнопок */
         .btn-primary {
-            /* Очень светлый, ледяной градиент: от светлого циан до очень светлого голубого */
             background: linear-gradient(145deg, #e0f7fa, #b3e5fc);
-            color: #01579b; /* Глубокий синий текст */
+            color: #01579b;
             border: 1px solid #81d4fa;
             box-shadow: 0 4px 6px rgba(0, 150, 255, 0.1), 0 1px 3px rgba(0, 150, 255, 0.08);
             transition: all 0.3s ease;
@@ -41,120 +71,151 @@
             box-shadow: 0 6px 10px rgba(0, 150, 255, 0.2), 0 3px 6px rgba(0, 150, 255, 0.1);
             transform: translateY(-1px);
         }
-        .btn-primary:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 150, 255, 0.1);
-        }
 
-        /* Стиль для активного состояния загрузки */
+        /* Анимация пульсации для имитации активности AI */
+        @keyframes pulse-opacity-interactive {
+            0%, 100% { opacity: 0.9; }
+            50% { opacity: 1; }
+        }
         .loading-animation {
             animation: pulse-opacity-interactive 1.5s infinite;
         }
 
-        /* Стиль для блока результата */
-        .result-box {
-            white-space: pre-wrap; /* Сохраняет пробелы и переводы строк */
-            word-break: break-word; /* Переносит длинные слова */
-            max-height: 50vh; /* Ограничивает высоту */
-            overflow-y: auto; /* Добавляет прокрутку при необходимости */
+        /* Добавляем эффект матового стекла для заголовка */
+        .glass-overlay {
+            /* Полупрозрачный белый фон */
+            background-color: rgba(255, 255, 255, 0.25);
+            /* Эффект размытия (Frosted glass) */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
     </style>
 </head>
-<body class="p-4 sm:p-8 flex items-center justify-center min-h-screen">
-    <!-- Главный контейнер (Карточка) -->
-    <div class="w-full max-w-xl bg-white rounded-xl shadow-2xl p-6 sm:p-8 transform transition duration-500 hover:shadow-3xl border border-gray-100">
+<body>
 
-        <h1 class="text-3xl font-extrabold text-center text-blue-800 mb-2">AI Освітній Асистент 5-й Клас</h1>
-        <p class="text-center text-gray-500 mb-6">Ваш персональний помічник у навчанні</p>
+    <!-- Основной контейнер макета -->
+    <div id="main-layout">
 
-        <!-- Изображение AI Ассистента -->
-        <div class="relative w-48 h-48 md:w-56 md:h-56 mx-auto mb-6">
+        <!-- ЛЕВАЯ КОЛОНКА: Рабочая область приложения (Форма + Результат) -->
+        <div id="app-content" class="bg-white lg:shadow-2xl lg:shadow-blue-100">
+            <div class="max-w-xl mx-auto space-y-8">
+                
+                <header class="mb-6 lg:hidden">
+                     <h1 class="text-3xl font-extrabold text-blue-800">AI Освітній Асистент 5-й Клас</h1>
+                     <p class="text-gray-500">Ваш персональний помічник у навчанні</p>
+                </header>
+
+                <!-- Форма задания -->
+                <form id="assistant-form" class="space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-800 border-b pb-2">Введення даних</h2>
+
+                    <!-- Ввод задания -->
+                    <div>
+                        <label for="task-input" class="block text-sm font-medium text-gray-700 mb-1">Введіть ваше завдання</label>
+                        <textarea id="task-input" rows="4" class="block w-full rounded-lg border-gray-300 shadow-inner p-3 border focus:border-blue-500 focus:ring-blue-500 transition duration-150" placeholder="Наприклад: Розв'яжи задачу 57 зі сторінки 25 з книги 'Математика 5 клас'"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Выбор предмета -->
+                        <div>
+                            <label for="subject-select" class="block text-sm font-medium text-gray-700 mb-1">Оберіть предмет</label>
+                            <select id="subject-select" class="block w-full rounded-lg border-gray-300 shadow-sm p-3 border focus:border-blue-500 focus:ring-blue-500 transition duration-150 bg-white">
+                                <option value="Математика">Математика</option>
+                                <option value="Українська мова">Українська мова</option>
+                                <option value="Історія">Історія</option>
+                                <option value="Біологія">Біологія</option>
+                                <option value="Інший">Інший</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Ввод ссылки (URL) -->
+                        <div>
+                            <label for="url-input" class="block text-sm font-medium text-gray-700 mb-1">Контекст (URL книги)</label>
+                            <input type="url" id="url-input" class="block w-full rounded-lg border-gray-300 shadow-sm p-3 border focus:border-blue-500 focus:ring-blue-500 transition duration-150" placeholder="https://..." value="">
+                        </div>
+                    </div>
+                    
+                    <!-- Загрузка фото (деактивировано) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Завантажити фото (Функція деактивована)</label>
+                        <label for="photo-upload" class="flex justify-center items-center w-full h-12 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 text-gray-500 cursor-not-allowed">
+                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            Обрати файл (Наразі недоступно)
+                            <input type="file" id="photo-upload" class="hidden" disabled>
+                        </label>
+                    </div>
+
+                    <!-- Кнопка вызова ассистента -->
+                    <button type="submit" id="submit-button" class="btn-primary w-full py-3 rounded-xl text-lg font-bold shadow-lg">
+                        Отримати допомогу асистента
+                    </button>
+                </form>
+
+                <!-- Блок с результатом -->
+                <div id="result-container">
+                    <h2 class="text-2xl font-bold text-gray-800 border-b pb-2">Розв'язання та пояснення</h2>
+                    
+                    <div id="loading-indicator" class="hidden text-center text-blue-500 p-4">
+                        <p class="font-semibold loading-animation">AI обмірковує...</p>
+                        <div class="mt-2 flex justify-center space-x-2">
+                            <div class="w-3 h-3 bg-blue-500 rounded-full animate-bounce"></div>
+                            <div class="w-3 h-3 bg-blue-500 rounded-full animate-bounce delay-150"></div>
+                            <div class="w-3 h-3 bg-blue-500 rounded-full animate-bounce delay-300"></div>
+                        </div>
+                    </div>
+
+                    <div id="result-message" class="result-box bg-gray-50 p-4 mt-2 rounded-lg text-gray-800 text-base shadow-inner border">
+                        Тут з'явиться відповідь від AI Асистента. Асистент пояснить логіку і кроки розв'язання.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        
+        <!-- ПРАВА КОЛОНКА: Визуальное представление ассистента -->
+        <div id="assistant-visual">
             <img id="assistant-image"
                 src="https://raw.githubusercontent.com/EvaSunCatches/AI-Assistant/main/assets/assistant.png"
                 alt="AI Асистент"
-                class="w-full h-full object-cover rounded-full shadow-2xl transition-transform duration-500 transform hover:scale-105"
-                style="animation: fadeIn 1s ease-out; border: 4px solid #b3e5fc;">
-        </div>
+                class="w-full h-full object-cover transition-transform duration-500"
+                style="object-position: 80% center;"> <!-- Сдвигаем фокус вправо -->
 
-        <!-- Форма задания -->
-        <form id="assistant-form" class="space-y-4">
-            <!-- Ввод задания -->
-            <div>
-                <label for="task-input" class="block text-sm font-medium text-gray-700">Введіть ваше завдання</label>
-                <textarea id="task-input" rows="3" class="mt-1 block w-full rounded-lg border-gray-300 shadow-inner p-3 border focus:border-blue-500 focus:ring-blue-500 transition duration-150" placeholder="Наприклад: Розв'яжи задачу 57 зі сторінки 25 з книги 'Математика 5 клас'"></textarea>
-            </div>
-
-            <!-- Выбор предмета (Упрощенный выпадающий список) -->
-            <div>
-                <label for="subject-select" class="block text-sm font-medium text-gray-700">Оберіть предмет</label>
-                <select id="subject-select" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border focus:border-blue-500 focus:ring-blue-500 transition duration-150 bg-white">
-                    <option value="Математика">Математика</option>
-                    <option value="Українська мова">Українська мова</option>
-                    <option value="Історія">Історія</option>
-                    <option value="Біологія">Біологія</option>
-                    <option value="Інший">Інший</option>
-                </select>
-            </div>
-
-            <!-- Дополнительные опции ввода -->
-            <div class="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-3">
-                <!-- Ввод ссылки (URL) -->
-                <div class="flex-1">
-                    <label for="url-input" class="block text-sm font-medium text-gray-700">За посиланням (URL книги)</label>
-                    <input type="url" id="url-input" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-3 border focus:border-blue-500 focus:ring-blue-500 transition duration-150" placeholder="https://..." value="">
-                </div>
-                <!-- Загрузка фото (только для примера, так как обработка файла здесь не реализована) -->
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700">Завантажити фото</label>
-                    <label for="photo-upload" class="flex justify-center items-center mt-1 w-full h-12 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 text-gray-500 cursor-pointer hover:bg-gray-100 transition duration-150">
-                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        Обрати файл (неактивно)
-                        <input type="file" id="photo-upload" class="hidden" disabled>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Кнопка вызова ассистента -->
-            <button type="submit" id="submit-button" class="btn-primary w-full py-3 rounded-xl text-lg font-bold">
-                Отримати допомогу асистента
-            </button>
-        </form>
-
-        <!-- Блок с результатом -->
-        <div id="result-container" class="mt-8 pt-6 border-t border-gray-200">
-            <h2 class="text-xl font-bold text-blue-700 mb-3">Розв'язання та пояснення</h2>
-            <div id="loading-indicator" class="hidden text-center text-blue-500">
-                <p class="font-semibold loading-animation">AI обмірковує...</p>
-            </div>
-            <div id="result-message" class="result-box bg-gray-50 p-4 rounded-lg text-gray-800 text-base shadow-inner">
-                Тут з'явиться відповідь від AI Асистента.
+            <!-- Матовое прозрачное наложение с текстом -->
+            <div class="glass-overlay absolute right-0 bottom-0 m-4 p-4 rounded-xl text-white max-w-xs sm:max-w-sm lg:max-w-md">
+                <h1 class="text-2xl sm:text-3xl font-extrabold drop-shadow-lg" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">AI Освітній Асистент</h1>
+                <p class="text-lg sm:text-xl font-medium drop-shadow-md" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.4);">Ваш персональний помічник у навчанні</p>
             </div>
         </div>
 
     </div>
 
     <script type="module">
+        // --- БОЙЛЕРПЛЕЙТ FIREBASE ТА API ---
+        
         // Глобальные переменные Firebase, которые предоставляет Canvas.
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // --- ИМПОРТЫ FIREBASE (Для будущей аутентификации или сохранения данных) ---
+        // API Key для Gemini
+        const apiKey = ""; // Canvas предоставит ключ при вызове fetch
+
+        // --- ИМПОРТЫ FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // API Key для Gemini
-        const apiKey = ""; // Canvas предоставит ключ при вызове fetch
-
         // Инициализация Firebase
         let app, db, auth;
         try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            setLogLevel('Debug');
-            console.log("Firebase ініціалізовано.");
+            if (Object.keys(firebaseConfig).length > 0) {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                setLogLevel('Debug');
+                // console.log("Firebase ініціалізовано.");
+            }
         } catch (e) {
             console.error("Помилка ініціалізації Firebase:", e);
         }
@@ -162,12 +223,14 @@
         // Аутентификация
         async function authenticate() {
             try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                    console.log("Успішний вхід за допомогою Custom Token.");
-                } else {
-                    await signInAnonymously(auth);
-                    console.log("Успішний анонімний вхід.");
+                if (auth) {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                        // console.log("Успішний вхід за допомогою Custom Token.");
+                    } else {
+                        await signInAnonymously(auth);
+                        // console.log("Успішний анонімний вхід.");
+                    }
                 }
             } catch (error) {
                 console.error("Помилка аутентифікації:", error);
@@ -184,12 +247,12 @@
                     const response = await fetch(url, options);
                     if (response.status === 429 && i < maxRetries - 1) {
                         const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                        console.warn(`Запит обмежено, повторна спроба через ${delay.toFixed(0)} мс...`);
+                        // console.warn(`Запит обмежено, повторна спроба через ${delay.toFixed(0)} мс...`);
                         await new Promise(resolve => setTimeout(resolve, delay));
                         continue;
                     }
                     if (!response.ok) {
-                        throw new Error(`HTTP помилка: ${response.status}`);
+                        throw new Error(`HTTP помилка: ${response.status} ${response.statusText}`);
                     }
                     return response.json();
                 } catch (error) {
@@ -197,7 +260,7 @@
                         throw error;
                     }
                     const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                    console.error(`Помилка запиту (спроба ${i + 1}/${maxRetries}):`, error.message);
+                    // console.error(`Помилка запиту (спроба ${i + 1}/${maxRetries}):`, error.message);
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
             }
@@ -224,13 +287,14 @@
 
             if (!task) {
                 resultMessage.textContent = "Будь ласка, введіть ваше завдання.";
+                resultMessage.classList.remove('bg-gray-50', 'text-gray-800');
                 resultMessage.classList.add('bg-red-100', 'text-red-700');
                 return;
             }
 
             // Очистка и установка состояния загрузки
             resultMessage.textContent = "";
-            resultMessage.classList.remove('bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700', 'bg-gray-50', 'text-gray-800');
+            resultMessage.classList.remove('bg-red-100', 'text-red-700');
             resultMessage.classList.add('bg-gray-50', 'text-gray-800');
             loadingIndicator.classList.remove('hidden');
             submitButton.disabled = true;
@@ -243,7 +307,7 @@
             }
 
             // Добавляем инструкцию для AI для получения только текста
-            const systemPrompt = `Ви — доброзичливий, досвідчений вчитель-асистент для 5-го класу. Ваша мета — допомогти учню зрозуміти, як розв'язувати завдання, а не просто дати відповідь. Пояснюйте логіку, правила та кроки детально і заохочувальним тоном. Відповідь надавайте виключно українською мовою.`;
+            const systemPrompt = `Ви — доброзичливий, досвідчений вчитель-асистент для 5-го класу. Ваша мета — допомогти учню зрозуміти, як розв'язувати завдання, а не просто дати відповідь. Пояснюйте логіку, правила та кроки детально і заохочувальним тоном. Відповідь надавайте виключно українською мовою. Форматуйте свою відповідь за допомогою Markdown.`;
 
             try {
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
@@ -271,7 +335,8 @@
 
             } catch (error) {
                 console.error("Помилка при виконанні запиту до AI:", error);
-                resultMessage.textContent = `Помилка: Не вдалося отримати допомогу. Перевірте, чи правильно вказано API Key. Деталі: ${error.message}`;
+                resultMessage.textContent = `Помилка: Не вдалося отримати допомогу. Перевірте підключення до мережі. Деталі: ${error.message}`;
+                resultMessage.classList.remove('bg-gray-50', 'text-gray-800');
                 resultMessage.classList.add('bg-red-100', 'text-red-700');
             } finally {
                 // Восстановление состояния
