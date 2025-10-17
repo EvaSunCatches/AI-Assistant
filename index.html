@@ -233,18 +233,19 @@
 </div>
 
 <script>
-    // 💡 [GEMINI_API_KEY_MARKER] НЕ УДАЛЯТЬ. ЭТА СТРОКА БУДЕТ ЗАМЕНЕНА GitHub Action!
-    const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';
+    // 💡 [GEMINI_API_KEY_MARKER]
+    // ЭТА СТРОКА БУДЕТ ЗАМЕНЕНА GitHub!
+    //
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
     // === УТИЛИТЫ ДЛЯ API ===
     
     function fileToBase64(file) {
         return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result.split(',')[1]); 
-            reader.onerror = error => reject(error);
+            const fileReader = new FileReader(); // Исправлено: изменено 'reader' на 'fileReader'
+            fileReader.readAsDataURL(file);
+            fileReader.onload = () => resolve(fileReader.result.split(',')[1]); 
+            fileReader.onerror = error => reject(error);
         });
     }
 
@@ -402,7 +403,7 @@
             startProgressSimulation();
 
             try {
-                if (apiKey === "") {
+                if (typeof apiKey === "undefined" || apiKey === "") {
                     // Симуляция ответа, если API-ключ не установлен
                     await new Promise(resolve => setTimeout(resolve, 5000));
                     resultMessage.textContent = `[СИМУЛЯЦІЯ] Відповідь AI-асистента з предмету "${subject}":
