@@ -11,8 +11,9 @@
             font-family: 'Nunito', sans-serif;
             background-color: #f7f7f7;
         }
+        /* ВАЖЛИВО: ШЛЯХ ДО ЗОБРАЖЕННЯ ВИПРАВЛЕНО */
         .assistant-image {
-            background: url('assistant.png') no-repeat center center;
+            background: url('assets/assistant.png') no-repeat center center;
             background-size: cover;
             min-height: 100vh; 
             position: relative;
@@ -89,16 +90,16 @@
 
                     <div id="url-container">
                         <label for="url-link" class="block text-xs font-medium text-gray-500">URL (Посилання)</label>
-                        <input type="url" id="url-link" value="https://pidruchnyk.com.ua/1638-matematika-8-klas-merzlyak-2021.html" placeholder="https://..." class="w-full p-2 border border-gray-300 rounded-lg mb-3 focus:ring-blue-500 focus:border-blue-500">
+                        <input type="url" id="url-link" value="" placeholder="https://..." class="w-full p-2 border border-gray-300 rounded-lg mb-3 focus:ring-blue-500 focus:border-blue-500">
                         
                         <div class="flex space-x-4 mb-4">
                             <div>
                                 <label for="page-number" class="block text-xs font-medium text-gray-500">Сторінка</label>
-                                <input type="text" id="page-number" value="88" placeholder="54" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                <input type="text" id="page-number" value="" placeholder="54" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                             </div>
                             <div>
                                 <label for="task-number" class="block text-xs font-medium text-gray-500">Номер завдання</label>
-                                <input type="text" id="task-number" value="293" placeholder="181 або §3" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                <input type="text" id="task-number" value="" placeholder="181 або §3" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                             </div>
                         </div>
                     </div>
@@ -113,7 +114,7 @@
                     </div>
 
                     <h2 class="text-lg font-semibold mt-6 mb-3 text-gray-700">Секція: Укажіть, що необхідно зробити (деталі)</h2>
-                    <textarea id="task-details" rows="3" placeholder="Наприклад: 'Допоможи мені зрозуміти, як розв'язати це завдання, та поясни правило, яке використовується.' Це дуже важливо!" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 resize-none mb-4">Допоможи розв'язати та поясни правило</textarea>
+                    <textarea id="task-details" rows="3" placeholder="Наприклад: 'Допоможи мені зрозуміти, як розв'язати це завдання, та поясни правило, яке використовується.' Це дуже важливо!" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 resize-none mb-4"></textarea>
                     
                     <button id="submit-button" class="w-full px-6 py-3 text-lg font-semibold rounded-lg text-white bg-blue-500 hover:bg-blue-600 transition duration-150 ease-in-out shadow-md disabled:bg-gray-400">
                         Отримати допомогу асистента
@@ -394,8 +395,8 @@
             startLoading();
             
             try {
+                // ПЕРЕВІРКА КЛЮЧА
                 if (typeof apiKey === 'undefined' || apiKey === '') {
-                    // Симуляція відповіді, якщо ключ не знайдено
                     throw new Error("API Key не знайдено. Використовується симуляція.");
                 }
 
