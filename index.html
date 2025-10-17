@@ -12,11 +12,13 @@
             font-family: 'Nunito', sans-serif;
             background-color: #f3f4f6;
         }
+        
         /* Анимация пульсации для имитации активности AI */
         @keyframes pulse-opacity-interactive {
             0%, 100% { transform: scale(1); opacity: 0.9; }
             50% { transform: scale(1.02); opacity: 1; }
         }
+        
         /* Анимация для плавного появления фото */
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -90,7 +92,7 @@
         /* СТИЛЬ ПЕРЕКЛЮЧАТЕЛЕЙ: ХОЛОДНЫЙ ТОН */
         .input-switcher {
             transition: all 0.3s ease;
-            border: 1px solid transparent; /* Добавляем прозрачную рамку для предотвращения "прыжка" при активации */
+            border: 1px solid transparent; 
         }
         .input-switcher.active {
             background-color: #E0F7FA !important;
@@ -155,10 +157,15 @@
             </div>
             
             <div id="url-fields" class="space-y-4 mb-5 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div class="flex flex-col space-y-4">
+                <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
                     <div class="flex-1">
                         <label for="task-url" class="block text-xs font-medium text-gray-500 mb-1">URL (Посилання)</label>
                         <input type="url" id="task-url" placeholder="https://pidruchnik.ua/..."
+                                class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label for="task-section" class="block text-xs font-medium text-gray-500 mb-1">Розділ (опціонально)</label>
+                        <input type="text" id="task-section" placeholder="Напр. 1"
                                 class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
                 </div>
@@ -173,11 +180,6 @@
                         <input type="text" id="task-number" placeholder="Напр. 181 або §3"
                                 class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
-                </div>
-                 <div>
-                     <label for="task-section" class="block text-xs font-medium text-gray-500 mb-1">Розділ (опціонально)</label>
-                     <input type="text" id="task-section" placeholder="Напр. 1"
-                                class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                 </div>
             </div>
 
@@ -198,7 +200,7 @@
                     <input type="file" id="photo-camera-input" accept="image/*" capture="camera" class="hidden">
                 </div>
                 <div id="photo-status" class="text-sm text-gray-500 text-center">
-                    Фото не вибрано.
+                    Фото не вибрано. (Функція камери може бути заблокована браузером, але виклик камери обов'язково налаштований)
                 </div>
             </div>
 
@@ -236,7 +238,6 @@
 <script>
     // API Key теперь берется из глобальной переменной, предоставленной средой Canvas
     const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';
-    // Используем более мощную модель для обработки complex запросов с browsing
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
     // === УТИЛИТЫ ДЛЯ API ===
@@ -295,7 +296,7 @@
         const photoStatus = document.getElementById('photo-status');
         const subjectSelect = document.getElementById('subject-select');
         const taskDescription = document.getElementById('task-description');
-        const assistantPhoto = document.getElementById('assistant-photo');
+        const assistantPhoto = document.getElementById('assistant-photo'); 
         
         let selectedInputType = 'url';
         let selectedFile = null;
@@ -308,7 +309,7 @@
                 photoStatus.classList.remove('text-gray-500');
                 photoStatus.classList.add('text-cyan-700', 'font-semibold');
             } else {
-                photoStatus.textContent = 'Фото не вибрано.';
+                photoStatus.textContent = 'Фото не вибрано. (Функція камери може бути заблокована браузером, але виклик камери обов\'язково налаштований)';
                 photoStatus.classList.add('text-gray-500');
                 photoStatus.classList.remove('text-cyan-700', 'font-semibold');
             }
@@ -353,6 +354,7 @@
             // Простая валидация
             const subject = subjectSelect.value;
             const description = taskDescription.value.trim();
+            const url = document.getElementById('task-url').value.trim();
 
             if (!subject) {
                 resultMessage.textContent = 'Будь ласка, виберіть предмет.';
@@ -366,17 +368,14 @@
                 resultMessage.classList.add('bg-red-100', 'text-red-700');
                 return;
             }
-
-            // --- НОВАЯ ВАЛИДАЦИЯ ДЛЯ URL ---
-            const url = document.getElementById('task-url').value.trim();
+            
+            // Валидация URL/Photo
             if (selectedInputType === 'url' && !url) {
                 resultMessage.textContent = 'Ви вибрали режим "По посиланню", але не вказали URL підручника.';
                 resultContainer.classList.remove('hidden');
                 resultMessage.classList.add('bg-red-100', 'text-red-700');
                 return;
             }
-            // --- КОНЕЦ НОВОЙ ВАЛИДАЦИИ ---
-
             if (selectedInputType === 'photo' && !selectedFile) {
                 resultMessage.textContent = 'Ви вибрали режим "Завантажити фото", але не прикріпили файл.';
                 resultContainer.classList.remove('hidden');
@@ -419,7 +418,7 @@
 
             try {
                 if (apiKey === "") {
-                    // Симуляция ответа, если API-ключ не установлен (как запасной вариант)
+                    // Симуляция ответа, если API-ключ не установлен
                     await new Promise(resolve => setTimeout(resolve, 5000));
                     resultMessage.textContent = `[СИМУЛЯЦІЯ] Відповідь AI-асистента з предмету "${subject}":
                     
@@ -440,7 +439,7 @@ P.S. Для реальної роботи додайте ваш Google API Key �
                     const page = document.getElementById('task-page').value;
                     const number = document.getElementById('task-number').value;
 
-                    // Обновленный промпт, который явно просит AI использовать URL и найти задание
+                    // Усиленный промпт дляBrowsing/Vision
                     let userPrompt = `Ти - AI Освітній Асистент, допомагаєш учню з предметом "${subject}".
 Ваша задача:
 1. **Використовуючи функціонал інструментів (Google Search/Browsing),** перейди за наданим посиланням або проаналізуй фото.
@@ -474,10 +473,12 @@ P.S. Для реальної роботи додайте ваш Google API Key �
                         parts.push({ text: userPrompt }); // Добавляем текстовый промпт после изображения
                     }
 
+                    // Корректный payload для API
                     const payload = {
                         contents: [{ parts: parts }],
-                        tools: [{ googleSearch: {} }], // Инструмент Google Search (Browsing) включен
+                        tools: [{ googleSearch: {} }], // Корректный синтаксис инструмента
                         config: {
+                            // Корректный синтаксис systemInstruction
                             systemInstruction: `Ви — доброзичливий, досвідчений вчитель-асистент. Ваша мета — допомогти учню зрозуміти, як розв'язувати завдання, а не просто дати відповідь. Пояснюйте логіку, правила та кроки детально і заохочувальним тоном. Відповідь надавайте виключно українською мовою.`
                         },
                     };
@@ -488,7 +489,7 @@ P.S. Для реальної роботи додайте ваш Google API Key �
                         body: JSON.stringify(payload)
                     });
 
-                    let generatedText = "Не вдалося отримати відповідь від AI. Перевірте логі консолі.";
+                    let generatedText = "Не вдалося отримати відповідь від AI.";
                     if (apiResponse && apiResponse.candidates && apiResponse.candidates.length > 0) {
                         generatedText = apiResponse.candidates[0].content.parts[0].text;
                     }
@@ -498,7 +499,7 @@ P.S. Для реальної роботи додайте ваш Google API Key �
                 }
             } catch (error) {
                 console.error("Помилка при виконанні запиту до AI:", error);
-                resultMessage.textContent = `Помилка: Не вдалося отримати допомогу. Перевірте, чи правильно вказано API Key або доступність посилання. Деталі: ${error.message}`;
+                resultMessage.textContent = `Помилка: Не вдалося отримати допомогу. Перевірте, чи правильно вказано API Key. Деталі: ${error.message}`;
                 resultMessage.classList.add('bg-red-100', 'text-red-700');
             } finally {
                 stopProgressSimulation();
