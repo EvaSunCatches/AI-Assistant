@@ -9,12 +9,12 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     
-    # 💡 ВАЖНО: ДОБАВЬТЕ БЛОК ENVIRONMENT СЮДА!
+    # Требуется для нового механизма деплоя Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    # 💡 КОНЕЦ БЛОКА ENVIRONMENT
     
+    # Требуется для OIDC-токена, используемого для деплоя
     permissions:
       contents: read
       pages: write
@@ -26,8 +26,9 @@ jobs:
 
       - name: Inject API Key into index.html
         run: |
-          # Внедряем секрет GEMINI_API_KEY в качестве глобальной JS-переменной __api_key
-          sed -i "s|const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';|const __api_key = \"${{ secrets.GEMINI_API_KEY }}\";\nconst apiKey = typeof __api_key !== 'undefined' ? __api_key : '';|" index.html
+          # Ищем маркер [GEMINI_API_KEY_MARKER] в index.html и заменяем его на реальную переменную __api_key
+          # \n используется для разрыва строки в sed, чтобы код выглядел чисто.
+          sed -i "s|// 💡 \\[GEMINI_API_KEY_MARKER\\].*|const __api_key = \"${{ secrets.GEMINI_API_KEY }}\";\n    const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';|" index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
