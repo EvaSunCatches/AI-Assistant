@@ -30,9 +30,16 @@ jobs:
         run: |
           echo "Key length is: $(echo -n "${GEMINI_KEY}" | wc -c) characters"
 
+      # *** ИСПРАВЛЕНИЕ: ВНЕДРЕНИЕ КЛЮЧА И ПЕРЕМЕННОЙ apiKey (без конфликта) ***
       - name: Inject API Key into index.html
         run: |
-          sed -i "s|// 💡 \\[GEMINI_API_KEY_MARKER\\].*|const __api_key = \"${GEMINI_KEY}\";\n    const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';|" index.html
+          # Внедряем ключ, попутно объявляя переменную apiKey.
+          # Новый маркер - это строка, начинающаяся с `// 💡 [GEMINI_API_KEY_MARKER]`
+          sed -i "s|// 💡 \\[GEMINI_API_KEY_MARKER\\]|const __api_key = \"${GEMINI_KEY}\";\n    const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';\n    // 💡 [GEMINI_API_KEY_MARKER]|" index.html
+          
+          # Очистка: удаляем маркеры после внедрения.
+          sed -i "/\/\/ 💡 \\[GEMINI_API_KEY_MARKER\\]/d" index.html
+
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
