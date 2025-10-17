@@ -27,9 +27,8 @@
 
         /* СТИЛЬ КНОПОК: СНЕЖНЫЙ/ЛЕДЯНОЙ ТОН */
         .btn-primary {
-            /* Очень светлый, ледяной градиент: от светлого циан до очень светлого голубого */
             background-image: linear-gradient(to right, #B2EBF2 0%, #E0F7FA 100%); 
-            color: #006064; /* Темный циан для текста */
+            color: #006064; 
             transition: all 0.3s ease;
             border: 1px solid #80DEEA;
         }
@@ -46,32 +45,30 @@
             color: #78909C;
         }
 
-        /* КОНТЕЙНЕР ФОТО: Ледяной фон + ТЕНЬ для отделения от body */
+        /* КОНТЕЙНЕР ФОТО: Ледяной фон + ТЕНЬ */
         .assistant-container {
-            /* Фон: светлый ледяной градиент */
             background-image: linear-gradient(to bottom, #e0f7fa 0%, #ffffff 100%);
             position: relative;
-            /* Добавляем внутреннюю тень для плавного перехода к белому фону */
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.1); /* Легкая внешняя тень */
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.1); 
         }
         
         .assistant-image {
             opacity: 0;
-            animation: fadeIn 1.5s ease-out forwards; /* Плавное появление (п. 4) */
+            animation: fadeIn 1.5s ease-out forwards;
         }
         
         .assistant-image.pulsing {
-            animation: pulse-opacity-interactive 1s infinite alternate ease-in-out; /* Пульсация (п. 4) */
+            animation: pulse-opacity-interactive 1s infinite alternate ease-in-out;
         }
 
-        /* СТИЛЬ МАТОВОГО СТЕКЛА (ИСПРАВЛЕНА ПРОЗРАЧНОСТЬ) */
+        /* СТИЛЬ МАТОВОГО СТЕКЛА (Скорректированная прозрачность) */
         .assistant-label {
             /* Темная, но более ПРОЗРАЧНАЯ основа (п. 2) */
             background-color: rgba(0, 0, 0, 0.3); 
             color: #fff; 
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px); 
-            border: 1px solid rgba(255, 255, 255, 0.3); /* Более заметная рамка */
+            border: 1px solid rgba(255, 255, 255, 0.3);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
             max-width: 90%; 
             width: fit-content;
@@ -229,7 +226,7 @@
             <div id="result-container" class="mt-6 hidden">
                 <h3 class="text-xl font-bold text-gray-800 mb-3">Відповідь Асистента</h3>
                 <div id="result-message" class="p-4 bg-white border border-cyan-200 text-gray-800 rounded-lg shadow-md whitespace-pre-wrap">
-                    </div>
+                </div>
             </div>
 
         </div>
@@ -237,15 +234,12 @@
 </div>
 
 <script>
-    // 1. ПРОВЕРКА API KEY: Берется из глобальной переменной (которая должна быть установлена GitHub Action или средой)
+    // 💡 ЭТА СЕКЦИЯ БУДЕТ ЗАМЕНЕНА GitHub Action для внедрения ключа
     const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
     // === УТИЛИТЫ ДЛЯ API ===
     
-    /**
-     * Конвертирует File (Blob) в base64 строку для API
-     */
     function fileToBase64(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -255,9 +249,6 @@
         });
     }
 
-    /**
-     * Делает POST запрос к Gemini API с экспоненциальной задержкой
-     */
     async function fetchWithRetry(url, options, maxRetries = 3) {
         for (let i = 0; i < maxRetries; i++) {
             try {
@@ -300,7 +291,7 @@
         let selectedInputType = 'url';
         let selectedFile = null;
 
-        // 2. Логика обработки загрузки фото
+        // Логика обработки загрузки фото
         const updatePhotoStatus = (file) => {
             selectedFile = file;
             if (file) {
@@ -313,6 +304,10 @@
                 photoStatus.classList.remove('text-cyan-700', 'font-semibold');
             }
         };
+
+        // Обработчики ввода фото (объединены для обоих инпутов)
+        photoUploadInput.addEventListener('change', (e) => updatePhotoStatus(e.target.files[0]));
+        photoCameraInput.addEventListener('change', (e) => updatePhotoStatus(e.target.files[0]));
 
         // Логика переключения
         const toggleInputType = (type) => {
@@ -339,11 +334,7 @@
         
         toggleInputType('url');
         
-        // Обработчики ввода фото
-        photoUploadInput.addEventListener('change', (e) => updatePhotoStatus(e.target.files[0]));
-        photoCameraInput.addEventListener('change', (e) => updatePhotoStatus(e.target.files[0]));
-
-        // 3. Основная логика: Запуск ассистента и API-запрос
+        // Основная логика: Запуск ассистента и API-запрос
         getHelpButton.addEventListener('click', async () => {
             resultContainer.classList.add('hidden');
             resultMessage.textContent = '';
@@ -387,12 +378,11 @@
             resultMessage.classList.remove('bg-red-100', 'text-red-700');
             resultMessage.classList.add('bg-white', 'text-gray-800');
             
-            // Активация пульсации фото (п. 4)
+            // Активация пульсации фото
             assistantPhoto.classList.add('pulsing');
             
             let progressInterval;
             let currentProgress = 0;
-            // Запуск симуляции прогресса (п. 5)
             const startProgressSimulation = () => {
                 currentProgress = 0;
                 progressInterval = setInterval(() => {
@@ -414,22 +404,22 @@
 
             try {
                 if (apiKey === "") {
-                    // Симуляция ответа, если API-ключ не установлен
+                    // Симуляция ответа, если API-ключ не установлен (после настройки GitHub Action это не должно срабатывать)
                     await new Promise(resolve => setTimeout(resolve, 5000));
                     resultMessage.textContent = `[СИМУЛЯЦІЯ] Відповідь AI-асистента з предмету "${subject}":
                     
 ⚠️ **API Key не знайдено.** Використовується симуляція.
                     
-**Крок 1: Аналіз.** Я б використав інструмент **Google Search (Browsing)**, щоб перейти за посиланням: ${url || 'N/A'}, знайти завдання ${document.getElementById('task-number').value || 'N/A'} на сторінці ${document.getElementById('task-page').value || 'N/A'}.
+**Крок 1: Аналіз (URL/Vision):** Я б використав інструмент **Google Search (Browsing)** або **Vision** для аналізу джерела.
                     
-**Крок 2: Рішення.** Для математики (якщо обрано), я б надав покроковий розв'язок.
+**Крок 2: Рішення:** Завдання знайдене і розв'язане.
                     
-**Пояснення правила:** Це зроблено, щоб допомогти вам не просто списати, а зрозуміти суть матеріалу! 🚀
+**Пояснення правила:** Це зроблено, щоб допомогти вам зрозуміти суть матеріалу! 🚀
                     
-P.S. Для реальної роботи **додайте ваш Google API Key в налаштуваннях секретів Canvas (або GitHub Actions для GitHub Pages)**.
+P.S. Будь ласка, **створіть файл .github/workflows/deploy.yml** за інструкцією, щоб активувати Gemini API.
                     `;
                 } else {
-                    // --- РЕАЛЬНЫЙ API-ЗАПРОС С GOOGLE SEARCH TOOL ---
+                    // --- РЕАЛЬНЫЙ API-ЗАПРОС С GOOGLE SEARCH/VISION ---
                     
                     const section = document.getElementById('task-section').value;
                     const page = document.getElementById('task-page').value;
@@ -489,7 +479,7 @@ P.S. Для реальної роботи **додайте ваш Google API Key
                 }
             } catch (error) {
                 console.error("Помилка при виконанні запиту до AI:", error);
-                resultMessage.textContent = `Помилка: Не вдалося отримати допомогу. Перевірте, чи правильно вказано API Key або формат посилання. Деталі: ${error.message}`;
+                resultMessage.textContent = `Помилка: Не вдалося отримати допомогу. Перевірте, чи правильно вказано API Key. Деталі: ${error.message}`;
                 resultMessage.classList.add('bg-red-100', 'text-red-700');
             } finally {
                 stopProgressSimulation();
@@ -499,7 +489,7 @@ P.S. Для реальної роботи **додайте ваш Google API Key
                     resultContainer.classList.remove('hidden');
                     getHelpButton.disabled = false;
                     getHelpButton.textContent = 'Отримати допомогу асистента';
-                    assistantPhoto.classList.remove('pulsing'); // Деактивация пульсации
+                    assistantPhoto.classList.remove('pulsing');
                 }, 1000);
             }
         });
