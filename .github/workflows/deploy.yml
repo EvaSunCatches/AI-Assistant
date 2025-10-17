@@ -14,21 +14,26 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     
-    # Требуется для OIDC-токена, используемого для деплоя
+    # Требуется для OIDC-токена и записи в репозиторий
     permissions:
       contents: read
       pages: write
       id-token: write
+      
+    # 💡 ИСПОЛЬЗУЕМ БЛОК ENV ДЛЯ НАДЕЖНОЙ ПЕРЕДАЧИ КЛЮЧА
+    env:
+      GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:
       - name: Checkout 
         uses: actions/checkout@v4
 
-      - name: Inject API Key into index.html
+      - name: Inject API Key into index.html (Reliable method)
         run: |
-          # Ищем маркер [GEMINI_API_KEY_MARKER] в index.html и заменяем его на реальную переменную __api_key
-          # \n используется для разрыва строки в sed, чтобы код выглядел чисто.
-          sed -i "s|// 💡 \\[GEMINI_API_KEY_MARKER\\].*|const __api_key = \"${{ secrets.GEMINI_API_KEY }}\";\n    const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';|" index.html
+          # Используем переменную окружения GEMINI_KEY для замены маркера
+          # Теперь команда sed гарантированно найдет маркер, если он есть в index.html,
+          # и вставит туда ключ, взятый из ENV.
+          sed -i "s|// 💡 \\[GEMINI_API_KEY_MARKER\\].*|const __api_key = \"${GEMINI_KEY}\";\n    const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';|" index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
