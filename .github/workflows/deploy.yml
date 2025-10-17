@@ -9,10 +9,18 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+    # 💡 ДОБАВИТЬ ЭТОТ БЛОК!
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    # 💡 КОНЕЦ ДОБАВЛЕННОГО БЛОКА
+
     steps:
       - name: Checkout 
         uses: actions/checkout@v4
 
+      # ... (остальной код остается без изменений)
       - name: Inject API Key into index.html
         run: |
           # Внедряем секрет GEMINI_API_KEY в качестве глобальной JS-переменной __api_key
