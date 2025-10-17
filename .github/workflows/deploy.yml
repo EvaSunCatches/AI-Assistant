@@ -9,31 +9,38 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     
-    # Требуется для нового механизма деплоя Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     
-    # Требуется для OIDC-токена и записи в репозиторий
     permissions:
       contents: read
       pages: write
       id-token: write
       
-    # 💡 ИСПОЛЬЗУЕМ БЛОК ENV ДЛЯ НАДЕЖНОЙ ПЕРЕДАЧИ КЛЮЧА
+    # Ключ из Secrets будет доступен тут
     env:
       GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:
       - name: Checkout 
         uses: actions/checkout@v4
-
+      
+      # *** ДИАГНОСТИКА: ПРОВЕРЯЕМ, ЧТО КЛЮЧ ДОСТУПЕН (будет скрыт звездочками) ***
+      - name: Diagnostic: Check GEMINI_KEY visibility
+        run: |
+          echo "Key length is: $(echo -n "$GEMINI_KEY" | wc -c) characters"
+          
       - name: Inject API Key into index.html (Reliable method)
         run: |
-          # Используем переменную окружения GEMINI_KEY для замены маркера
-          # Теперь команда sed гарантированно найдет маркер, если он есть в index.html,
-          # и вставит туда ключ, взятый из ENV.
+          # 1. Выполняем замену ключа (как в предыдущем варианте)
           sed -i "s|// 💡 \\[GEMINI_API_KEY_MARKER\\].*|const __api_key = \"${GEMINI_KEY}\";\n    const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';|" index.html
+          
+          # 2. *** ДИАГНОСТИКА: ПОКАЗЫВАЕМ СТРОКУ, КОТОРАЯ БЫЛА ЗАМЕНЕНА ***
+          echo "--- Content after injection: ---"
+          grep 'const __api_key' index.html
+          echo "---------------------------------"
+          
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -41,7 +48,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Загружаем все файлы из корня (включая измененный index.html)
           path: . 
 
       - name: Deploy to GitHub Pages
