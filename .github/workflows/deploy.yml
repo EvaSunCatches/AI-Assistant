@@ -1,56 +1,40 @@
-name: Deploy and Inject Key
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches:
-      - main
+      - main  # Або 'master', якщо ви використовуєте стару назву гілки
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-      
-    env:
-      GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:
-      - name: Checkout 
+      - name: Checkout 🛎️
         uses: actions/checkout@v4
-      
-      # *** ДИАГНОСТИКА: ПРОВЕРКА КЛЮЧА ***
-      - name: Check GEMINI_KEY visibility
-        run: |
-          echo "Key length is: $(echo -n "${GEMINI_KEY}" | wc -c) characters"
 
-      # *** ИСПРАВЛЕНИЕ: ВНЕДРЕНИЕ КЛЮЧА И ПЕРЕМЕННОЙ apiKey ***
+      # 1. СЕКЦІЯ ВСТАВКИ API KEY (ВИПРАВЛЕНО)
+      # Цей крок використовує SED для пошуку маркеру і вставки ключа
       - name: Inject API Key into index.html
         run: |
-          # Внедряем две переменные: __api_key для хранения ключа и apiKey для использования в URL.
-          # Заменяем МАРКЕР на две строки JS-кода.
-          # ВНИМАНИЕ: Маркер должен быть в файле index.html
-          sed -i "s|// 💡 \\[GEMINI_API_KEY_MARKER\\]|const __api_key = \"${GEMINI_KEY}\";\n    const apiKey = typeof __api_key !== 'undefined' ? __api_key : '';|" index.html
+          # Вставлення секрету GEMINI_API_KEY у JavaScript змінну apiKey у файлі index.html
+          # Маркер // 💡 [GEMINI_API_KEY_MARKER] повинен бути присутній у вашому index.html
+          sed -i "s|// 💡 \[GEMINI_API_KEY_MARKER\]|// 💡 \[GEMINI_API_KEY_MARKER\]\n        const apiKey = \"${{ secrets.GEMINI_API_KEY }}\";|g" index.html
           
-          # *** ДИАГНОСТИКА: ПРОВЕРКА ВНЕДРЕНИЯ ***
-          echo "--- Content after injection ---"
-          grep 'const apiKey =' index.html
-          echo "-------------------------------"
+          # *** ДІАГНОСТИКА: ПЕРЕВІРКА, ЧИ КЛЮЧ БУВ ВСТАВЛЕНИЙ ***
+          # GitHub автоматично приховує секрети в логах, тому ви побачите лише початок.
+          echo "Перевірка вставки API Key (побачите початок ключа):"
+          grep 'const apiKey = ' index.html
+        env:
+          # Важливо: використовуйте ім'я секрету, яке ви створили в налаштуваннях репозиторію
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      # 2. РОЗГОРТАННЯ НА GITHUB PAGES
+      - name: Deploy to GitHub Pages 🚀
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: . 
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./ # Розгортаємо кореневу папку, де знаходиться index.html
+          publish_branch: gh-pages # Гілка для розгортання вашого сайту (змініть, якщо потрібно)
+          cname: '' # Залиште порожнім, якщо не використовуєте власний домен
