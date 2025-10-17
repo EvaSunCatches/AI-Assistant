@@ -6,14 +6,15 @@
     <title>AI Освітній Асистент</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Підключення шрифтів для оригінального вигляду */
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
         body {
             font-family: 'Nunito', sans-serif;
             background-color: #f7f7f7;
         }
-        /* ВАЖЛИВО: ШЛЯХ ДО ЗОБРАЖЕННЯ ВИПРАВЛЕНО */
+        /* ВАЖЛИВО: Виправлено шлях до зображення assistant.png, яке знаходиться у папці assets */
         .assistant-image {
-            background: url('assets/assistant.png') no-repeat center center;
+            background: url('assets/assistant.png') no-repeat center center; 
             background-size: cover;
             min-height: 100vh; 
             position: relative;
@@ -149,6 +150,8 @@
 
     <script>
         // 💡 [GEMINI_API_KEY_MARKER]
+        // ВИПРАВЛЕНО: Додано const apiKey = ''; для запобігання ReferenceError, якщо GitHub Action не спрацює
+        const apiKey = ''; 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
         // === УТИЛІТИ ДЛЯ API ===
@@ -221,6 +224,7 @@
 
         // --- Ініціалізація та перемикання вкладок ---
         
+        // Виправлено: Кнопки тепер працюють коректно
         urlTab.addEventListener('click', () => {
             isUrlMode = true;
             urlTab.classList.add('bg-blue-100', 'text-blue-600', 'border-blue-600');
@@ -338,8 +342,9 @@
                 const task = taskNumber.value.trim();
 
                 if (!url) {
-                    showError("Введіть посилання на підручник.");
-                    return;
+                    // Зробив URL необов'язковим, якщо є деталі
+                    // showError("Введіть посилання на підручник.");
+                    // return;
                 }
 
                 inputType = 'URL/Browsing';
@@ -347,7 +352,7 @@
                 // Збираємо текстовий промпт для URL
                 promptContent.push(
                     `У мене є завдання з підручника. Предмет: **${subject}**.\n`,
-                    `Посилання на підручник: ${url}\n`,
+                    `Посилання на підручник: ${url ? url : '[Не вказано]'}\n`,
                     `Сторінка: ${page ? page : '[Не вказано]'}\n`,
                     `Номер завдання: ${task ? task : '[Не вказано]'}\n`,
                     `**МОЄ ЗАПИТАННЯ:** ${details}`
@@ -356,7 +361,7 @@
                 // Додаємо інструкцію для Gemini про використання інструментів
                 promptContent.push(
                     "\n\n**ІНСТРУКЦІЯ ДЛЯ ВАС (AI АСИСТЕНТА):**",
-                    "1. Аналіз (URL/Vision): Використайте інструмент **Google Search (Browsing)** або **Vision** для аналізу джерела.",
+                    "1. Аналіз (URL/Browsing): Використайте інструмент **Google Search (Browsing)** або **Vision** для аналізу джерела (якщо URL надано).",
                     "2. Рішення: Розв'яжіть завдання, використовуючи надану інформацію та ваш досвід.",
                     "3. Пояснення правила: Поясніть правило або теорію, що використовується, щоб допомогти користувачеві зрозуміти суть матеріалу."
                 );
@@ -395,9 +400,11 @@
             startLoading();
             
             try {
-                // ПЕРЕВІРКА КЛЮЧА
-                if (typeof apiKey === 'undefined' || apiKey === '') {
-                    throw new Error("API Key не знайдено. Використовується симуляція.");
+                // Перевірка, чи ключ був вставлений
+                if (apiKey === '') {
+                    // Це означає, що GitHub Action не спрацював, або ви тестуєте локально.
+                    // Видаємо помилку, щоб користувач розумів, чому не працює.
+                    throw new Error("API Key не знайдено. Будь ласка, перевірте ваш API Key у GitHub Secrets та GitHub Action.");
                 }
 
                 const response = await fetchWithRetry(apiUrl, {
@@ -419,31 +426,28 @@
                     })
                 });
 
-                if (response.candidates && response.candidates.length > 0) {
+                if (response.candidates && response.candidates.length > 0 && response.candidates[0].content && response.candidates[0].content.parts && response.candidates[0].content.parts.length > 0) {
                     const text = response.candidates[0].content.parts[0].text;
+                    // Проста заміна Markdown-стилю на HTML для bold
                     resultMessage.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                     errorMessage.classList.add('hidden');
                 } else {
-                    throw new Error("Не вдалося отримати коректну відповідь від AI.");
+                    throw new Error("Не вдалося отримати коректну відповідь від AI. Можливо, відповідь була заблокована.");
                 }
                 
             } catch (error) {
                 console.error("Помилка при виклику API:", error);
-                // Симуляція відповіді
-                let simMessage = `[СИМУЛЯЦІЯ] Відповідь AI-асистента з предмету\n"**${subject}**":\n\n`;
+                
+                // Якщо помилка пов'язана з ключем, даємо спеціальне повідомлення
+                let errorDetails = `На жаль, виникла помилка: ${error.message}`;
                 if (error.message.includes("API Key не знайдено")) {
-                    simMessage += "⚠️ **API Key не знайдено.** **Використовується симуляція.** (Будь ласка, перевірте ваш API Key у GitHub Secrets.)\n\n";
-                } else {
-                    simMessage += `🔴 **Помилка:** ${error.message}. **Використовується симуляція.**\n\n`;
+                    errorDetails = `**API Key не знайдено.** Це означає, що ключ не був вставлений. Будь ласка, перевірте ваш GitHub Action (файл \`.github/workflows/deploy.yml\`) та Секрет (\`GEMINI_API_KEY\`).`;
+                } else if (error.message.includes("400") || error.message.includes("429")) {
+                    errorDetails = `**Помилка API (400/429):** Неправильний запит, або перевищено ліміт. Будь ласка, перевірте, чи коректний ключ вставлено (API Key) і чи не вичерпано ваш ліміт використання.`;
                 }
-                
-                simMessage += `**Крок 1: Аналіз (${inputType}):** Я б використав інструмент Google Search (Browsing) або Vision для аналізу джерела.\n\n`;
-                simMessage += `**Крок 2: Рішення:** Завдання знайдене і розв'язане.\n\n`;
-                simMessage += `**Пояснення правила:** Це зроблено, щоб допомогти вам зрозуміти суть матеріалу! 🧑‍🎓`;
-                
-                resultMessage.innerHTML = simMessage.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                errorMessage.classList.add('hidden');
 
+                showError(errorDetails);
+                resultMessage.textContent = "";
             } finally {
                 stopLoading();
             }
