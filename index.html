@@ -46,37 +46,33 @@
             color: #78909C;
         }
 
-        /* Контейнер для фото с ледяным градиентным фоном и тенью */
+        /* КОНТЕЙНЕР ФОТО: Ледяной фон + ТЕНЬ для отделения от body */
         .assistant-container {
             /* Фон: светлый ледяной градиент */
             background-image: linear-gradient(to bottom, #e0f7fa 0%, #ffffff 100%);
             position: relative;
             /* Добавляем внутреннюю тень для плавного перехода к белому фону */
-            box-shadow: inset 0px 0px 30px rgba(0, 0, 0, 0.1); 
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.1); /* Легкая внешняя тень */
         }
         
         .assistant-image {
             opacity: 0;
-            animation: fadeIn 1.5s ease-out forwards;
+            animation: fadeIn 1.5s ease-out forwards; /* Плавное появление (п. 4) */
         }
         
         .assistant-image.pulsing {
-            animation: pulse-opacity-interactive 1s infinite alternate ease-in-out;
+            animation: pulse-opacity-interactive 1s infinite alternate ease-in-out; /* Пульсация (п. 4) */
         }
 
-        /* ИСПРАВЛЕНИЕ: МАКСИМАЛЬНО ТОЧНЫЙ МАТОВЫЙ ПРОЗРАЧНЫЙ ФОН (FROSTED GLASS) */
+        /* СТИЛЬ МАТОВОГО СТЕКЛА (ИСПРАВЛЕНА ПРОЗРАЧНОСТЬ) */
         .assistant-label {
-            /* Темная, но прозрачная основа (для контраста белого текста) */
-            background-color: rgba(0, 0, 0, 0.45); /* Сделано темнее и прозрачнее, как на Image 2 */
-            color: #fff; /* Белый цвет текста */
-            /* Эффект матового стекла/размытия фона (более сильное размытие, как на скрине) */
+            /* Темная, но более ПРОЗРАЧНАЯ основа (п. 2) */
+            background-color: rgba(0, 0, 0, 0.3); 
+            color: #fff; 
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px); 
-            /* Мягкая белая рамка для эффекта "льда" */
-            border: 1px solid rgba(255, 255, 255, 0.2); /* Немного более заметная рамка */
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Более заметная тень */
-            
-            /* Убеждаемся, что подпись не выйдет за границы */
+            border: 1px solid rgba(255, 255, 255, 0.3); /* Более заметная рамка */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
             max-width: 90%; 
             width: fit-content;
         }
@@ -391,11 +387,12 @@
             resultMessage.classList.remove('bg-red-100', 'text-red-700');
             resultMessage.classList.add('bg-white', 'text-gray-800');
             
-            // Активация пульсации фото
+            // Активация пульсации фото (п. 4)
             assistantPhoto.classList.add('pulsing');
             
             let progressInterval;
             let currentProgress = 0;
+            // Запуск симуляции прогресса (п. 5)
             const startProgressSimulation = () => {
                 currentProgress = 0;
                 progressInterval = setInterval(() => {
@@ -425,10 +422,9 @@
                     
 **Крок 1: Аналіз.** Я б використав інструмент **Google Search (Browsing)**, щоб перейти за посиланням: ${url || 'N/A'}, знайти завдання ${document.getElementById('task-number').value || 'N/A'} на сторінці ${document.getElementById('task-page').value || 'N/A'}.
                     
-**Крок 2: Рішення.** Для математики (якщо обрано), я б надав покроковий розв'язок. Наприклад, для задачі №181 на стор. 60 пропонується:
-1. Запишіть формулу...
-2. Підставте значення...
-3. **Пояснення правила:** Це зроблено, щоб допомогти вам не просто списати, а зрозуміти суть матеріалу! 🚀
+**Крок 2: Рішення.** Для математики (якщо обрано), я б надав покроковий розв'язок.
+                    
+**Пояснення правила:** Це зроблено, щоб допомогти вам не просто списати, а зрозуміти суть матеріалу! 🚀
                     
 P.S. Для реальної роботи **додайте ваш Google API Key в налаштуваннях секретів Canvas (або GitHub Actions для GitHub Pages)**.
                     `;
@@ -457,12 +453,10 @@ P.S. Для реальної роботи **додайте ваш Google API Key
                     let parts = [];
                     
                     if (selectedInputType === 'url') {
-                        // Добавляем URL к промпту, инициируя browsing
                         userPrompt += `Посилання на підручник: ${url}.`;
                         parts.push({ text: userPrompt });
                     } else if (selectedInputType === 'photo' && selectedFile) {
                         const base64Data = await fileToBase64(selectedFile);
-                        // Добавляем изображение как часть запроса
                         parts.push({
                             inlineData: {
                                 mimeType: selectedFile.type,
@@ -470,13 +464,11 @@ P.S. Для реальної роботи **додайте ваш Google API Key
                             }
                         });
                         userPrompt += `[Завантажене фото].`;
-                        parts.push({ text: userPrompt }); // Добавляем текстовый промпт после изображения
+                        parts.push({ text: userPrompt }); 
                     }
 
-                    // Корректный payload для API
                     const payload = {
                         contents: [{ parts: parts }],
-                        // Подключение инструмента Google Search для Browsing по URL
                         tools: [{ googleSearch: {} }], 
                         config: {
                             systemInstruction: `Ви — доброзичливий, досвідчений вчитель-асистент. Ваша мета — допомогти учню зрозуміти, як розв'язувати завдання, а не просто дати відповідь. Пояснюйте логіку, правила та кроки детально і заохочувальним тоном. Відповідь надавайте виключно українською мовою.`
