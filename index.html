@@ -152,8 +152,8 @@
     </div>
 
     <script>
-        // Цей рядок буде замінено GitHub Action (deploy.yml).
-        // Якщо інжекція не спрацює, apiKey залишиться порожнім рядком, і ми покажемо помилку.
+        // Цей рядок буде замінено GitHub Action (deploy.yml) на ваш ключ.
+        // Залиште його таким, як є: const apiKey = '';
         const apiKey = ''; 
         
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
@@ -252,7 +252,8 @@
         });
 
         // Ініціалізація (переконаємося, що URL режим активний при завантаженні)
-        urlTab.click(); 
+        // ВАЖЛИВО: Оскільки в HTML-коді вище URL-tab вже має потрібні класи, цей рядок можна пропустити або використовувати для ініціалізації
+        // urlTab.click(); 
 
         // --- Обробка завантаження файлу ---
 
@@ -341,9 +342,9 @@
                 return;
             }
 
-            // 2. Валідація API Key (тепер ця перевірка працюватиме коректно)
+            // 2. Валідація API Key (Тепер цей рядок має містити ключ після Action)
             if (apiKey === '') {
-                showError(`**API Key не знайдено.** Це означає, що ключ не був вставлений. Будь ласка, перевірте ваш <a href=".github/workflows/deploy.yml" target="_blank" class="underline">GitHub Action</a> та Секрет (\`GEMINI_API_KEY\`).`);
+                showError(`**Помилка API:** Ключ **не знайдено** або не був коректно вставлений. Будь ласка, перевірте ваш <a href=".github/workflows/deploy.yml" target="_blank" class="underline">GitHub Action</a> та Секрет (\`GEMINI_API_KEY\`).`);
                 return;
             }
 
