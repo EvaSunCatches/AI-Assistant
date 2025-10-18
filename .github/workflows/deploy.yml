@@ -6,11 +6,17 @@ on:
       - main
   workflow_dispatch:
 
+# *** ВИПРАВЛЕННЯ ПОМИЛКИ DEPLOY: ДОДАНО СЕКЦІЮ PERMISSIONS ***
+permissions:
+  contents: read # Дозволяє читати вміст репозиторію
+  pages: write   # Дозволяє записувати в GitHub Pages
+  id-token: write # Дозволяє отримувати OIDC токен для аутентифікації (вирішує вашу поточну помилку)
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     
-    # Визначаємо змінну середовища GEMINI_API_KEY для використання в усіх кроках job, що стосуються ключа
+    # *** ВИПРАВЛЕННЯ ПОМИЛКИ API KEY: ВИКОРИСТАННЯ ENV та SED ***
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
@@ -18,32 +24,39 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: true  # Рекурсивне клонування, якщо є підмодулі
+          submodules: true
 
+      # 1. СЕКЦІЯ ВСТАВКИ API KEY (використовуємо максимально стійку логіку sed)
       - name: Inject API Key into index.html
-        # Цей крок замінює заглушку const apiKey = ''; на фактичний ключ із Secrets
         run: |
-          # Перевірка, чи існує файл index.html
+          # Перевіряємо, чи існує файл
           if [ ! -f index.html ]; then
             echo "Error: index.html not found!"
             exit 1
           fi
 
-          # 1. Заміна: const apiKey = ''; -> const apiKey = 'AIzaSy...';
-          # Використовуємо $GEMINI_API_KEY, визначений у секції env.
-          # Одинарні лапки всередині подвійних забезпечують коректний JavaScript-синтаксис.
-          sed -i "s|const apiKey = '';|const apiKey = '$GEMINI_API_KEY';|g" index.html
+          # Використовуємо тимчасову змінну для коректного екранування в sed
+          # Потрійні лапки всередині подвійних забезпечують коректний JS-синтаксис: const apiKey = 'ВАШ_КЛЮЧ';
+          API_KEY_VALUE="'${{ env.GEMINI_API_KEY }}'"
+          
+          # Заміна: const apiKey = ''; -> const apiKey = 'ВАШ_КЛЮЧ';
+          # Використовуємо символ # як роздільник для sed, щоб уникнути конфлікту з символами URL або змінної
+          sed -i "s#const apiKey = '';#const apiKey = $API_KEY_VALUE;#g" index.html
           
           echo "API Key successfully injected into index.html."
           
+      # 2. СЕКЦІЯ DEPLOY
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './' # Завантажуємо всі файли з кореневого каталогу, включно з оновленим index.html
+          path: './'
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        # *** ВИПРАВЛЕННЯ ПОМИЛКИ DEPLOY: ДОДАНО ENVIRONMENT ***
+        environment:
+          name: github-pages # Це виправляє попередню помилку 'Missing environment' (Снимок экрана 2025-10-18 в 08.59.01.jpg)
