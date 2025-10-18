@@ -13,13 +13,13 @@
             font-family: 'Nunito', sans-serif;
             background-color: #f7f7f7;
         }
-        /* Адаптація для мобільних пристроїв: на маленьких екранах прибираємо min-height */
+        
+        /* Адаптація для мобільних пристроїв */
         .content-area {
             min-height: auto; 
             max-height: none;
             overflow-y: visible;
         }
-        /* На великих екранах повертаємо фіксовану висоту для розділення */
         @media (min-width: 1024px) {
             .content-area {
                 min-height: 100vh;
@@ -43,12 +43,10 @@
             transform: translateX(-50%);
             width: 80%;
             max-width: 300px;
-            padding: 12px; /* Трохи збільшено відступ */
+            padding: 12px; 
             border-radius: 10px;
-            /* Збільшено непрозорість до 0.4 для кращої читабельності */
-            background: rgba(255, 255, 255, 0.4); 
-            /* Збільшено розмиття для виразнішого ефекту */
-            backdrop-filter: blur(8px); 
+            background: rgba(255, 255, 255, 0.45); /* Зроблено трохи темнішим для кращої читабельності */
+            backdrop-filter: blur(10px); /* Збільшено розмиття */
             color: white; 
             text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
@@ -79,22 +77,46 @@
             100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
         }
 
-        /* Стиль для обраної кнопки (Колір ЛьОДУ) */
+        /* Стиль для обраної кнопки (Колір ЛьОДУ з UI/UX.jpg) */
         .tab-selected {
-            /* Більш холодний градієнт */
-            background: linear-gradient(to right, #91d2ff, #4c9fff); 
+            background: linear-gradient(to right, #4c9fff, #007bff); /* Синій градієнт */
             color: white;
-            border-color: #4c9fff;
+            border-color: #007bff;
             box-shadow: 0 2px 4px rgba(0, 123, 255, 0.4);
         }
-        /* Стиль для неактивної кнопки - напівпрозорий вигляд льоду */
+        /* Стиль для неактивної кнопки */
         .tab-unselected {
             background-color: rgba(255, 255, 255, 0.6); 
             color: #444;
-            border-color: #b0e0ff; /* Світло-блакитний обідок */
+            border-color: #b0e0ff;
             box-shadow: none;
         }
         
+        /* Стилізація input type="file" для відображення українською */
+        .custom-file-input::-webkit-file-upload-button {
+            visibility: hidden;
+        }
+        .custom-file-input::before {
+            content: 'Вибрати файл...';
+            display: inline-block;
+            background: linear-gradient(to top, #f9f9f9, #e3e3e3);
+            border: 1px solid #999;
+            border-radius: 3px;
+            padding: 5px 8px;
+            outline: none;
+            white-space: nowrap;
+            -webkit-user-select: none;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 10pt;
+            color: #444;
+        }
+        .custom-file-input:hover::before {
+            border-color: black;
+        }
+        .custom-file-input:active::before {
+            background: -webkit-linear-gradient(top, #e3e3e3, #f9f9f9);
+        }
     </style>
 </head>
 <body>
@@ -127,7 +149,7 @@
                         </button>
                         <button id="photo-tab" class="px-3 py-2 text-sm font-semibold rounded-lg border tab-unselected transition duration-150 ease-in-out">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-8-4v8m-4-4h8m-1-5h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg>
-                            Завантажити фото
+                            Завантажити фото/Камера
                         </button>
                     </div>
 
@@ -148,8 +170,26 @@
                     </div>
 
                     <div id="photo-container" class="hidden">
-                        <label for="file-upload" class="block text-xs font-medium text-gray-500 mb-2">Завантажити зображення завдання</label>
-                        <input type="file" id="file-upload" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        <label class="block text-xs font-medium text-gray-500 mb-2">Оберіть або сфотографуйте завдання</label>
+                        
+                        <div class="flex space-x-3 mb-4">
+                            <label for="file-upload" class="flex-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                                <input type="file" id="file-upload" accept="image/*" class="hidden">
+                                <span class="block text-center py-2 px-4 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition duration-150">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-8-4v8m-4-4h8m-1-5h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg>
+                                    Вибрати файл
+                                </span>
+                            </label>
+                            
+                            <label for="camera-capture" class="flex-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                                <input type="file" id="camera-capture" accept="image/*" capture="environment" class="hidden">
+                                <span class="block text-center py-2 px-4 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition duration-150">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.218A2 2 0 0110.69 4h2.62a2 2 0 011.664.89l.812 1.218a2 2 0 001.664.89H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9zM12 14a4 4 0 100-8 4 4 0 000 8z"/></svg>
+                                    Зробити фото
+                                </span>
+                            </label>
+                        </div>
+
                         <div id="image-preview" class="mt-3 hidden">
                             <p class="text-sm text-gray-500">Завантажене зображення:</p>
                             <img id="preview-image" src="" alt="Image Preview" class="max-w-full h-auto max-h-32 rounded-lg mt-2 border border-gray-300 object-contain">
@@ -192,7 +232,7 @@
 
     <script>
         // Цей рядок буде замінено GitHub Action (deploy.yml) на ваш ключ.
-        // **ЗАХИСТ:** Ми залишаємо його порожнім. Якщо Action не спрацює, спрацює перевірка нижче.
+        // Залишаємо порожнім. Якщо Action не спрацює, спрацює перевірка нижче.
         const apiKey = ''; 
         
         // Використовуємо стабільну модель gemini-2.5-flash
@@ -247,6 +287,7 @@
         const urlContainer = document.getElementById('url-container');
         const photoContainer = document.getElementById('photo-container');
         const fileUpload = document.getElementById('file-upload');
+        const cameraCapture = document.getElementById('camera-capture'); // Новий елемент для камери
         const previewImage = document.getElementById('preview-image');
         const imagePreview = document.getElementById('image-preview');
         const submitButton = document.getElementById('submit-button');
@@ -290,6 +331,7 @@
             isUrlMode = true;
             updateTabStyles();
             fileUpload.value = ''; 
+            cameraCapture.value = ''; // Очищаємо і камеру
             imagePreview.classList.add('hidden');
             base64Image = null;
         });
@@ -301,15 +343,21 @@
 
         window.onload = updateTabStyles; 
 
-        // --- Обробка завантаження файлу ---
+        // --- Обробка завантаження файлу / захоплення камери ---
 
-        fileUpload.addEventListener('change', async (event) => {
+        async function handleFileUpload(event) {
             const file = event.target.files[0];
             if (file) {
                 try {
                     base64Image = await fileToBase64(file);
                     previewImage.src = URL.createObjectURL(file);
                     imagePreview.classList.remove('hidden');
+                    // Очищаємо інше поле вводу, щоб уникнути конфліктів
+                    if (event.target.id === 'file-upload') {
+                        cameraCapture.value = '';
+                    } else if (event.target.id === 'camera-capture') {
+                        fileUpload.value = '';
+                    }
                 } catch (error) {
                     showError("Помилка завантаження файлу.");
                     base64Image = null;
@@ -318,7 +366,10 @@
                 imagePreview.classList.add('hidden');
                 base64Image = null;
             }
-        });
+        }
+
+        fileUpload.addEventListener('change', handleFileUpload);
+        cameraCapture.addEventListener('change', handleFileUpload); // Обробка захоплення камери
 
         // --- Управління станом UI та помилками ---
 
@@ -382,15 +433,15 @@
             const details = taskDetails.value.trim();
             let promptContent = [];
             
-            // 1. Валідація API Key (тепер із жорстким повідомленням, якщо Action не спрацював)
+            // 1. Валідація API Key
             if (apiKey === '') {
                 showError(`**Помилка API:** Ключ **не знайдено** або не був коректно вставлений. Це критична проблема розгортання. Будь ласка, перевірте ваш <a href=".github/workflows/deploy.yml" target="_blank" class="underline">GitHub Action</a> та Секрет (\`GEMINI_API_KEY\`).`);
                 return;
             }
 
-            // 2. Валідація введення (тепер taskDetails НЕ обов'язковий)
+            // 2. Валідація введення 
             if (!isUrlMode && !base64Image) {
-                showError("Будь ласка, завантажте зображення завдання.");
+                showError("Будь ласка, завантажте зображення завдання або зробіть фото.");
                 return;
             }
             if (isUrlMode && !urlLink.value.trim() && !pageNumber.value.trim() && !taskNumber.value.trim() && !details) {
@@ -432,10 +483,12 @@
                     "3. Пояснення правила: Поясніть правило або теорію, що використовується, щоб допомогти користувачеві зрозуміти суть матеріалу."
                 );
 
+                const uploadedFile = fileUpload.files[0] || cameraCapture.files[0];
+
                 promptContent.push({
                     inlineData: {
                         data: base64Image,
-                        mimeType: fileUpload.files[0].type
+                        mimeType: uploadedFile.type
                     }
                 });
             }
