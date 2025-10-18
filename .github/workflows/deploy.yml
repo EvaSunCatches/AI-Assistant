@@ -15,7 +15,6 @@ jobs:
       pages: write
       id-token: write
       
-    # ВИПРАВЛЕННЯ ПОМИЛКИ: Додано блок environment для gh-pages
     environment:
       name: github-pages
 
@@ -27,22 +26,23 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
         
-      # 1. СЕКЦІЯ ВСТАВКИ API KEY (використовуємо простий і надійний маркер)
+      # 1. СЕКЦІЯ ВСТАВКИ API KEY (використовуємо максимально стійку логіку sed)
       - name: Inject API Key into index.html
+        # Використовуємо екранування змінної та символ # як роздільник
         run: |
-          # Замінюємо маркер у index.html на оголошення змінної apiKey
-          # У index.html має бути рядок: const apiKey = '';
-          sed -i 's|const apiKey = '"''"';|const apiKey = "${{ env.GEMINI_API_KEY }}";|g' index.html
+          API_KEY_VALUE="${{ env.GEMINI_API_KEY }}"
+          
+          # Заміна 'const apiKey = '';' на 'const apiKey = "ВАШ_КЛЮЧ";'
+          # Ключ тепер обгорнутий подвійними лапками для коректного JS.
+          sed -i "s#const apiKey = '';#const apiKey = \"$API_KEY_VALUE\";#g" index.html
           
           # *** ДІАГНОСТИКА: ПЕРЕВІРКА ***
           echo "Перевірка вставки API Key (побачите початок ключа):"
           grep 'const apiKey = ' index.html
         
-      # 2. Setup Pages (обов'язковий крок)
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      # 3. РОЗГОРТАННЯ
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
