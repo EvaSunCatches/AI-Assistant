@@ -152,10 +152,9 @@
     </div>
 
     <script>
-        // 💡 [GEMINI_API_KEY_MARKER]
-        // Цей рядок буде замінено GitHub Action. Якщо інжекція не спрацює, apiKey залишиться порожнім рядком.
+        // Цей рядок буде замінено GitHub Action (deploy.yml).
+        // Якщо інжекція не спрацює, apiKey залишиться порожнім рядком, і ми покажемо помилку.
         const apiKey = ''; 
-        // 💡 [END_GEMINI_API_KEY_MARKER]
         
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
@@ -342,8 +341,8 @@
                 return;
             }
 
+            // 2. Валідація API Key (тепер ця перевірка працюватиме коректно)
             if (apiKey === '') {
-                // Пряма перевірка apiKey. Тепер вона повинна працювати коректно, якщо інжекція не вдалася.
                 showError(`**API Key не знайдено.** Це означає, що ключ не був вставлений. Будь ласка, перевірте ваш <a href=".github/workflows/deploy.yml" target="_blank" class="underline">GitHub Action</a> та Секрет (\`GEMINI_API_KEY\`).`);
                 return;
             }
