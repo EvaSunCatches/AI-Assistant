@@ -16,6 +16,7 @@
         }
         /* ВАЖЛИВО: Виправлено шлях до зображення assistant.png, яке знаходиться у папці assets */
         .assistant-image {
+            /* Використовуємо фонове зображення з папки assets */
             background: url('assets/assistant.png') no-repeat center center; 
             background-size: cover;
             min-height: 100vh; 
@@ -153,8 +154,9 @@
     <script>
         const apiKey = "AIzaSyB8-NfcBCVfrGvvOv4Ip9JxD1r6ZzQFPDU";
 // 💡 [GEMINI_API_KEY_MARKER]
-        // Цей рядок буде замінено GitHub Action: const apiKey = "ВАШ_КЛЮЧ";
-        const apiKey = ''; // Резервне значення на випадок локального тестування або помилки Action
+        // Цей рядок буде замінено GitHub Action. Якщо інжекція не спрацює, apiKey залишиться порожнім рядком.
+        const apiKey = ''; 
+        // 💡 [END_GEMINI_API_KEY_MARKER]
         
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
@@ -228,7 +230,6 @@
 
         // --- Ініціалізація та перемикання вкладок ---
         
-        // Виправлено: Кнопки тепер працюють коректно
         urlTab.addEventListener('click', () => {
             isUrlMode = true;
             urlTab.classList.add('bg-blue-100', 'text-blue-600', 'border-blue-600');
@@ -251,6 +252,9 @@
             photoContainer.classList.remove('hidden');
             urlContainer.classList.add('hidden');
         });
+
+        // Ініціалізація (переконаємося, що URL режим активний при завантаженні)
+        urlTab.click(); 
 
         // --- Обробка завантаження файлу ---
 
@@ -291,7 +295,7 @@
         }
 
         function showError(message) {
-            errorText.textContent = message;
+            errorText.innerHTML = message; // Використовуємо innerHTML для форматування
             errorMessage.classList.remove('hidden');
             resultMessage.textContent = "";
         }
@@ -332,7 +336,6 @@
             const subject = subjectSelect.value;
             const details = taskDetails.value.trim();
             let promptContent = [];
-            let inputType = '';
             
             // 1. Валідація
             if (!details) {
@@ -340,12 +343,16 @@
                 return;
             }
 
+            if (apiKey === '') {
+                // Пряма перевірка apiKey. Тепер вона повинна працювати коректно, якщо інжекція не вдалася.
+                showError(`**API Key не знайдено.** Це означає, що ключ не був вставлений. Будь ласка, перевірте ваш <a href=".github/workflows/deploy.yml" target="_blank" class="underline">GitHub Action</a> та Секрет (\`GEMINI_API_KEY\`).`);
+                return;
+            }
+
             if (isUrlMode) {
                 const url = urlLink.value.trim();
                 const page = pageNumber.value.trim();
                 const task = taskNumber.value.trim();
-
-                inputType = 'URL/Browsing';
                 
                 // Збираємо текстовий промпт для URL
                 promptContent.push(
@@ -369,8 +376,6 @@
                     showError("Завантажте зображення завдання.");
                     return;
                 }
-                
-                inputType = 'Image/Vision';
                 
                 // Збираємо промпт для зображення
                 promptContent.push(
@@ -398,13 +403,7 @@
             startLoading();
             
             try {
-                // Перевірка, чи ключ був вставлений
-                if (apiKey === '') {
-                    // Це означає, що GitHub Action не спрацював, або ви тестуєте локально.
-                    // Видаємо помилку, щоб користувач розумів, чому не працює.
-                    throw new Error("API Key не знайдено. Будь ласка, перевірте ваш API Key у GitHub Secrets та GitHub Action.");
-                }
-
+                
                 const response = await fetchWithRetry(apiUrl, {
                     method: 'POST',
                     headers: {
@@ -426,22 +425,22 @@
 
                 if (response.candidates && response.candidates.length > 0 && response.candidates[0].content && response.candidates[0].content.parts && response.candidates[0].content.parts.length > 0) {
                     const text = response.candidates[0].content.parts[0].text;
-                    // Проста заміна Markdown-стилю на HTML для bold
+                    // Заміна Markdown-стилю на HTML для bold
                     resultMessage.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                     errorMessage.classList.add('hidden');
                 } else {
-                    throw new Error("Не вдалося отримати коректну відповідь від AI. Можливо, відповідь була заблокована.");
+                    throw new Error("Не вдалося отримати коректну відповідь від AI. Можливо, відповідь була заблокована або неповна.");
                 }
                 
             } catch (error) {
                 console.error("Помилка при виклику API:", error);
                 
-                // Якщо помилка пов'язана з ключем, даємо спеціальне повідомлення
                 let errorDetails = `На жаль, виникла помилка: ${error.message}`;
-                if (error.message.includes("API Key не знайдено")) {
-                    errorDetails = `**API Key не знайдено.** Це означає, що ключ не був вставлений. Будь ласка, перевірте ваш GitHub Action (файл \`.github/workflows/deploy.yml\`) та Секрет (\`GEMINI_API_KEY\`).`;
-                } else if (error.message.includes("400") || error.message.includes("429")) {
+                
+                if (error.message.includes("400") || error.message.includes("429")) {
                     errorDetails = `**Помилка API (400/429):** Неправильний запит, або перевищено ліміт. Будь ласка, перевірте, чи коректний ключ вставлено (API Key) і чи не вичерпано ваш ліміт використання.`;
+                } else if (error.message.includes("404")) {
+                     errorDetails = `**Помилка 404:** API-шлях не знайдено. Можливо, проблема з URL або конфігурацією.`;
                 }
 
                 showError(errorDetails);
