@@ -8,24 +8,27 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Підключення шрифтів для оригінального вигляду */
+        /* Підключення шрифтів */
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
         body {
             font-family: 'Nunito', sans-serif;
             background-color: #f7f7f7;
         }
-        /* ВАЖЛИВО: Зміни для кращої видимості на екрані 100% */
+        /* Зміни для кращої видимості на екрані 100% */
         .content-area {
             min-height: 100vh;
             max-height: 100vh;
-            overflow-y: auto; /* Дозволяє прокрутку лише цієї секції за потреби */
+            overflow-y: auto; 
         }
+        /* Зображення асистента: зменшено до 40% ширини на великих екранах */
         .assistant-image {
             background: url('assets/assistant.png') no-repeat center center; 
             background-size: cover;
             min-height: 100vh; 
             position: relative;
         }
+        
+        /* ЕФЕКТ МАТОВОГО СКЛА ТА БІЛІ БУКВИ */
         .assistant-text-box {
             position: absolute;
             bottom: 20px;
@@ -35,13 +38,19 @@
             max-width: 300px;
             padding: 10px;
             border-radius: 10px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #333;
+            /* Напівпрозорий фон */
+            background: rgba(255, 255, 255, 0.2);
+            /* Ефект матового скла */
+            backdrop-filter: blur(5px);
+            /* Білий текст */
+            color: white; 
             text-align: center;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
+
+        /* Стилі для ПРОГРЕС-БАРА */
         #progress-bar {
-            height: 8px; /* Зменшено висоту */
+            height: 8px;
             background-color: #e0e0e0;
             border-radius: 4px;
             margin-top: 8px;
@@ -49,22 +58,26 @@
         #progress-fill {
             height: 100%;
             width: 0%;
-            background-color: #007bff; /* Синій для UX */
+            /* Градієнт для прогрес-бара */
+            background: linear-gradient(to right, #4c9fff, #007bff); 
             border-radius: 4px;
             transition: width 0.3s;
         }
+        
+        /* АНІМАЦІЯ ПУЛЬСАЦІЇ */
         .pulse {
             animation: pulse-animation 2s infinite;
         }
         @keyframes pulse-animation {
-            0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); }
+            /* Використовуємо колір градієнта */
+            0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); } 
             70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
             100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
         }
 
-        /* Стиль для обраної кнопки */
+        /* Стиль для обраної кнопки (Градієнт) */
         .tab-selected {
-            background-color: #007bff; /* Синій */
+            background: linear-gradient(to right, #4c9fff, #007bff); 
             color: white;
             border-color: #007bff;
         }
@@ -79,8 +92,8 @@
 <body>
     <div class="flex flex-col lg:flex-row min-h-screen">
         
-        <div class="w-full lg:w-1/2 p-4 md:p-8 lg:p-12 flex items-start justify-center content-area">
-            <div class="w-full max-w-lg pt-4 pb-10">
+        <div class="w-full lg:w-3/5 p-4 md:p-8 lg:p-12 flex items-start justify-center content-area">
+            <div class="w-full max-w-xl pt-4 pb-10">
                 <h1 class="text-2xl font-bold mb-6 text-gray-800">Введіть ваше завдання</h1>
 
                 <div class="bg-white p-5 rounded-lg shadow-xl">
@@ -138,7 +151,7 @@
                     <h2 class="text-md font-semibold mt-4 mb-2 text-gray-700">Секція: Укажіть, що необхідно зробити (необов'язково)</h2>
                     <textarea id="task-details" rows="2" placeholder="Наприклад: 'Допоможи мені зрозуміти, як розв'язати це завдання, та поясни правило, яке використовується.' Це уточнить завдання!" class="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 resize-none mb-4"></textarea>
                     
-                    <button id="submit-button" class="w-full px-6 py-3 text-lg font-semibold rounded-lg text-white bg-blue-700 hover:bg-blue-800 transition duration-150 ease-in-out shadow-lg disabled:bg-gray-400">
+                    <button id="submit-button" class="w-full px-6 py-3 text-lg font-semibold rounded-lg text-white bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 transition duration-150 ease-in-out shadow-lg disabled:bg-gray-400">
                         Отримати допомогу асистента
                     </button>
                     
@@ -160,10 +173,10 @@
             </div>
         </div>
 
-        <div class="w-full lg:w-1/2 assistant-image flex-shrink-0 hidden lg:block">
+        <div class="w-full lg:w-2/5 assistant-image flex-shrink-0 hidden lg:block">
             <div class="assistant-text-box">
-                <p class="text-xl font-bold text-blue-700">AI Освітній Асистент</p>
-                <p class="text-xs mt-1 text-gray-600">Ваш персональний помічник у навчанні</p>
+                <p class="text-xl font-bold">AI Освітній Асистент</p>
+                <p class="text-xs mt-1">Ваш персональний помічник у навчанні</p>
             </div>
         </div>
 
@@ -171,7 +184,6 @@
 
     <script>
         // Цей рядок буде замінено GitHub Action (deploy.yml) на ваш ключ.
-        // Залиште його таким, як є: const apiKey = '';
         const apiKey = ''; 
         
         // Використовуємо стабільну модель gemini-2.5-flash
@@ -278,7 +290,6 @@
             updateTabStyles();
         });
 
-        // Ініціалізація стилів
         window.onload = updateTabStyles; 
 
         // --- Обробка завантаження файлу ---
@@ -304,7 +315,8 @@
 
         function startLoading() {
             submitButton.disabled = true;
-            submitButton.classList.add('opacity-50', 'cursor-not-allowed', 'pulse');
+            // Додаємо клас пульсації
+            submitButton.classList.add('opacity-50', 'cursor-not-allowed', 'pulse'); 
             resultMessage.textContent = "Очікування відповіді...";
             errorMessage.classList.add('hidden');
             progressContainer.classList.remove('hidden');
@@ -314,7 +326,8 @@
 
         function stopLoading() {
             submitButton.disabled = false;
-            submitButton.classList.remove('opacity-50', 'cursor-not-allowed', 'pulse');
+            // Видаляємо клас пульсації
+            submitButton.classList.remove('opacity-50', 'cursor-not-allowed', 'pulse'); 
             progressContainer.classList.add('hidden');
             stopProgressSimulation();
         }
@@ -362,7 +375,7 @@
             const details = taskDetails.value.trim();
             let promptContent = [];
             
-            // 1. Валідація API Key (залишаємо, це критично)
+            // 1. Валідація API Key
             if (apiKey === '') {
                 showError(`**Помилка API:** Ключ **не знайдено** або не був коректно вставлений. Будь ласка, перевірте ваш <a href=".github/workflows/deploy.yml" target="_blank" class="underline">GitHub Action</a> та Секрет (\`GEMINI_API_KEY\`).`);
                 return;
@@ -373,6 +386,7 @@
                 showError("Будь ласка, завантажте зображення завдання.");
                 return;
             }
+            // Якщо обрано URL-режим, але нічого не введено (ні URL, ні сторінки/номера, ні деталей)
             if (isUrlMode && !urlLink.value.trim() && !pageNumber.value.trim() && !taskNumber.value.trim() && !details) {
                 showError("Будь ласка, введіть посилання, номери або детально опишіть завдання.");
                 return;
@@ -431,7 +445,6 @@
                             ...promptContent.filter(p => typeof p === 'object')
                         ]
                     }],
-                    // Інструменти (tools) тепер передаються як частина верхньорівневого JSON.
                     tools: [{ googleSearch: {} }] 
                 };
 
@@ -445,7 +458,6 @@
 
                 if (response.candidates && response.candidates.length > 0 && response.candidates[0].content && response.candidates[0].content.parts && response.candidates[0].content.parts.length > 0) {
                     const text = response.candidates[0].content.parts[0].text;
-                    // Проста заміна для bold та list (для чистоти коду)
                     resultMessage.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                     errorMessage.classList.add('hidden');
                 } else {
