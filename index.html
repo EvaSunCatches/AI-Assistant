@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Освітній Асистент</title>
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon"> 
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Підключення шрифтів для оригінального вигляду */
@@ -151,8 +153,9 @@
     <script>
         // 💡 [GEMINI_API_KEY_MARKER]
         const apiKey = "AIzaSyB8-NfcBCVfrGvvOv4Ip9JxD1r6ZzQFPDU";
-        // ВИПРАВЛЕНО: Додано const apiKey = ''; для запобігання ReferenceError, якщо GitHub Action не спрацює
-        const apiKey = ''; 
+        // Цей рядок буде замінено GitHub Action: const apiKey = "ВАШ_КЛЮЧ";
+        const apiKey = ''; // Резервне значення на випадок локального тестування або помилки Action
+        
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
         // === УТИЛІТИ ДЛЯ API ===
@@ -341,12 +344,6 @@
                 const url = urlLink.value.trim();
                 const page = pageNumber.value.trim();
                 const task = taskNumber.value.trim();
-
-                if (!url) {
-                    // Зробив URL необов'язковим, якщо є деталі
-                    // showError("Введіть посилання на підручник.");
-                    // return;
-                }
 
                 inputType = 'URL/Browsing';
                 
