@@ -1,53 +1,49 @@
-name: Deploy to GitHub Pages and Inject API Key
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches:
-      - main  # Переконайтеся, що це ваша основна гілка
+      - main
   workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
-      
-    environment:
-      name: github-pages
-
+    
+    # Визначаємо змінну середовища GEMINI_API_KEY для використання в усіх кроках job, що стосуються ключа
     env:
-      # Змінна середовища для доступу до секрету
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:
-      - name: Checkout 🛎️
+      - name: Checkout repository
         uses: actions/checkout@v4
-        
-      # 1. СЕКЦІЯ ВСТАВКИ API KEY (використовуємо максимально стійку логіку sed)
+        with:
+          submodules: true  # Рекурсивне клонування, якщо є підмодулі
+
       - name: Inject API Key into index.html
-        # Використовуємо екранування змінної та символ # як роздільник
+        # Цей крок замінює заглушку const apiKey = ''; на фактичний ключ із Secrets
         run: |
-          API_KEY_VALUE="${{ env.GEMINI_API_KEY }}"
+          # Перевірка, чи існує файл index.html
+          if [ ! -f index.html ]; then
+            echo "Error: index.html not found!"
+            exit 1
+          fi
+
+          # 1. Заміна: const apiKey = ''; -> const apiKey = 'AIzaSy...';
+          # Використовуємо $GEMINI_API_KEY, визначений у секції env.
+          # Одинарні лапки всередині подвійних забезпечують коректний JavaScript-синтаксис.
+          sed -i "s|const apiKey = '';|const apiKey = '$GEMINI_API_KEY';|g" index.html
           
-          # Заміна 'const apiKey = '';' на 'const apiKey = "ВАШ_КЛЮЧ";'
-          # Ключ тепер обгорнутий подвійними лапками для коректного JS.
-          sed -i "s#const apiKey = '';#const apiKey = \"$API_KEY_VALUE\";#g" index.html
+          echo "API Key successfully injected into index.html."
           
-          # *** ДІАГНОСТИКА: ПЕРЕВІРКА ***
-          echo "Перевірка вставки API Key (побачите початок ключа):"
-          grep 'const apiKey = ' index.html
-        
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
-          
-      - name: Deploy to GitHub Pages 🚀
+          path: './' # Завантажуємо всі файли з кореневого каталогу, включно з оновленим index.html
+
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
