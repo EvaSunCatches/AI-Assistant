@@ -8,19 +8,26 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Підключення шрифтів */
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
         body {
             font-family: 'Nunito', sans-serif;
             background-color: #f7f7f7;
         }
-        /* Зміни для кращої видимості на екрані 100% */
+        /* Адаптація для мобільних пристроїв: на маленьких екранах прибираємо min-height */
         .content-area {
-            min-height: 100vh;
-            max-height: 100vh;
-            overflow-y: auto; 
+            min-height: auto; 
+            max-height: none;
+            overflow-y: visible;
         }
-        /* Зображення асистента: зменшено до 40% ширини на великих екранах */
+        /* На великих екранах повертаємо фіксовану висоту для розділення */
+        @media (min-width: 1024px) {
+            .content-area {
+                min-height: 100vh;
+                max-height: 100vh;
+                overflow-y: auto; 
+            }
+        }
+        
         .assistant-image {
             background: url('assets/assistant.png') no-repeat center center; 
             background-size: cover;
@@ -28,7 +35,7 @@
             position: relative;
         }
         
-        /* ЕФЕКТ МАТОВОГО СКЛА ТА БІЛІ БУКВИ */
+        /* ЕФЕКТ МАТОВОГО СКЛА - ЧИТАБЕЛЬНІСТЬ */
         .assistant-text-box {
             position: absolute;
             bottom: 20px;
@@ -36,16 +43,15 @@
             transform: translateX(-50%);
             width: 80%;
             max-width: 300px;
-            padding: 10px;
+            padding: 12px; /* Трохи збільшено відступ */
             border-radius: 10px;
-            /* Напівпрозорий фон */
-            background: rgba(255, 255, 255, 0.2);
-            /* Ефект матового скла */
-            backdrop-filter: blur(5px);
-            /* Білий текст */
+            /* Збільшено непрозорість до 0.4 для кращої читабельності */
+            background: rgba(255, 255, 255, 0.4); 
+            /* Збільшено розмиття для виразнішого ефекту */
+            backdrop-filter: blur(8px); 
             color: white; 
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         /* Стилі для ПРОГРЕС-БАРА */
@@ -58,8 +64,7 @@
         #progress-fill {
             height: 100%;
             width: 0%;
-            /* Градієнт для прогрес-бара */
-            background: linear-gradient(to right, #4c9fff, #007bff); 
+            background: linear-gradient(to right, #6fc7ff, #007bff); 
             border-radius: 4px;
             transition: width 0.3s;
         }
@@ -69,30 +74,33 @@
             animation: pulse-animation 2s infinite;
         }
         @keyframes pulse-animation {
-            /* Використовуємо колір градієнта */
             0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); } 
             70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
             100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
         }
 
-        /* Стиль для обраної кнопки (Градієнт) */
+        /* Стиль для обраної кнопки (Колір ЛьОДУ) */
         .tab-selected {
-            background: linear-gradient(to right, #4c9fff, #007bff); 
+            /* Більш холодний градієнт */
+            background: linear-gradient(to right, #91d2ff, #4c9fff); 
             color: white;
-            border-color: #007bff;
+            border-color: #4c9fff;
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.4);
         }
-        /* Стиль для неактивної кнопки */
+        /* Стиль для неактивної кнопки - напівпрозорий вигляд льоду */
         .tab-unselected {
-            background-color: #f0f0f0;
+            background-color: rgba(255, 255, 255, 0.6); 
             color: #444;
-            border-color: #d1d1d1;
+            border-color: #b0e0ff; /* Світло-блакитний обідок */
+            box-shadow: none;
         }
+        
     </style>
 </head>
 <body>
     <div class="flex flex-col lg:flex-row min-h-screen">
         
-        <div class="w-full lg:w-3/5 p-4 md:p-8 lg:p-12 flex items-start justify-center content-area">
+        <div class="w-full lg:w-2/3 p-4 md:p-8 lg:p-12 flex items-start justify-center content-area">
             <div class="w-full max-w-xl pt-4 pb-10">
                 <h1 class="text-2xl font-bold mb-6 text-gray-800">Введіть ваше завдання</h1>
 
@@ -173,7 +181,7 @@
             </div>
         </div>
 
-        <div class="w-full lg:w-2/5 assistant-image flex-shrink-0 hidden lg:block">
+        <div class="w-full lg:w-1/3 assistant-image flex-shrink-0 hidden lg:block">
             <div class="assistant-text-box">
                 <p class="text-xl font-bold">AI Освітній Асистент</p>
                 <p class="text-xs mt-1">Ваш персональний помічник у навчанні</p>
@@ -184,6 +192,7 @@
 
     <script>
         // Цей рядок буде замінено GitHub Action (deploy.yml) на ваш ключ.
+        // **ЗАХИСТ:** Ми залишаємо його порожнім. Якщо Action не спрацює, спрацює перевірка нижче.
         const apiKey = ''; 
         
         // Використовуємо стабільну модель gemini-2.5-flash
@@ -315,7 +324,6 @@
 
         function startLoading() {
             submitButton.disabled = true;
-            // Додаємо клас пульсації
             submitButton.classList.add('opacity-50', 'cursor-not-allowed', 'pulse'); 
             resultMessage.textContent = "Очікування відповіді...";
             errorMessage.classList.add('hidden');
@@ -326,7 +334,6 @@
 
         function stopLoading() {
             submitButton.disabled = false;
-            // Видаляємо клас пульсації
             submitButton.classList.remove('opacity-50', 'cursor-not-allowed', 'pulse'); 
             progressContainer.classList.add('hidden');
             stopProgressSimulation();
@@ -375,9 +382,9 @@
             const details = taskDetails.value.trim();
             let promptContent = [];
             
-            // 1. Валідація API Key
+            // 1. Валідація API Key (тепер із жорстким повідомленням, якщо Action не спрацював)
             if (apiKey === '') {
-                showError(`**Помилка API:** Ключ **не знайдено** або не був коректно вставлений. Будь ласка, перевірте ваш <a href=".github/workflows/deploy.yml" target="_blank" class="underline">GitHub Action</a> та Секрет (\`GEMINI_API_KEY\`).`);
+                showError(`**Помилка API:** Ключ **не знайдено** або не був коректно вставлений. Це критична проблема розгортання. Будь ласка, перевірте ваш <a href=".github/workflows/deploy.yml" target="_blank" class="underline">GitHub Action</a> та Секрет (\`GEMINI_API_KEY\`).`);
                 return;
             }
 
@@ -386,7 +393,6 @@
                 showError("Будь ласка, завантажте зображення завдання.");
                 return;
             }
-            // Якщо обрано URL-режим, але нічого не введено (ні URL, ні сторінки/номера, ні деталей)
             if (isUrlMode && !urlLink.value.trim() && !pageNumber.value.trim() && !taskNumber.value.trim() && !details) {
                 showError("Будь ласка, введіть посилання, номери або детально опишіть завдання.");
                 return;
