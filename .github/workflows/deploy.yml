@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main  # Або 'master', якщо ви використовуєте стару назву гілки
+      - main  # Переконайтеся, що це ваша основна гілка ('main' або 'master')
 
 jobs:
   build-and-deploy:
@@ -14,15 +14,14 @@ jobs:
         uses: actions/checkout@v4
 
       # 1. СЕКЦІЯ ВСТАВКИ API KEY (ВИПРАВЛЕНО)
-      # Цей крок використовує SED для пошуку маркеру і вставки ключа
+      # Запобігає помилці "apiKey is not defined" та конфлікту оголошення
       - name: Inject API Key into index.html
         run: |
-          # Вставлення секрету GEMINI_API_KEY у JavaScript змінну apiKey у файлі index.html
-          # Маркер // 💡 [GEMINI_API_KEY_MARKER] повинен бути присутній у вашому index.html
-          sed -i "s|// 💡 \[GEMINI_API_KEY_MARKER\]|// 💡 \[GEMINI_API_KEY_MARKER\]\n        const apiKey = \"${{ secrets.GEMINI_API_KEY }}\";|g" index.html
+          # Вставляємо 'const apiKey = "ВАШ_КЛЮЧ";' прямо перед маркером
+          # Маркер // 💡 [GEMINI_API_KEY_MARKER] в index.html буде замінений на інжекцію ключа + резервну змінну.
+          sed -i 's|// 💡 \[GEMINI_API_KEY_MARKER\]|const apiKey = "${{ env.GEMINI_API_KEY }}";\n// 💡 \[GEMINI_API_KEY_MARKER\]|g' index.html
           
           # *** ДІАГНОСТИКА: ПЕРЕВІРКА, ЧИ КЛЮЧ БУВ ВСТАВЛЕНИЙ ***
-          # GitHub автоматично приховує секрети в логах, тому ви побачите лише початок.
           echo "Перевірка вставки API Key (побачите початок ключа):"
           grep 'const apiKey = ' index.html
         env:
@@ -35,6 +34,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./ # Розгортаємо кореневу папку, де знаходиться index.html
-          publish_branch: gh-pages # Гілка для розгортання вашого сайту (змініть, якщо потрібно)
-          cname: '' # Залиште порожнім, якщо не використовуєте власний домен
+          publish_dir: ./ # Розгортаємо кореневу папку
+          publish_branch: gh-pages # Гілка для розгортання вашого сайту (стандартна для Pages)
+          cname: ''
