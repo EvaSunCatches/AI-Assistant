@@ -10,25 +10,30 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+    # ОБОВ'ЯЗКОВІ ПРАВА ДЛЯ РОЗГОРТАННЯ
     permissions:
       contents: write
       pages: write
       id-token: write
+      
+    # ВИПРАВЛЕННЯ ПОМИЛКИ: Додано блок environment для GitHub Pages
+    environment:
+      name: github-pages
 
     env:
-      # Важливо: використовуйте ім'я секрету, яке ви створили в налаштуваннях репозиторію
+      # Використовуємо GEMINI_API_KEY з секретів, як ви його назвали
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
-      # 1. СЕКЦІЯ ВСТАВКИ API KEY (ВИПРАВЛЕНО: Використовуємо лише один рядок)
+      # 1. СЕКЦІЯ ВСТАВКИ API KEY (ВИПРАВЛЕНО)
       - name: Inject API Key into index.html
         run: |
-          # Нова команда sed: шукаємо рядок `const apiKey = '';`
-          # і замінюємо його на `const apiKey = "ВАШ_КЛЮЧ";`
-          # Це вирішує проблему конфлікту оголошення змінної.
+          # Нова команда sed: шукаємо рядок 'const apiKey = '';'
+          # і замінюємо його на 'const apiKey = "ВАШ_КЛЮЧ";'
+          # Це вирішує проблему ReferenceError та SyntaxError.
           sed -i 's|const apiKey = '"''"';|const apiKey = "${{ env.GEMINI_API_KEY }}";|g' index.html
           
           # *** ДІАГНОСТИКА: ПЕРЕВІРКА, ЧИ КЛЮЧ БУВ ВСТАВЛЕНИЙ ***
@@ -43,7 +48,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: . # Завантажуємо всі файли з кореневої папки
           
       - name: Deploy to GitHub Pages 🚀
         id: deployment
