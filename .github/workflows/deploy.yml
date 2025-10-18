@@ -1,39 +1,50 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages and Inject API Key
 
 on:
   push:
     branches:
       - main  # Переконайтеся, що це ваша основна гілка ('main' або 'master')
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    env:
+      # Важливо: використовуйте ім'я секрету, яке ви створили в налаштуваннях репозиторію
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
-      # 1. СЕКЦІЯ ВСТАВКИ API KEY (ВИПРАВЛЕНО)
-      # Запобігає помилці "apiKey is not defined" та конфлікту оголошення
+      # 1. СЕКЦІЯ ВСТАВКИ API KEY (ВИПРАВЛЕНО: Використовуємо лише один рядок)
       - name: Inject API Key into index.html
         run: |
-          # Вставляємо 'const apiKey = "ВАШ_КЛЮЧ";' прямо перед маркером
-          # Маркер // 💡 [GEMINI_API_KEY_MARKER] в index.html буде замінений на інжекцію ключа + резервну змінну.
-          sed -i 's|// 💡 \[GEMINI_API_KEY_MARKER\]|const apiKey = "${{ env.GEMINI_API_KEY }}";\n// 💡 \[GEMINI_API_KEY_MARKER\]|g' index.html
+          # Нова команда sed: шукаємо рядок `const apiKey = '';`
+          # і замінюємо його на `const apiKey = "ВАШ_КЛЮЧ";`
+          # Це вирішує проблему конфлікту оголошення змінної.
+          sed -i 's|const apiKey = '"''"';|const apiKey = "${{ env.GEMINI_API_KEY }}";|g' index.html
           
           # *** ДІАГНОСТИКА: ПЕРЕВІРКА, ЧИ КЛЮЧ БУВ ВСТАВЛЕНИЙ ***
           echo "Перевірка вставки API Key (побачите початок ключа):"
           grep 'const apiKey = ' index.html
-        env:
-          # Важливо: використовуйте ім'я секрету, яке ви створили в налаштуваннях репозиторію
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        
+      # 2. Setup Pages (обов'язковий крок для використання gh-pages)
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
 
-
-      # 2. РОЗГОРТАННЯ НА GITHUB PAGES
-      - name: Deploy to GitHub Pages 🚀
-        uses: peaceiris/actions-gh-pages@v4
+      # 3. РОЗГОРТАННЯ НА GITHUB PAGES
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./ # Розгортаємо кореневу папку
-          publish_branch: gh-pages # Гілка для розгортання вашого сайту (стандартна для Pages)
-          cname: ''
+          path: .
+          
+      - name: Deploy to GitHub Pages 🚀
+        id: deployment
+        uses: actions/deploy-pages@v4
