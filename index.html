@@ -191,8 +191,8 @@
             
             <div id="url-fields" class="space-y-4 mb-5 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
-                    <div class="flex-1">
-                        <label for="task-url" class="block text-xs font-medium text-gray-500 mb-1">URL (Посилання на підручник)</label>
+                    <div class="w-full">
+                        <label for="task-url" class="block text-xs font-medium text-gray-500 mb-1">URL (Посилання на підручник, обов'язково)</label>
                         <input type="url" id="task-url" placeholder="https://pidruchnik.ua/..."
                                 class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
@@ -204,7 +204,7 @@
                                 class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
                     <div class="flex-1">
-                        <label for="task-number" class="block text-xs font-medium text-gray-500 mb-1">Номер завдання (або §)</label>
+                        <label for="task-number" class="block text-xs font-medium text-gray-500 mb-1">Номер завдання (або §, наприклад: 181 або §3)</label>
                         <input type="text" id="task-number" placeholder="Напр. 54 або §3"
                                 class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
@@ -257,8 +257,8 @@
 </div>
 
 <script>
-    // Цей рядок має бути замінений GitHub Action (deploy.yml) на ваш ключ.
-    // Якщо помилка повторюється, перевірте, чи коректно працює sed-команда у вашому deploy.yml.
+    // ЦЕЙ РЯДОК БУДЕ ЗАМІНЕНО GitHub Action (deploy.yml) на ваш ключ.
+    // Для коректної роботи deploy.yml цей рядок повинен бути саме таким:
     const apiKey = ''; 
     
     // Використовуємо стабільну модель gemini-2.5-flash
@@ -276,6 +276,10 @@
     }
 
     async function fetchWithRetry(url, options, maxRetries = 3) {
+        if (apiKey === '') {
+             throw new Error(`Помилка API: Ключ не знайдено.`);
+        }
+        
         for (let i = 0; i < maxRetries; i++) {
             try {
                 const response = await fetch(url, options);
@@ -290,8 +294,11 @@
                     continue;
                 } else {
                     const errorBody = await response.text();
-                    if (response.status === 403 || response.status === 401 || response.status === 400) {
-                         throw new Error(`API Error (${response.status}): ${errorBody}`);
+                    if (response.status === 403 || response.status === 401) {
+                         throw new Error(`API Error (${response.status} Forbidden/Unauthorized): Будь ласка, перевірте ваш API-ключ.`);
+                    } else if (response.status === 400) {
+                         // Помилки 400 часто виникають через надто велике зображення або невалідне тіло запиту
+                         throw new Error(`API Error (${response.status} Bad Request): Неправильний формат запиту (наприклад, занадто велике зображення).`);
                     }
                     throw new Error(`HTTP error! status: ${response.status}. Body: ${errorBody}`);
                 }
@@ -365,10 +372,14 @@
     photoTab.addEventListener('click', () => {
         isUrlMode = false;
         updateTabStyles();
+        // Скидання полів URL при перемиканні
+        urlLink.value = '';
+        taskPage.value = '';
+        taskNumber.value = '';
     });
 
     window.onload = updateTabStyles; 
-
+    
     // --- Обробка завантаження файлу / захоплення камери ---
     // Єдиний input type="file" тепер обробляє і вибір файлу, і знімок з камери
 
@@ -376,6 +387,15 @@
         uploadedFile = event.target.files[0];
         
         if (uploadedFile) {
+            // Перевірка розміру файлу (макс. 4MB)
+            if (uploadedFile.size > 4 * 1024 * 1024) { 
+                showError("Помилка: Розмір файлу не повинен перевищувати 4MB.");
+                fileUpload.value = '';
+                imagePreview.classList.add('hidden');
+                base64Image = null;
+                return;
+            }
+            
             try {
                 base64Image = await fileToBase64(uploadedFile);
                 previewImage.src = URL.createObjectURL(uploadedFile);
@@ -456,7 +476,7 @@
         
         // 1. Валідація API Key (КРИТИЧНО)
         if (apiKey === '') {
-            showError(`**Помилка API:** Ключ **не знайдено**. Перевірте, чи коректно працює заміна Secret (\`GEMINI_API_KEY\`) у вашому скрипті GitHub Actions (\`deploy.yml\`).`);
+            showError(`**Помилка API:** Ключ **не знайдено** або не був коректно вставлений. Це критична проблема розгортання. Будь ласка, перевірте ваш GitHub Action та Секрет (\`GEMINI_API_KEY\`).`);
             return;
         }
         
@@ -488,7 +508,7 @@
         
         // 3. Формування промпта
         const basePrompt = [
-            `У мене є завдання з підручника. Предмет: **${subject}**.\n`,
+            `Ви є AI-асистентом для шкільних завдань. Предмет: **${subject}**.\n`,
             `**МОЄ ЗАПИТАННЯ:** ${details ? details : '[Розв\'яжіть завдання і поясніть логіку.]'}`
         ];
 
@@ -502,9 +522,10 @@
             promptContent.push(
                 basePrompt.join(''),
                 "\n\n**ІНСТРУКЦІЯ ДЛЯ ВАС (AI АСИСТЕНТА):**",
-                "1. Аналіз (Google Search): Використовуйте інструмент **Google Search (Browsing)**, якщо надано URL для пошуку контексту.",
+                "1. Аналіз (Google Search): Використовуйте інструмент **Google Search (Browsing)**, якщо надано URL, сторінку та номер завдання для пошуку контексту.",
                 "2. Рішення: Розв'яжіть завдання, використовуючи надану інформацію та ваш досвід.",
-                "3. Пояснення правила: Поясніть правило або теорію, що використовується, щоб допомогти користувачеві зрозуміти суть матеріалу."
+                "3. Пояснення правила: Поясніть правило або теорію, що використовується, щоб допомогти користувачеві зрозуміти суть матеріалу.",
+                "4. Форматування: Форматуйте відповідь у вигляді markdown для кращого читання."
             );
 
         } else { // Режим фото
@@ -514,7 +535,8 @@
                 "\n\n**ІНСТРУКЦІЯ ДЛЯ ВАС (AI АСИСТЕНТА):**",
                 "1. Аналіз (Vision): Використовуйте **Vision** для аналізу прикріпленого зображення.",
                 "2. Рішення: Розв'яжіть завдання, використовуючи надану інформацію та ваш досвід.",
-                "3. Пояснення правила: Поясніть правило або теорію, що використовується, щоб допомогти користувачеві зрозуміти суть матеріалу."
+                "3. Пояснення правила: Поясніть правило або теорію, що використовується, щоб допомогти користувачеві зрозуміти суть матеріалу.",
+                "4. Форматування: Форматуйте відповідь у вигляді markdown для кращого читання."
             );
 
             // Додаємо зображення в кінець
@@ -551,13 +573,10 @@
 
             if (response.candidates && response.candidates.length > 0 && response.candidates[0].content && response.candidates[0].content.parts && response.candidates[0].content.parts.length > 0) {
                 const text = response.candidates[0].content.parts[0].text;
-                // Заміна **текст** на <strong>текст</strong> для кращого відображення
-                resultMessage.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                // Заміна **текст** на <strong>текст</strong> для кращого відображення (Це потрібно для HTML, якщо Gemini не використовує HTML-теги)
+                resultMessage.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
                 errorMessage.classList.add('hidden');
                 
-                // Після успішної відповіді, ви готові до наступних інструкцій
-                console.log("AI Assistant Response Received successfully. Ready for further instructions on processing the result.");
-
             } else {
                 throw new Error("Не вдалося отримати коректну відповідь від AI. Перевірте вхідні дані.");
             }
@@ -565,12 +584,12 @@
         } catch (error) {
             console.error("Помилка при виклику API:", error);
             
-            let errorDetails = `На жаль, виникла помишка: ${error.message}`;
+            let errorDetails = `На жаль, виникла помилка: ${error.message}`;
             
             if (error.message.includes("403") || error.message.includes("401")) {
                  errorDetails = `**Помилка API (403/401 Forbidden):** Google відхилив запит. Це означає, що ваш ключ недійсний, вичерпано ліміт або він не має доступу до цієї моделі. Будь ласка, **перевірте Secret** у GitHub і сам API-ключ.`;
-            } else if (error.message.includes("400")) {
-                errorDetails = `**Помилка API (400 Bad Request):** Неправильний формат запиту або помилка в зображенні. Спробуйте уточнити деталі завдання.`;
+            } else if (error.message.includes("400") && error.message.includes("Bad Request")) {
+                errorDetails = `**Помилка API (400 Bad Request):** Неправильний формат запиту, або зображення занадто велике. Спробуйте уточнити деталі завдання.`;
             }
 
             showError(errorDetails);
