@@ -156,7 +156,8 @@
         // Залиште його таким, як є: const apiKey = '';
         const apiKey = ''; 
         
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        // КРИТИЧНО ВАЖЛИВА ЗМІНА: Використовуємо стабільну модель gemini-2.5-flash
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
         // === УТИЛІТИ ДЛЯ API ===
 
@@ -186,6 +187,10 @@
                     } else {
                         // Other error, throw it
                         const errorBody = await response.text();
+                        // 403 Forbidden - часто означає недійсний ключ.
+                        if (response.status === 403 || response.status === 401 || response.status === 400) {
+                             throw new Error(`Auth/Permission Error: ${response.status}. Body: ${errorBody}`);
+                        }
                         throw new Error(`HTTP error! status: ${response.status}. Body: ${errorBody}`);
                     }
                 } catch (error) {
@@ -250,10 +255,6 @@
             photoContainer.classList.remove('hidden');
             urlContainer.classList.add('hidden');
         });
-
-        // Ініціалізація (переконаємося, що URL режим активний при завантаженні)
-        // ВАЖЛИВО: Оскільки в HTML-коді вище URL-tab вже має потрібні класи, цей рядок можна пропустити або використовувати для ініціалізації
-        // urlTab.click(); 
 
         // --- Обробка завантаження файлу ---
 
@@ -342,7 +343,7 @@
                 return;
             }
 
-            // 2. Валідація API Key (Тепер цей рядок має містити ключ після Action)
+            // 2. Валідація API Key 
             if (apiKey === '') {
                 showError(`**Помилка API:** Ключ **не знайдено** або не був коректно вставлений. Будь ласка, перевірте ваш <a href=".github/workflows/deploy.yml" target="_blank" class="underline">GitHub Action</a> та Секрет (\`GEMINI_API_KEY\`).`);
                 return;
@@ -436,10 +437,10 @@
                 
                 let errorDetails = `На жаль, виникла помилка: ${error.message}`;
                 
-                if (error.message.includes("400") || error.message.includes("429")) {
-                    errorDetails = `**Помилка API (400/429):** Неправильний запит, або перевищено ліміт. Будь ласка, перевірте, чи коректний ключ вставлено (API Key) і чи не вичерпано ваш ліміт використання.`;
-                } else if (error.message.includes("404")) {
-                     errorDetails = `**Помилка 404:** API-шлях не знайдено. Можливо, проблема з URL або конфігурацією.`;
+                if (error.message.includes("403") || error.message.includes("401")) {
+                     errorDetails = `**Помилка API (403/401 Forbidden):** Google відхилив запит. Це означає, що **ваш ключ недійсний**, вичерпано ліміт або він не має доступу до цієї моделі. Вам необхідно **створити новий API ключ** у Google AI Studio та оновити Secret (\`GEMINI_API_KEY\`) у GitHub.`;
+                } else if (error.message.includes("400")) {
+                    errorDetails = `**Помилка API (400 Bad Request):** Неправильний формат запиту (наприклад, занадто велике зображення).`;
                 }
 
                 showError(errorDetails);
