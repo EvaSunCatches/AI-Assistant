@@ -404,23 +404,24 @@
             
             try {
                 
+                const requestBody = {
+                    contents: [{
+                        parts: [
+                            { text: promptContent.filter(p => typeof p === 'string').join('\n') },
+                            ...promptContent.filter(p => typeof p === 'object')
+                        ]
+                    }],
+                    // Видаляємо поле "config" повністю, щоб уникнути помилки 400.
+                    // Інструменти (tools) тепер передаються як частина верхньорівневого JSON.
+                    tools: [{ googleSearch: {} }] 
+                };
+
                 const response = await fetchWithRetry(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: promptContent.filter(p => typeof p === 'string').join('\n') },
-                                ...promptContent.filter(p => typeof p === 'object')
-                            ]
-                        }],
-                        config: {
-                            // Налаштування для включення інструменту Google Search
-                            tools: [{ googleSearch: {} }] 
-                        }
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 if (response.candidates && response.candidates.length > 0 && response.candidates[0].content && response.candidates[0].content.parts && response.candidates[0].content.parts.length > 0) {
@@ -440,7 +441,7 @@
                 if (error.message.includes("403") || error.message.includes("401")) {
                      errorDetails = `**Помилка API (403/401 Forbidden):** Google відхилив запит. Це означає, що **ваш ключ недійсний**, вичерпано ліміт або він не має доступу до цієї моделі. Вам необхідно **створити новий API ключ** у Google AI Studio та оновити Secret (\`GEMINI_API_KEY\`) у GitHub.`;
                 } else if (error.message.includes("400")) {
-                    errorDetails = `**Помилка API (400 Bad Request):** Неправильний формат запиту (наприклад, занадто велике зображення).`;
+                    errorDetails = `**Помилка API (400 Bad Request):** Неправильний формат запиту. Спробуйте очистити кеш (Ctrl+Shift+R) та спробуйте ще раз. Якщо помилка повторюється, можливо, у запиті є невірні дані.`;
                 }
 
                 showError(errorDetails);
