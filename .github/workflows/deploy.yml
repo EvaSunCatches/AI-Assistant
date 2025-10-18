@@ -10,7 +10,6 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
-    # ОБОВ'ЯЗКОВІ ПРАВА ДЛЯ РОЗГОРТАННЯ
     permissions:
       contents: write
       pages: write
@@ -28,27 +27,26 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
         
-      # 1. СЕКЦІЯ ВСТАВКИ API KEY (ВИПРАВЛЕНО НАДІЙНІШУ ЛОГІКУ)
+      # 1. СЕКЦІЯ ВСТАВКИ API KEY (використовуємо простий і надійний маркер)
       - name: Inject API Key into index.html
         run: |
-          # Нова, проста команда sed: шукаємо рядок 'const apiKey = '';' (який має бути в index.html)
-          # і замінюємо його на 'const apiKey = "ВАШ_КЛЮЧ";'
-          # Це вирішує проблему ReferenceError та SyntaxError, які виникали раніше.
+          # Замінюємо маркер у index.html на оголошення змінної apiKey
+          # У index.html має бути рядок: const apiKey = '';
           sed -i 's|const apiKey = '"''"';|const apiKey = "${{ env.GEMINI_API_KEY }}";|g' index.html
           
-          # *** ДІАГНОСТИКА: ПЕРЕВІРКА, ЧИ КЛЮЧ БУВ ВСТАВЛЕНИЙ ***
+          # *** ДІАГНОСТИКА: ПЕРЕВІРКА ***
           echo "Перевірка вставки API Key (побачите початок ключа):"
           grep 'const apiKey = ' index.html
         
-      # 2. Setup Pages (обов'язковий крок для використання gh-pages)
+      # 2. Setup Pages (обов'язковий крок)
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      # 3. РОЗГОРТАННЯ НА GITHUB PAGES
+      # 3. РОЗГОРТАННЯ
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: . # Завантажуємо всі файли з кореневої папки
+          path: .
           
       - name: Deploy to GitHub Pages 🚀
         id: deployment
