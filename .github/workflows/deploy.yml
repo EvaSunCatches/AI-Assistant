@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages and Inject API Key
 on:
   push:
     branches:
-      - main  # Переконайтеся, що це ваша основна гілка ('main' або 'master')
+      - main  # Переконайтеся, що це ваша основна гілка
   workflow_dispatch:
 
 jobs:
@@ -16,24 +16,24 @@ jobs:
       pages: write
       id-token: write
       
-    # ВИПРАВЛЕННЯ ПОМИЛКИ: Додано блок environment для GitHub Pages
+    # ВИПРАВЛЕННЯ ПОМИЛКИ: Додано блок environment для gh-pages
     environment:
       name: github-pages
 
     env:
-      # Використовуємо GEMINI_API_KEY з секретів, як ви його назвали
+      # Змінна середовища для доступу до секрету
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
-
-      # 1. СЕКЦІЯ ВСТАВКИ API KEY (ВИПРАВЛЕНО)
+        
+      # 1. СЕКЦІЯ ВСТАВКИ API KEY (ВИПРАВЛЕНО НАДІЙНІШУ ЛОГІКУ)
       - name: Inject API Key into index.html
         run: |
-          # Нова команда sed: шукаємо рядок 'const apiKey = '';'
+          # Нова, проста команда sed: шукаємо рядок 'const apiKey = '';' (який має бути в index.html)
           # і замінюємо його на 'const apiKey = "ВАШ_КЛЮЧ";'
-          # Це вирішує проблему ReferenceError та SyntaxError.
+          # Це вирішує проблему ReferenceError та SyntaxError, які виникали раніше.
           sed -i 's|const apiKey = '"''"';|const apiKey = "${{ env.GEMINI_API_KEY }}";|g' index.html
           
           # *** ДІАГНОСТИКА: ПЕРЕВІРКА, ЧИ КЛЮЧ БУВ ВСТАВЛЕНИЙ ***
