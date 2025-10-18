@@ -14,7 +14,7 @@
         /* Применение шрифта Nunito ко всему документу */
         body {
             font-family: 'Nunito', sans-serif;
-            background-color: #f3f4f6; /* Светлый фон для основного контента */
+            background-color: #f3f4f6; /* Світлий фон для основного контенту */
         }
         
         /* Адаптація для мобільних пристроїв */
@@ -192,24 +192,19 @@
             <div id="url-fields" class="space-y-4 mb-5 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
                     <div class="flex-1">
-                        <label for="task-url" class="block text-xs font-medium text-gray-500 mb-1">URL (Посилання)</label>
+                        <label for="task-url" class="block text-xs font-medium text-gray-500 mb-1">URL (Посилання на підручник)</label>
                         <input type="url" id="task-url" placeholder="https://pidruchnik.ua/..."
-                                class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
-                    </div>
-                    <div>
-                        <label for="task-section" class="block text-xs font-medium text-gray-500 mb-1">Розділ</label>
-                        <input type="text" id="task-section" placeholder="Напр. 1"
                                 class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
                 </div>
                 <div class="flex space-x-4">
                     <div class="flex-1">
-                        <label for="task-page" class="block text-xs font-medium text-gray-500 mb-1">Сторінка</label>
+                        <label for="task-page" class="block text-xs font-medium text-gray-500 mb-1">Сторінка (Номер)</label>
                         <input type="number" id="task-page" placeholder="Напр. 54"
                                 class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
                     <div class="flex-1">
-                        <label for="task-number" class="block text-xs font-medium text-gray-500 mb-1">Номер завдання (§)</label>
+                        <label for="task-number" class="block text-xs font-medium text-gray-500 mb-1">Номер завдання (або §)</label>
                         <input type="text" id="task-number" placeholder="Напр. 54 або §3"
                                 class="w-full p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500">
                     </div>
@@ -217,20 +212,12 @@
             </div>
             
             <div id="photo-fields" class="hidden space-y-4 mb-5 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div class="flex space-x-4">
+                <div class="flex">
                     <label for="file-upload" class="flex-1 cursor-pointer">
-                        <input type="file" id="file-upload" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
-                        <span class="file-label-text flex items-center justify-center">
-                            <svg class="w-5 h-5 mr-2 text-cyan-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            Вибрати файл
-                        </span>
-                    </label>
-                    
-                    <label for="camera-capture" class="flex-1 cursor-pointer">
-                        <input type="file" id="camera-capture" accept="image/*" capture="environment" class="hidden" onchange="handleFileUpload(event)">
-                        <span class="file-label-text flex items-center justify-center">
-                            <svg class="w-5 h-5 mr-2 text-cyan-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.218A2 2 0 0110.69 4h2.62a2 2 0 011.664.89l.812 1.218a2 2 0 001.664.89H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9zM12 14a4 4 0 100-8 4 4 0 000 8z"/></svg>
-                            Зробити фото
+                        <input type="file" id="file-upload" accept="image/*" capture="environment" class="hidden" onchange="handleFileUpload(event)">
+                        <span class="file-label-text flex items-center justify-center border-cyan-400 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 font-semibold shadow-md">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            Завантажити фото (або Зробити фото)
                         </span>
                     </label>
                 </div>
@@ -242,7 +229,7 @@
             </div>
 
             <div class="mb-6">
-                <h2 class="text-md font-semibold text-gray-800 mb-2">Секція: Укажіть, що необхідно зробити (необов'язково)</h2>
+                <h2 class="text-md font-semibold text-gray-800 mb-2">Секція: Укажіть, що необхідно зробити (деталі)</h2>
                 <textarea id="task-details" rows="3" placeholder="Наприклад: 'Поясни крок 3 детально.' Або: 'Знайди помилку в рішенні і виправ її.'" 
                     class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-cyan-500 focus:border-cyan-500 resize-none"></textarea>
             </div>
@@ -270,7 +257,8 @@
 </div>
 
 <script>
-    // Цей рядок буде замінено GitHub Action (deploy.yml) на ваш ключ.
+    // Цей рядок має бути замінений GitHub Action (deploy.yml) на ваш ключ.
+    // Якщо помилка повторюється, перевірте, чи коректно працює sed-команда у вашому deploy.yml.
     const apiKey = ''; 
     
     // Використовуємо стабільну модель gemini-2.5-flash
@@ -325,7 +313,6 @@
     const urlFields = document.getElementById('url-fields');
     const photoFields = document.getElementById('photo-fields');
     const fileUpload = document.getElementById('file-upload');
-    const cameraCapture = document.getElementById('camera-capture'); 
     const previewImage = document.getElementById('preview-image');
     const imagePreview = document.getElementById('image-preview');
     const submitButton = document.getElementById('submit-button');
@@ -371,7 +358,6 @@
         updateTabStyles();
         // Скидання стану фото при перемиканні
         fileUpload.value = ''; 
-        cameraCapture.value = '';
         imagePreview.classList.add('hidden');
         base64Image = null;
     });
@@ -384,17 +370,11 @@
     window.onload = updateTabStyles; 
 
     // --- Обробка завантаження файлу / захоплення камери ---
+    // Єдиний input type="file" тепер обробляє і вибір файлу, і знімок з камери
 
     async function handleFileUpload(event) {
         uploadedFile = event.target.files[0];
         
-        // Скидаємо інше поле вводу, щоб лише одне зображення було активним
-        if (event.target.id === 'file-upload') {
-            cameraCapture.value = '';
-        } else if (event.target.id === 'camera-capture') {
-            fileUpload.value = '';
-        }
-
         if (uploadedFile) {
             try {
                 base64Image = await fileToBase64(uploadedFile);
@@ -411,10 +391,6 @@
             uploadedFile = null;
         }
     }
-
-    // Присвоєння обробника вводу (вже зроблено в HTML, але тут для ясності)
-    // fileUpload.addEventListener('change', handleFileUpload);
-    // cameraCapture.addEventListener('change', handleFileUpload); 
 
     // --- Управління станом UI та помилками ---
 
@@ -480,7 +456,7 @@
         
         // 1. Валідація API Key (КРИТИЧНО)
         if (apiKey === '') {
-            showError(`**Помилка API:** Ключ **не знайдено** або не був коректно вставлений. Це критична проблема розгортання. Будь ласка, перевірте ваш <a href="https://github.com/${window.location.pathname.split('/')[1]}/${window.location.pathname.split('/')[2]}/settings/secrets/actions" target="_blank" class="underline">GitHub Secrets</a> (\`GEMINI_API_KEY\`).`);
+            showError(`**Помилка API:** Ключ **не знайдено**. Перевірте, чи коректно працює заміна Secret (\`GEMINI_API_KEY\`) у вашому скрипті GitHub Actions (\`deploy.yml\`).`);
             return;
         }
         
@@ -489,6 +465,10 @@
             showError("Будь ласка, оберіть предмет.");
             return;
         }
+
+        const url = urlLink.value.trim();
+        const page = taskPage.value.trim();
+        const number = taskNumber.value.trim();
 
         if (!isUrlMode) {
             if (!base64Image) {
@@ -501,28 +481,26 @@
             }
         }
         
-        if (isUrlMode && !urlLink.value.trim() && !taskPage.value.trim() && !taskNumber.value.trim() && !details) {
+        if (isUrlMode && !url && !page && !number && !details) {
             showError("Будь ласка, введіть посилання, номери завдання/сторінки, або детально опишіть завдання.");
             return;
         }
         
         // 3. Формування промпта
+        const basePrompt = [
+            `У мене є завдання з підручника. Предмет: **${subject}**.\n`,
+            `**МОЄ ЗАПИТАННЯ:** ${details ? details : '[Розв\'яжіть завдання і поясніть логіку.]'}`
+        ];
+
         if (isUrlMode) {
-            const url = urlLink.value.trim();
-            const page = taskPage.value.trim();
-            const number = taskNumber.value.trim();
-            const section = document.getElementById('task-section').value.trim();
-            
-            promptContent.push(
-                `У мене є завдання з підручника. Предмет: **${subject}**.\n`,
+            basePrompt.splice(1, 0, 
                 `Посилання на підручник: ${url ? url : '[Не вказано]'}\n`,
-                `Розділ: ${section ? section : '[Не вказано]'}\n`,
                 `Сторінка: ${page ? page : '[Не вказано]'}\n`,
-                `Номер завдання: ${number ? number : '[Не вказано]'}\n`,
-                `**МОЄ ЗАПИТАННЯ:** ${details ? details : '[Розв\'яжіть завдання, використовуючи надану інформацію. Якщо даних недостатньо, запитайте. Завжди пояснюйте логіку.]'}`
+                `Номер завдання/Параграф: ${number ? number : '[Не вказано]'}\n`
             );
 
             promptContent.push(
+                basePrompt.join(''),
                 "\n\n**ІНСТРУКЦІЯ ДЛЯ ВАС (AI АСИСТЕНТА):**",
                 "1. Аналіз (Google Search): Використовуйте інструмент **Google Search (Browsing)**, якщо надано URL для пошуку контексту.",
                 "2. Рішення: Розв'яжіть завдання, використовуючи надану інформацію та ваш досвід.",
@@ -530,19 +508,16 @@
             );
 
         } else { // Режим фото
+            
             promptContent.push(
-                `У мене є завдання з підручника (див. прикріплене зображення). Предмет: **${subject}**.\n`,
-                `**МОЄ ЗАПИТАННЯ:** ${details ? details : '[Розв\'яжіть завдання, використовуючи інформацію з зображення. Завжди пояснюйте логіку.]'}`
-            );
-
-            promptContent.push(
+                basePrompt.join(''),
                 "\n\n**ІНСТРУКЦІЯ ДЛЯ ВАС (AI АСИСТЕНТА):**",
                 "1. Аналіз (Vision): Використовуйте **Vision** для аналізу прикріпленого зображення.",
                 "2. Рішення: Розв'яжіть завдання, використовуючи надану інформацію та ваш досвід.",
                 "3. Пояснення правила: Поясніть правило або теорію, що використовується, щоб допомогти користувачеві зрозуміти суть матеріалу."
             );
 
-            // uploadedFile буде встановлено в handleFileUpload
+            // Додаємо зображення в кінець
             promptContent.push({
                 inlineData: {
                     data: base64Image,
@@ -579,6 +554,10 @@
                 // Заміна **текст** на <strong>текст</strong> для кращого відображення
                 resultMessage.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 errorMessage.classList.add('hidden');
+                
+                // Після успішної відповіді, ви готові до наступних інструкцій
+                console.log("AI Assistant Response Received successfully. Ready for further instructions on processing the result.");
+
             } else {
                 throw new Error("Не вдалося отримати коректну відповідь від AI. Перевірте вхідні дані.");
             }
@@ -586,12 +565,12 @@
         } catch (error) {
             console.error("Помилка при виклику API:", error);
             
-            let errorDetails = `На жаль, виникла помилка: ${error.message}`;
+            let errorDetails = `На жаль, виникла помишка: ${error.message}`;
             
             if (error.message.includes("403") || error.message.includes("401")) {
-                 errorDetails = `**Помилка API (403/401 Forbidden):** Google відхилив запит. Це означає, що **ваш ключ недійсний**, вичерпано ліміт або він не має доступу до цієї моделі. Вам необхідно **створити новий API ключ** у Google AI Studio та оновити Secret (\`GEMINI_API_KEY\`) у GitHub.`;
+                 errorDetails = `**Помилка API (403/401 Forbidden):** Google відхилив запит. Це означає, що ваш ключ недійсний, вичерпано ліміт або він не має доступу до цієї моделі. Будь ласка, **перевірте Secret** у GitHub і сам API-ключ.`;
             } else if (error.message.includes("400")) {
-                errorDetails = `**Помилка API (400 Bad Request):** Неправильний формат запиту. Спробуйте уточнити деталі завдання.`;
+                errorDetails = `**Помилка API (400 Bad Request):** Неправильний формат запиту або помилка в зображенні. Спробуйте уточнити деталі завдання.`;
             }
 
             showError(errorDetails);
@@ -600,7 +579,6 @@
             stopLoading();
         }
     });
-
 </script>
 </body>
 </html>
