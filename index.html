@@ -9,10 +9,9 @@
     <script src="assets/api_config.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
     
-    <link href="assets/tailwind.css" rel="stylesheet">
+    <link href="assets/tailwind.css" rel="stylesheet"> 
     
     <link rel="icon" type="image/png" href="assets/assistant.png"> 
 
@@ -120,20 +119,20 @@
 
         /* СТИЛЬ ПЕРЕКЛЮЧАТЕЛЕЙ: ХОЛОДНИЙ ТОН */
         .source-button {
-             padding: 10px;
-             border-radius: 6px;
-             transition: all 0.3s ease;
-             font-weight: 600;
-             display: flex;
-             align-items: center;
-             justify-content: center;
-             border: 1px solid #d1d5db; 
-             flex-grow: 1; 
-             cursor: pointer;
-             background-color: #ffffff; 
+            padding: 10px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #d1d5db; 
+            flex-grow: 1; 
+            cursor: pointer;
+            background-color: #ffffff; 
         }
         .source-button:hover:not(.source-button-active) {
-             background-color: #f3f4f6 !important; 
+            background-color: #f3f4f6 !important; 
         }
         .source-button-active {
             background-color: #E0F7FA !important; 
@@ -142,8 +141,8 @@
             box-shadow: 0 2px 4px rgba(0, 188, 212, 0.2);
         }
         .source-button-inactive {
-             background-color: #f3f4f6; 
-             color: #4b5563; 
+            background-color: #f3f4f6; 
+            color: #4b5563; 
         }
 
         /* Стиль кнопки Отримати допомогу */
@@ -155,7 +154,7 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            background-image: linear-gradient(to right, #B2EBF2 0%, #E0F7FA 100%); 
+            background-image: linear-gradient(to right, #B2EBF2 0%, #E0F7FA 100%);  
             color: #006064; 
             border: 1px solid #80DEEA;
             transition: all 0.3s ease;
@@ -213,7 +212,7 @@
         }
         
         #subject-group {
-             width: 50%; 
+            width: 50%; 
         }
         
         #task-details {
@@ -272,8 +271,8 @@
             background: #B2EBF2;
         }
         .tts-controls button:disabled {
-             opacity: 0.5;
-             cursor: not-allowed;
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         /* Стилі для секції "По зображенню" */
         #photo-upload-section {
@@ -381,8 +380,8 @@
             <div id="copilot-section" class="mt-8 p-4 bg-gray-100 rounded-lg hidden border border-gray-300">
                 <h3 class="text-xl font-semibold mb-3 text-gray-800">Copilot (Додаткові запитання)</h3>
                 <div class="textarea-container mb-3">
-                     <textarea id="copilot-text-input" rows="2" placeholder="Введіть додаткове питання або використовуйте мікрофон"></textarea>
-                     <button id="mic-copilot-button" class="mic-button focus:outline-none" title="Голосове введення">
+                    <textarea id="copilot-text-input" rows="2" placeholder="Введіть додаткове питання або використовуйте мікрофон"></textarea>
+                    <button id="mic-copilot-button" class="mic-button focus:outline-none" title="Голосове введення">
                         <span class="material-icons-outlined text-xl">mic</span>
                     </button>
                 </div>
@@ -395,7 +394,7 @@
                         <span class="material-icons-outlined mr-2" id="recording-icon">mic</span> <span id="recording-status">Натисніть для початку...</span>
                     </button>
                 </div>
-                 <div id="copilot-response-area" class="mt-4 p-4 rounded-lg min-h-[50px] whitespace-pre-wrap bg-white border border-gray-200">
+                <div id="copilot-response-area" class="mt-4 p-4 rounded-lg min-h-[50px] whitespace-pre-wrap bg-white border border-gray-200">
                     Тут з'являться відповіді Copilot.
                 </div>
             </div>
