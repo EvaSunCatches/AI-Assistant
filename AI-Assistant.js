@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_KEY = window.GEMINI_API_KEY; 
     let ai = null;
     const model = "gemini-2.5-flash";
-    const KEY_PLACEHOLDER = "СЮДИ_ВСТАВТЕ_НОВИЙ_СКОПІЙОВАНИЙ_КЛЮЧ_ПОВНІСТЮ"; // Оновлена заглушка
+    const KEY_PLACEHOLDER = "СЮДИ_ВСТАВТЕ_ВАШ_НОВИЙ_РЕАЛЬНИЙ_КЛЮЧ"; 
     let chat = null; // Для Copilot
 
     // TTS Control Variables
@@ -65,14 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function initializeAI() {
         // Перевіряємо, чи завантажена бібліотека Gemini (для виправлення помилки CDN)
         if (typeof window.GoogleGenerativeAI === 'undefined') {
-             const errorText = 'КРИТИЧНА ПОМИЛКА: Бібліотека Google Gen AI не завантажена. Перевірте підключення CDN. (Можливо, допоможе Ctrl+Shift+R)';
+             const errorText = 'КРИТИЧНА ПОМИЛКА: Бібліотека Google Gen AI не завантажена. Перевірте підключення CDN.';
              if (responseArea) responseArea.innerHTML = `<div class="error-message">${errorText}</div>`;
              if (assistantButton) assistantButton.disabled = true;
              console.error(errorText);
              return false;
         }
 
-        // КЛЮЧОВЕ ВИПРАВЛЕННЯ: Якщо ключ має заглушку або менше 30 символів (приблизна довжина ключа)
+        // КЛЮЧОВЕ ВИПРАВЛЕННЯ: Якщо ключ має заглушку або менше 30 символів
         if (typeof API_KEY === 'undefined' || !API_KEY || API_KEY === KEY_PLACEHOLDER || API_KEY.length < 30) {
             const errorText = 'КРИТИЧНА ПОМИЛКА: Ключ Gemini API не знайдено, недійсний, або не вставлений коректно. Перевірте <strong>assets/api_config.js</strong>!';
             if (responseArea) responseArea.innerHTML = `<div class="error-message">${errorText}</div>`;
@@ -90,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (responseArea) responseArea.innerText = "Тут з'явиться детальна відповідь.";
         return true;
     }
+    // Запускаємо ініціалізацію одразу
     initializeAI();
 
 
@@ -116,19 +117,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (urlToggleBtn && imageToggleBtn) {
         // ВІДКЛЮЧАЄМО АСИСТЕНТА, ЯКЩО ФОТО ВИБРАНО
         function updateAssistantButtonState() {
+            // Перевіряємо також, чи пройшла ініціалізація AI
+            const isAIReady = ai !== null; 
             const isImageMode = photoUploadSection.classList.contains('hidden') === false;
-            const canCallAssistant = !isImageMode || (isImageMode && selectedImagePart !== null);
+            const canCallAssistant = isAIReady && (!isImageMode || (isImageMode && selectedImagePart !== null));
             assistantButton.disabled = !canCallAssistant;
             
             if (responseArea) {
-                if (!canCallAssistant && isImageMode) {
+                if (!isAIReady) {
+                     // Не змінюємо текст, якщо там вже є повідомлення про помилку ключа/CDN
+                     return; 
+                } else if (!canCallAssistant && isImageMode) {
                      responseArea.innerText = "Будь ласка, завантажте фото або зробіть знімок.";
                 } else if (canCallAssistant && isImageMode) {
                      responseArea.innerText = `Фото завантажено! Очікує на запит.`;
-                } else if (!isImageMode && !ai) {
-                     // Відображаємо помилку ключа, якщо AI не ініціалізовано
-                     initializeAI(); 
-                } else if (!isImageMode && ai) {
+                } else if (!isImageMode && isAIReady) {
                      responseArea.innerText = "Тут з'явиться детальна відповідь.";
                 }
             }
@@ -159,13 +162,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Логіка для "Завантажити фото"
         uploadPhotoBtn.addEventListener('click', () => {
-             fileInput.removeAttribute('capture'); // Відкриття галереї/папки
+             fileInput.removeAttribute('capture'); 
              fileInput.click(); 
         });
         
-        // Логіка для "Зробити фото" (для камери, включаючи MacBook)
+        // Логіка для "Зробити фото"
         takePhotoBtn.addEventListener('click', () => {
-             fileInput.setAttribute('capture', 'environment'); // Запуск задньої камери (або передньої на MacBook)
+             fileInput.setAttribute('capture', 'environment'); 
              fileInput.click();
         });
         
@@ -280,14 +283,11 @@ document.addEventListener('DOMContentLoaded', () => {
             micEmojiButton.disabled = true;
             micEmojiButton.style.color = '#DC2626'; 
             
-            // НЕ ОЧИЩАЄМО ЗНАЧЕННЯ АВТОМАТИЧНО, ЛИШЕ ДОДАЄМО ТРАНСКРИПТ
-            
             recognition.start();
         });
 
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
-            // Додаємо новий текст до існуючого, з пробілом, якщо потрібно
             details.value += (details.value.trim() ? ' ' : '') + transcript; 
         };
 
@@ -351,9 +351,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 playPauseIcon.innerText = 'play_arrow';
             }
         });
-        // Rewind/Forward (optional advanced features, typically not implemented in basic TTS)
-        // rewindTtsBtn.addEventListener('click', () => {/* ... */});
-        // forwardTtsBtn.addEventListener('click', () => {/* ... */});
     }
 
     // B. Copilot Chat Logic
@@ -385,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
          });
      }
     
-    // C. Copilot Audio Recording Logic (залишається мокованою, оскільки це вимагає окремого API)
+    // C. Copilot Audio Recording Logic (заглушка)
     if (startRecordingBtn) {
         startRecordingBtn.addEventListener('click', async () => {
             if (isRecording) {
@@ -417,8 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         startRecordingBtn.classList.add('!bg-red-500', 'hover:!bg-red-600');
                         recordingStatus.innerText = 'Натисніть для початку...';
                         
-                        // Активація Gemini з аудіо (МОКОВАНА)
-                        await processAudio(audioBlob);
+                        await processAudio(audioBlob); // Викликаємо заглушку
                     };
 
                     mediaRecorder.start();
@@ -436,9 +432,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Function to process the audio blob (МОКОВАНА)
+    // Function to process the audio blob (ЗАГЛУШКА)
     async function processAudio(audioBlob) {
-        // Заглушка, оскільки для цього потрібен інший сервіс або модель
         copilotResponseArea.innerHTML = `
             <div class="error-message">Аудіозапис успішно створено (${Math.round(audioBlob.size / 1024)} KB).
             <br>
