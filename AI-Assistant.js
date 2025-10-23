@@ -26,18 +26,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const micCopilotButton = document.getElementById('mic-copilot-button');
     const startRecordingBtn = document.getElementById('start-recording-btn');
     const recordingStatus = document.getElementById('recording-status');
+    const recordingIcon = document.getElementById('recording-icon');
     const copilotTextInput = document.getElementById('copilot-text-input');
     const sendCopilotBtn = document.getElementById('send-copilot-btn');
     const copilotResponseArea = document.getElementById('copilot-response-area'); 
     
     // --- Елементи керування Photo/Camera UI ---
     const urlToggleBtn = document.getElementById('url-toggle');
-    const imageToggleBtn = document.getElementById('image-toggle'); // Змінено ID
-    const photoUploadSection = document.getElementById('photo-upload-section'); // Змінено ID
+    const imageToggleBtn = document.getElementById('image-toggle'); 
+    const photoUploadSection = document.getElementById('photo-upload-section'); 
     const uploadPhotoBtn = document.getElementById('upload-photo-btn');
     const takePhotoBtn = document.getElementById('take-photo-btn');
     const fileInput = document.getElementById('file-input');
-    const urlSection = document.getElementById('url-section'); // Для приховування/показу URL-секції
+    const urlSection = document.getElementById('url-section'); 
 
     // --- API Ініціалізація ---
     const API_KEY = window.GEMINI_API_KEY; 
@@ -96,14 +97,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Логіка для "Завантажити фото"
         uploadPhotoBtn.addEventListener('click', () => {
+             fileInput.removeAttribute('capture'); // Видаляємо атрибут камери, якщо він був встановлений
              fileInput.click(); 
         });
         
         // Логіка для "Зробити фото"
         takePhotoBtn.addEventListener('click', () => {
+             // Встановлюємо атрибут 'capture' для запуску камери
              fileInput.setAttribute('capture', 'environment'); // Використовуємо 'environment' для задньої камери
              fileInput.click();
-             fileInput.removeAttribute('capture');
+             // Атрибут 'capture' бажано видаляти, щоб він не впливав на наступні завантаження
+             // Але в даному випадку, ми викликаємо його клік безпосередньо після встановлення
         });
     }
 
@@ -115,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Скидання TTS
             if (window.speechSynthesis) window.speechSynthesis.cancel();
             if (ttsControls) ttsControls.classList.add('hidden'); 
-            if (playPauseIcon) playPauseIcon.innerText = '▶️'; 
+            if (playPauseIcon) playPauseIcon.innerText = 'play_arrow'; // Іконка Material Icons
 
             responseArea.innerHTML = "Обробка запиту, чекайте...";
             assistantButton.disabled = true;
@@ -166,10 +170,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (synth.speaking && synth.paused) {
                 synth.resume();
-                playPauseIcon.innerText = '⏸️'; 
+                playPauseIcon.innerText = 'pause'; 
             } else if (synth.speaking && !synth.paused) {
                 synth.pause();
-                playPauseIcon.innerText = '▶️'; 
+                playPauseIcon.innerText = 'play_arrow'; 
             } else if (textToSpeak && !textToSpeak.includes("Обробка запиту") && !textToSpeak.includes("КРИТИЧНА ПОМИЛКА")) {
                 synth.cancel(); 
                 
@@ -180,10 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 utterance.rate = 1.0; 
 
                 synth.speak(utterance); 
-                playPauseIcon.innerText = '⏸️';
+                playPauseIcon.innerText = 'pause';
 
                 utterance.onend = () => {
-                    playPauseIcon.innerText = '▶️';
+                    playPauseIcon.innerText = 'play_arrow';
                 };
             } 
         });
@@ -240,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
         recognition.onerror = (event) => {
             isRecording = false;
             recordingStatus.innerText = `Помилка: ${event.error}.`;
-            startRecordingBtn.innerHTML = '<span class="text-lg mr-2">🎤</span> Почати запис';
+            recordingIcon.innerText = 'mic'; 
             startRecordingBtn.classList.remove('!bg-gray-500'); 
             startRecordingBtn.classList.add('!bg-red-500');
         };
@@ -248,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         recognition.onend = () => {
             isRecording = false;
             recordingStatus.innerText = 'Натисніть для початку...';
-            startRecordingBtn.innerHTML = '<span class="text-lg mr-2">🎤</span> Почати запис';
+            recordingIcon.innerText = 'mic';
             startRecordingBtn.classList.remove('!bg-gray-500'); 
             startRecordingBtn.classList.add('!bg-red-500');
         };
@@ -260,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     recognition.start();
                     isRecording = true;
                     recordingStatus.innerText = 'Запис... Говоріть.';
-                    startRecordingBtn.innerHTML = '<span class="text-lg mr-2">🛑</span> Запис...';
+                    recordingIcon.innerText = 'stop';
                     startRecordingBtn.classList.remove('!bg-red-500');
                     startRecordingBtn.classList.add('!bg-gray-500'); 
                 } catch (e) {
@@ -293,4 +297,24 @@ document.addEventListener('DOMContentLoaded', () => {
         copilotResponseArea.innerHTML = "Обробка запиту Copilot, чекайте...";
         sendCopilotBtn.disabled = true;
 
-        const previousResponse = responseArea.innerText
+        const previousResponse = responseArea.innerText;
+
+        const copilotPrompt = `Ось основна відповідь асистента: "${previousResponse}". 
+        Будь ласка, дай розгорнуту відповідь на додаткове питання: "${copilotQuestion}".`;
+
+        try {
+            const response = await ai.models.generateContent({
+                model: model,
+                contents: [{ role: "user", parts: [{ text: copilotPrompt }] }],
+            });
+            
+            copilotResponseArea.innerText = response.text;
+        } catch (error) {
+            copilotResponseArea.innerHTML = `<div class="error-message">Помилка Copilot API: ${error.message}.</div>`;
+            console.error("Copilot API Error:", error);
+        } finally {
+            sendCopilotBtn.disabled = false;
+        }
+    });
+
+});
