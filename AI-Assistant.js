@@ -32,22 +32,21 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- Елементи керування Photo/Camera UI ---
     const urlToggleBtn = document.getElementById('url-toggle');
-    const photoCameraButton = document.getElementById('photo-camera-button');
-    const photoCameraDropdown = document.getElementById('photo-camera-dropdown');
+    const imageToggleBtn = document.getElementById('image-toggle'); // Змінено ID
+    const photoUploadSection = document.getElementById('photo-upload-section'); // Змінено ID
     const uploadPhotoBtn = document.getElementById('upload-photo-btn');
     const takePhotoBtn = document.getElementById('take-photo-btn');
     const fileInput = document.getElementById('file-input');
+    const urlSection = document.getElementById('url-section'); // Для приховування/показу URL-секції
 
     // --- API Ініціалізація ---
-    // Ключ береться з window.GEMINI_API_KEY, який встановлює api_config.js
     const API_KEY = window.GEMINI_API_KEY; 
     let ai = null;
     const model = "gemini-2.5-flash";
-    const KEY_PLACEHOLDER = "AIzaSyCduP1AaWW5NuMXYM33WdJRaSbhDyDttdA"; // Використовуємо ваш ключ для перевірки
+    const KEY_PLACEHOLDER = "AIzaSyCduP1AaWW5NuMXYM33WdJRaSbhDyDttdA"; 
 
     // 1. ПЕРЕВІРКА КЛЮЧА ТА ІНІЦІАЛІЗАЦІЯ GEMINI API
     function initializeAI() {
-        // Якщо ключ недійсний або не завантажився з api_config.js
         if (typeof API_KEY === 'undefined' || !API_KEY || API_KEY === KEY_PLACEHOLDER || API_KEY.length < 30) {
             const errorText = 'КРИТИЧНА ПОМИЛКА: Ключ Gemini API не знайдено або недійсний. Перевірте, чи коректно він вставлений у <strong>assets/api_config.js</strong>!';
             if (responseArea) responseArea.innerHTML = `<div class="error-message">${errorText}</div>`;
@@ -56,7 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         }
 
-        // Перевірка наявності CDN-бібліотеки
         if (typeof window.GoogleGenerativeAI !== 'undefined') {
             const { GoogleGenerativeAI } = window; 
             ai = new GoogleGenerativeAI(API_KEY);
@@ -75,44 +73,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // 2. ЛОГІКА КНОПОК ДЖЕРЕЛА (UI/UX)
-    if (urlToggleBtn && photoCameraButton) {
+    if (urlToggleBtn && imageToggleBtn) {
         urlToggleBtn.addEventListener('click', () => {
             urlToggleBtn.classList.add('source-button-active');
             urlToggleBtn.classList.remove('source-button-inactive');
-            photoCameraButton.classList.remove('source-button-active');
-            photoCameraButton.classList.add('source-button-inactive');
-            document.getElementById('url-section').classList.remove('hidden');
-            photoCameraDropdown.classList.add('hidden');
+            imageToggleBtn.classList.remove('source-button-active');
+            imageToggleBtn.classList.add('source-button-inactive');
+            
+            urlSection.classList.remove('hidden'); // Показати секцію URL
+            photoUploadSection.classList.add('hidden'); // Приховати секцію завантаження фото
         });
 
-        photoCameraButton.addEventListener('click', (event) => {
-            event.stopPropagation();
-            photoCameraButton.classList.add('source-button-active');
-            photoCameraButton.classList.remove('source-button-inactive');
+        imageToggleBtn.addEventListener('click', () => {
+            imageToggleBtn.classList.add('source-button-active');
+            imageToggleBtn.classList.remove('source-button-inactive');
             urlToggleBtn.classList.remove('source-button-active');
             urlToggleBtn.classList.add('source-button-inactive');
-            document.getElementById('url-section').classList.add('hidden');
-            photoCameraDropdown.classList.toggle('hidden');
+            
+            urlSection.classList.add('hidden'); // Приховати секцію URL
+            photoUploadSection.classList.remove('hidden'); // Показати секцію завантаження фото
         });
         
         // Логіка для "Завантажити фото"
         uploadPhotoBtn.addEventListener('click', () => {
              fileInput.click(); 
-             photoCameraDropdown.classList.add('hidden');
         });
         
         // Логіка для "Зробити фото"
         takePhotoBtn.addEventListener('click', () => {
-             fileInput.setAttribute('capture', 'environment');
+             fileInput.setAttribute('capture', 'environment'); // Використовуємо 'environment' для задньої камери
              fileInput.click();
              fileInput.removeAttribute('capture');
-             photoCameraDropdown.classList.add('hidden');
-        });
-
-        document.addEventListener('click', (event) => {
-            if (!photoCameraButton.contains(event.target) && !photoCameraDropdown.contains(event.target)) {
-                photoCameraDropdown.classList.add('hidden');
-            }
         });
     }
 
@@ -170,16 +161,15 @@ document.addEventListener('DOMContentLoaded', () => {
              }
         };
 
-        // PLAY/PAUSE Button (Один елемент для обох функцій)
         playTtsBtn.addEventListener('click', () => {
             const textToSpeak = responseArea.innerText;
 
             if (synth.speaking && synth.paused) {
                 synth.resume();
-                playPauseIcon.innerText = '⏸️'; // Пауза
+                playPauseIcon.innerText = '⏸️'; 
             } else if (synth.speaking && !synth.paused) {
                 synth.pause();
-                playPauseIcon.innerText = '▶️'; // Відтворити
+                playPauseIcon.innerText = '▶️'; 
             } else if (textToSpeak && !textToSpeak.includes("Обробка запиту") && !textToSpeak.includes("КРИТИЧНА ПОМИЛКА")) {
                 synth.cancel(); 
                 
@@ -198,7 +188,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } 
         });
 
-        // REWIND/FORWARD Button (Перемотка. Залишається символічним)
         rewindTtsBtn.addEventListener('click', () => alert("Функція перемотки назад поки що не підтримується на рівні браузера TTS API."));
         forwardTtsBtn.addEventListener('click', () => alert("Функція перемотки вперед поки що не підтримується на рівні браузера TTS API."));
 
@@ -304,24 +293,4 @@ document.addEventListener('DOMContentLoaded', () => {
         copilotResponseArea.innerHTML = "Обробка запиту Copilot, чекайте...";
         sendCopilotBtn.disabled = true;
 
-        const previousResponse = responseArea.innerText;
-
-        const copilotPrompt = `Ось основна відповідь асистента: "${previousResponse}". 
-        Будь ласка, дай розгорнуту відповідь на додаткове питання: "${copilotQuestion}".`;
-
-        try {
-            const response = await ai.models.generateContent({
-                model: model,
-                contents: [{ role: "user", parts: [{ text: copilotPrompt }] }],
-            });
-            
-            copilotResponseArea.innerText = response.text;
-        } catch (error) {
-            copilotResponseArea.innerHTML = `<div class="error-message">Помилка Copilot API: ${error.message}.</div>`;
-            console.error("Copilot API Error:", error);
-        } finally {
-            sendCopilotBtn.disabled = false;
-        }
-    });
-
-});
+        const previousResponse = responseArea.innerText
