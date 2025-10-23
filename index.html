@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Освітній Асистент</title>
+
+    <script src="https://unpkg.com/@google/genai"></script> 
+    <script src="assets/api_config.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* ОСНОВНІ СТИЛІ */
+        body {
+            background-color: #F7F7F7; 
+            color: #1F2937; 
+            font-family: 'Nunito', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 0; 
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            max-width: 1200px;
+            width: 100%;
+            min-height: 95vh; 
+            background-color: #FFFFFF; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            margin-top: 2.5vh;
+            overflow: hidden; 
+        }
+        .left-panel {
+            flex: 2; 
+            padding: 40px;
+            overflow-y: auto;
+        }
+        .right-panel {
+            flex: 1; 
+            background-color: #E5E7EB;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .right-panel img {
+            width: 250px; 
+            height: 250px;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+        .assistant-button {
+            background-color: #4F46E5;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .assistant-button:hover:not(:disabled) {
+            background-color: #4338CA;
+        }
+        .assistant-button:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+        .assistant-button:disabled {
+            background-color: #9CA3AF;
+            cursor: not-allowed;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 16px;
+        }
+        .input-group label {
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #374151;
+            display: block;
+        }
+        .input-group input, .input-group textarea {
+            padding: 10px;
+            border: 1px solid #D1D5DB;
+            border-radius: 6px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            resize: none;
+        }
+        .input-group input:focus, .input-group textarea:focus {
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+            outline: none;
+        }
+        .error-message {
+            color: #DC2626; 
+            background-color: #FEE2E2; 
+            border: 1px solid #FCA5A5;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .source-toggle-group {
+            display: flex;
+            margin-bottom: 20px;
+            border: 2px solid #4F46E5;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .source-button-active, .source-button-inactive {
+            flex: 1;
+            padding: 10px 15px;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .source-button-active {
+            background-color: #4F46E5;
+            color: white;
+        }
+        .source-button-inactive {
+            background-color: white;
+            color: #4F46E5;
+        }
+        .source-button-inactive:hover {
+             background-color: #EEF2FF;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .mic-button {
+             color: #6B7280;
+             transition: color 0.2s;
+        }
+        /* СТИЛІ АНІМАЦІЇ ПУЛЬСАЦІЇ */
+        @keyframes pulse-default-anim {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); /* Tailwind indigo-600 */
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+            }
+        }
+        @keyframes pulse-speaking-anim {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.6); /* Tailwind teal-500 */
+            }
+            50% {
+                transform: scale(1.03);
+                box-shadow: 0 0 0 5px rgba(20, 184, 166, 0);
+            }
+        }
+        .pulse-default {
+             animation: pulse-default-anim 1.5s infinite;
+        }
+        .pulse-speaking {
+             animation: pulse-speaking-anim 1s infinite;
+        }
+        .loading-message {
+            color: #4F46E5; 
+            font-weight: 600;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <h2 class="text-3xl font-extrabold mb-8 text-indigo-700">Панель Завдань</h2>
+
+            <div class="source-toggle-group">
+                <div id="url-toggle" class="source-button-active">За посиланням (URL)</div>
+                <div id="image-toggle" class="source-button-inactive">За фото / Знімком</div>
+            </div>
+
+            <div id="url-section">
+                <div class="input-group">
+                    <label for="url">URL-адреса джерела</label>
+                    <input type="url" id="url" placeholder="Вставте посилання на сторінку або PDF">
+                </div>
+            </div>
+
+            <div id="photo-upload-section" class="hidden">
+                 <div class="flex space-x-4 mb-4">
+                     <button id="upload-photo-btn" class="assistant-button !bg-teal-600 hover:!bg-teal-700 flex-1">
+                         <span class="material-icons-outlined mr-2">upload</span> Завантажити фото
+                     </button>
+                     <button id="take-photo-btn" class="assistant-button !bg-cyan-600 hover:!bg-cyan-700 flex-1">
+                         <span class="material-icons-outlined mr-2">camera_alt</span> Зробити знімок
+                     </button>
+                 </div>
+                 <input type="file" id="file-input" accept="image/*" class="hidden">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="input-group">
+                    <label for="subject">Предмет</label>
+                    <input type="text" id="subject" value="Математика" placeholder="Наприклад: 'Фізика', 'Хімія'">
+                </div>
+                <div class="input-group">
+                    <label for="page-number">Номер сторінки</label>
+                    <input type="number" id="page-number" value="10" placeholder="Наприклад: '10'">
+                </div>
+                <div class="input-group">
+                    <label for="paragraph-number">Номер параграфа</label>
+                    <input type="number" id="paragraph-number" value="5" placeholder="Наприклад: '5'">
+                </div>
+                <div class="input-group">
+                    <label for="task-number">Номер завдання</label>
+                    <input type="number" id="task-number" value="2" placeholder="Наприклад: '2'">
+                </div>
+            </div>
+
+            <div class="input-group relative">
+                <label for="task-details">Деталі завдання (текст або голос)</label>
+                <textarea id="task-details" rows="3" placeholder="Наприклад: 'Поясни крок 3 детально.' Або: 'Знайди помилку в рішенні і виправ її.'"></textarea>
+                <button id="mic-emoji-button" class="absolute right-3 bottom-3 mic-button focus:outline-none" title="Голосове введення">
+                    <span class="material-icons-outlined text-xl">mic</span>
+                </button>
+            </div>
+
+            <button id="assistant-call-button" class="assistant-button w-full mb-8" disabled>
+                <span class="material-icons-outlined mr-2">psychology</span> Отримати допомогу асистента
+            </button>
+
+            <h3 class="text-xl font-bold mb-3 text-indigo-700">Відповідь Асистента</h3>
+            
+            <div id="response-area" class="p-4 rounded-lg min-h-[100px] whitespace-pre-wrap bg-gray-50 border border-gray-200">
+                Тут з'явиться детальна відповідь.
+            </div>
+            
+            <div id="tts-controls" class="flex space-x-3 mt-3 justify-end hidden">
+                 <button id="play-tts-btn" class="assistant-button !bg-indigo-500 !w-auto !py-2 !px-4">
+                    <span class="material-icons-outlined" id="play-pause-icon">play_arrow</span>
+                 </button>
+            </div>
+
+
+            <div id="copilot-section" class="mt-8 pt-6 border-t border-gray-300 hidden">
+                 <h3 class="text-xl font-bold mb-3 text-indigo-700">Copilot (Чат)</h3>
+                 
+                 <div class="input-group relative">
+                    <input type="text" id="copilot-text-input" placeholder="Введіть додаткове питання або використовуйте мікрофон">
+                    <button id="mic-copilot-button" class="absolute right-3 top-1/2 -translate-y-1/2 mic-button focus:outline-none" title="Голосове введення">
+                        <span class="material-icons-outlined text-xl">mic</span>
+                    </button>
+                </div>
+                 
+                <div class="flex items-center space-x-3 mt-4">
+                    <button id="send-copilot-btn" class="assistant-button !w-auto !py-2 !px-4" disabled>
+                        <span class="material-icons-outlined mr-2">send</span> Надіслати
+                    </button>
+                    <button id="start-recording-btn" class="assistant-button !bg-green-500 hover:!bg-green-600 !w-auto !py-2 !px-4">
+                        <span class="material-icons-outlined mr-2" id="recording-icon">mic</span> <span id="recording-status">Натисніть для початку...</span>
+                    </button>
+                </div>
+                 <div id="copilot-response-area" class="mt-4 p-4 rounded-lg min-h-[50px] whitespace-pre-wrap bg-white border border-gray-200">
+                    Тут з'являться відповіді Copilot.
+                </div>
+            </div>
+
+        </div>
+
+        <div class="right-panel">
+            <div id="processing-animation">
+                <img src="assets/assistant.png" alt="AI Assistant"> 
+            </div>
+            <div class="assistant-info">
+                <h1 class="text-2xl font-bold">AI Освітній Асистент</h1>
+                <p class="text-sm">Ваш персональний помічник у навчанні</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="AI-Assistant.js?v=26" defer></script>
+
+</body>
+</html>
