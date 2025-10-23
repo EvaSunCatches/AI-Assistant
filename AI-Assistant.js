@@ -41,14 +41,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlSection = document.getElementById('url-section'); 
 
     // --- API Ініціалізація ---
-    // Переконайтеся, що API_KEY завантажується з api_config.js
     const API_KEY = window.GEMINI_API_KEY; 
     let ai = null;
     const model = "gemini-2.5-flash";
-    const KEY_PLACEHOLDER = "ВАШ_ДІЙСНИЙ_КЛЮЧ_GEMINI_API"; // Заглушка, щоб перевірити ключ
+    const KEY_PLACEHOLDER = "ВАШ_ДІЙСНИЙ_КЛЮЧ_GEMINI_API"; 
 
     // 1. ПЕРЕВІРКА КЛЮЧА ТА ІНІЦІАЛІЗАЦІЯ GEMINI API
     function initializeAI() {
+        // Перевіряємо, чи завантажена бібліотека Gemini (для виправлення помилки CDN)
+        if (typeof window.GoogleGenerativeAI === 'undefined') {
+             const errorText = 'КРИТИЧНА ПОМИЛКА: Бібліотека Google Gen AI не завантажена. Перевірте підключення CDN.';
+             if (responseArea) responseArea.innerHTML = `<div class="error-message">${errorText}</div>`;
+             if (assistantButton) assistantButton.disabled = true;
+             console.error(errorText);
+             return false;
+        }
+
         if (typeof API_KEY === 'undefined' || !API_KEY || API_KEY === KEY_PLACEHOLDER || API_KEY.length < 30) {
             const errorText = 'КРИТИЧНА ПОМИЛКА: Ключ Gemini API не знайдено або недійсний. Перевірте, чи коректно він вставлений у <strong>assets/api_config.js</strong>!';
             if (responseArea) responseArea.innerHTML = `<div class="error-message">${errorText}</div>`;
@@ -57,19 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         }
 
-        if (typeof window.GoogleGenerativeAI !== 'undefined') {
-            const { GoogleGenerativeAI } = window; 
-            ai = new GoogleGenerativeAI(API_KEY);
-            if (assistantButton) assistantButton.disabled = false;
-            if (responseArea) responseArea.innerText = "Тут з'явиться детальна відповідь.";
-            return true;
-        } else {
-            const errorText = 'Критична помилка: Бібліотека Google Gen AI не завантажена. Перевірте підключення CDN.';
-            if (responseArea) responseArea.innerHTML = `<div class="error-message">${errorText}</div>`;
-            if (assistantButton) assistantButton.disabled = true;
-            console.error(errorText);
-            return false;
-        }
+        const { GoogleGenerativeAI } = window; 
+        ai = new GoogleGenerativeAI(API_KEY);
+        if (assistantButton) assistantButton.disabled = false;
+        if (responseArea) responseArea.innerText = "Тут з'явиться детальна відповідь.";
+        return true;
     }
     initializeAI();
 
@@ -98,17 +98,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Логіка для "Завантажити фото"
         uploadPhotoBtn.addEventListener('click', () => {
-             // 1. Видаляємо атрибут capture, щоб відкрити папку/файли
+             // ВИПРАВЛЕНО: Примусово видаляємо атрибут capture для відкриття папки
              fileInput.removeAttribute('capture');
-             // 2. Імітуємо клік для відкриття вікна вибору файлу
              fileInput.click(); 
         });
         
         // Логіка для "Зробити фото" (відкриває камеру)
         takePhotoBtn.addEventListener('click', () => {
-             // 1. Встановлюємо атрибут 'capture' для запуску камери
-             fileInput.setAttribute('capture', 'environment'); // 'environment' для задньої камери (зазвичай)
-             // 2. Імітуємо клік
+             // ВИПРАВЛЕНО: Примусово встановлюємо атрибут capture для запуску камери
+             fileInput.setAttribute('capture', 'environment'); // 'environment' для задньої камери
              fileInput.click();
         });
     }
@@ -141,8 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (ttsControls) ttsControls.classList.remove('hidden'); 
             } catch (error) {
                 // Виводимо більш конкретне повідомлення про помилку API
-                let errorMessage = error.message.includes('API_KEY_INVALID') 
-                    ? "Недійсний ключ API. Перевірте <strong>assets/api_config.js</strong>." 
+                let errorMessage = error.message.includes('API_KEY_INVALID') || error.message.includes('API key is not valid')
+                    ? "Недійсний ключ API. **Спробуйте створити новий ключ!** Перевірте <strong>assets/api_config.js</strong>." 
                     : `Помилка API: Не вдалося отримати відповідь. Деталі: ${error.message}.`;
                     
                 responseArea.innerHTML = `<div class="error-message">${errorMessage}</div>`;
@@ -241,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (event.results[i].isFinal) {
                     finalTranscript += event.results[i][0].transcript;
                 }
-                // Для інтерактивного введення можна використовувати: copilotTextInput.value = event.results[i][0].transcript;
             }
             if (finalTranscript) {
                 copilotTextInput.value = finalTranscript.trim();
@@ -254,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
             recordingStatus.innerText = `Помилка: ${event.error}.`;
             recordingIcon.innerText = 'mic'; 
             startRecordingBtn.classList.remove('!bg-gray-500'); 
-            startRecordingBtn.classList.add('!bg-red-500'); // Повертаємо червоний колір
+            startRecordingBtn.classList.add('!bg-red-500'); 
         };
 
         recognition.onend = () => {
@@ -274,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     recordingStatus.innerText = 'Запис... Говоріть.';
                     recordingIcon.innerText = 'stop';
                     startRecordingBtn.classList.remove('!bg-red-500');
-                    startRecordingBtn.classList.add('!bg-gray-500'); // Змінюємо колір на сірий під час запису
+                    startRecordingBtn.classList.add('!bg-gray-500'); 
                 } catch (e) {
                     if (e.name !== 'InvalidStateError') console.error('STT Start Error:', e);
                 }
