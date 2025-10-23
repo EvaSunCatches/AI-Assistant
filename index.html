@@ -7,6 +7,8 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* ОСНОВНІ СТИЛІ */
@@ -43,9 +45,9 @@
             position: relative;
             padding: 0; 
             background-color: #E0F7FA; 
-            display: flex; /* Додав flex для центрування */
-            align-items: flex-end; /* Вирівнювання плашки знизу */
-            justify-content: center; /* Центрування плашки */
+            display: flex; 
+            align-items: flex-end; 
+            justify-content: center; 
         }
         .right-panel img {
             width: 100%;
@@ -54,28 +56,28 @@
             position: absolute;
             top: 0;
             left: 0;
-            z-index: 1; /* Зображення під текстом */
+            z-index: 1; 
         }
-        /* ВИПРАВЛЕНО: Стилі плашки AI Освітній Асистент */
+        /* ВИПРАВЛЕНО: Стилі плашки AI Освітній Асистент (матове скло) */
         .assistant-info {
-            position: relative; /* Щоб z-index працював над зображенням */
-            z-index: 2; /* Над зображенням */
-            color: white; /* Білий текст */
-            background: rgba(0, 0, 0, 0.4); /* Напівпрозорий чорний фон */
-            backdrop-filter: blur(5px); /* Ефект матового скла */
+            position: relative; 
+            z-index: 2; 
+            color: white; 
+            background: rgba(0, 0, 0, 0.4); 
+            backdrop-filter: blur(5px); 
             padding: 15px 25px;
             border-radius: 12px;
             text-align: center;
-            margin-bottom: 20px; /* Відступ від низу */
+            margin-bottom: 20px; 
         }
         .assistant-info h1 {
-            font-size: 1.75rem; /* Забезпечення розміру тексту */
+            font-size: 1.75rem; 
             font-weight: bold;
-            color: white; /* Перевизначення, якщо Tailwind перекриває */
+            color: white; 
         }
         .assistant-info p {
             font-size: 0.9rem;
-            color: white; /* Перевизначення */
+            color: white; 
         }
 
         input[type="text"], select, textarea {
@@ -89,7 +91,7 @@
             resize: vertical;
         }
 
-        /* ІНШІ СТИЛІ (з незначними змінами емодзі) */
+        /* ІНШІ СТИЛІ */
         .assistant-button {
             background-color: #dbeafe; 
             color: #1e40af; 
@@ -187,7 +189,7 @@
              opacity: 0.5;
              cursor: not-allowed;
         }
-        /* ВИПРАВЛЕНО: Стилі для кнопок "По зображенню" */
+        /* Стилі для кнопок "По зображенню" */
         #photo-upload-section {
             background-color: #f3f4f6;
             padding: 15px;
@@ -235,11 +237,11 @@
             
             <div class="flex space-x-4 mb-4">
                 <button id="url-toggle" class="source-button source-button-active">
-                    <span class="text-lg mr-2">🔗</span> По посиланню (URL)
+                    <span class="material-icons-outlined mr-2">link</span> По посиланню (URL)
                 </button>
                 
                 <button id="image-toggle" class="source-button source-button-inactive">
-                    <span class="text-lg mr-2">🖼️</span> По зображенню
+                    <span class="material-icons-outlined mr-2">image</span> По зображенню
                 </button>
             </div>
 
@@ -263,13 +265,14 @@
                 </div>
             </div>
 
+            
             <div id="photo-upload-section" class="mb-4 hidden">
                  <div class="flex flex-col space-y-3">
                     <button id="upload-photo-btn" class="source-button !w-full !min-w-0">
-                        <span class="text-lg mr-2">📂</span> Завантажити фото
+                        <span class="material-icons-outlined mr-2">upload_file</span> Завантажити фото
                     </button>
                     <button id="take-photo-btn" class="source-button !w-full !min-w-0">
-                        <span class="text-lg mr-2">📸</span> Зробити фото
+                        <span class="material-icons-outlined mr-2">camera_alt</span> Зробити фото
                     </button>
                     <input type="file" id="file-input" accept="image/*" class="hidden">
                  </div>
@@ -280,13 +283,13 @@
                 <div class="textarea-container">
                     <textarea id="task-details" rows="3" placeholder="Наприклад: 'Поясни крок 3 детально.' Або: 'Знайди помилку в рішенні і виправ її.'">Поясни крок 3 детально.</textarea>
                     <button id="mic-emoji-button" class="mic-button focus:outline-none" title="Голосове введення">
-                        <span class="text-xl">🎙️</span> 
+                        <span class="material-icons-outlined text-xl">mic</span> 
                     </button>
                 </div>
             </div>
 
             <button id="assistant-call-button" class="assistant-button">
-                <span class="text-xl mr-2">✨</span> Отримати допомогу асистента
+                <span class="material-icons-outlined mr-2">auto_fix_high</span> Отримати допомогу асистента
             </button>
 
             <div class="mt-8">
@@ -296,13 +299,13 @@
                 </div>
                 <div id="tts-controls" class="tts-controls hidden">
                     <button id="rewind-tts-btn" title="Перемотка назад" disabled>
-                        <span class="text-lg">⏪</span>
+                        <span class="material-icons-outlined">fast_rewind</span>
                     </button>
                     <button id="play-tts-btn" title="Відтворити / Пауза">
-                        <span class="text-lg" id="play-pause-icon">▶️</span>
+                        <span class="material-icons-outlined" id="play-pause-icon">play_arrow</span>
                     </button>
                     <button id="forward-tts-btn" title="Перемотка вперед" disabled>
-                        <span class="text-lg">⏩</span>
+                        <span class="material-icons-outlined">fast_forward</span>
                     </button>
                 </div>
             </div>
@@ -312,16 +315,16 @@
                 <div class="textarea-container mb-3">
                      <textarea id="copilot-text-input" rows="2" placeholder="Введіть додаткове питання або використовуйте мікрофон"></textarea>
                      <button id="mic-copilot-button" class="mic-button focus:outline-none" title="Голосове введення">
-                        <span class="text-xl">🎙️</span>
+                        <span class="material-icons-outlined text-xl">mic</span>
                     </button>
                 </div>
                  
                 <div class="flex items-center space-x-3 mt-4">
                     <button id="send-copilot-btn" class="assistant-button !w-auto !py-2 !px-4" disabled>
-                        <span class="text-lg mr-2">📧</span> Надіслати
+                        <span class="material-icons-outlined mr-2">send</span> Надіслати
                     </button>
                     <button id="start-recording-btn" class="assistant-button !bg-red-500 hover:!bg-red-600 !w-auto !py-2 !px-4">
-                        <span class="text-lg mr-2">🎤</span> <span id="recording-status">Натисніть для початку...</span>
+                        <span class="material-icons-outlined mr-2" id="recording-icon">mic</span> <span id="recording-status">Натисніть для початку...</span>
                     </button>
                 </div>
                  <div id="copilot-response-area" class="mt-4 p-4 rounded-lg min-h-[50px] whitespace-pre-wrap bg-white border border-gray-200">
