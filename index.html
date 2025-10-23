@@ -25,15 +25,19 @@
             display: flex;
             max-width: 1200px;
             width: 100%;
-            min-height: 100vh; 
+            /* ВИПРАВЛЕНО: Фіксована висота контейнера, щоб уникнути стрибків */
+            min-height: 95vh; 
             background-color: #FFFFFF; 
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             overflow: hidden;
+            margin: 2.5vh auto; /* Центрування */
+            border-radius: 12px;
         }
         .left-panel {
             width: 60%; 
             padding: 30px;
             border-right: 1px solid #E5E7EB;
+            overflow-y: auto; /* Дозволяє прокрутку лівої панелі */
         }
         .right-panel {
             width: 40%; 
@@ -41,13 +45,38 @@
             padding: 0; 
             background-color: #E0F7FA; 
         }
+        /* ВИПРАВЛЕНО: Зображення займає всю праву панель */
         .right-panel img {
             width: 100%;
             height: 100%; 
             object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .assistant-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #1e40af;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+        /* ВИПРАВЛЕНО: Розміри для полів вводу */
+        input[type="text"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+        }
+        /* ВИПРАВЛЕНО: Висота TextArea */
+        #task-details {
+            min-height: 80px; 
+            resize: vertical;
         }
 
-        /* СТИЛІ КНОПОК */
+        /* ІНШІ СТИЛІ (БЕЗ ЗМІН) */
         .assistant-button {
             background-color: #dbeafe; 
             color: #1e40af; 
@@ -69,8 +98,6 @@
             opacity: 0.6;
             cursor: not-allowed;
         }
-        
-        /* СТИЛІ КНОПОК ДЖЕРЕЛА */
         .source-button {
             padding: 10px;
             border-radius: 6px;
@@ -91,11 +118,9 @@
              background-color: #f3f4f6; 
              color: #4b5563; 
         }
-        
         .textarea-container {
             position: relative;
         }
-        /* СТИЛІ МІКРОФОНА */
         .mic-button { 
             position: absolute;
             top: 5px; 
@@ -122,8 +147,6 @@
             gap: 15px; 
             margin-bottom: 15px;
         }
-        
-        /* СТИЛІ ДЛЯ TTS КОНТРОЛІВ */
         .tts-controls {
             display: flex;
             gap: 10px;
