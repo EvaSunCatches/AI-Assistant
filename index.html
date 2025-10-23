@@ -25,27 +25,28 @@
             display: flex;
             max-width: 1200px;
             width: 100%;
-            /* ВИПРАВЛЕНО: Фіксована висота контейнера, щоб уникнути стрибків */
             min-height: 95vh; 
             background-color: #FFFFFF; 
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             overflow: hidden;
-            margin: 2.5vh auto; /* Центрування */
+            margin: 2.5vh auto; 
             border-radius: 12px;
         }
         .left-panel {
             width: 60%; 
             padding: 30px;
             border-right: 1px solid #E5E7EB;
-            overflow-y: auto; /* Дозволяє прокрутку лівої панелі */
+            overflow-y: auto; 
         }
         .right-panel {
             width: 40%; 
             position: relative;
             padding: 0; 
             background-color: #E0F7FA; 
+            display: flex; /* Додав flex для центрування */
+            align-items: flex-end; /* Вирівнювання плашки знизу */
+            justify-content: center; /* Центрування плашки */
         }
-        /* ВИПРАВЛЕНО: Зображення займає всю праву панель */
         .right-panel img {
             width: 100%;
             height: 100%; 
@@ -53,30 +54,42 @@
             position: absolute;
             top: 0;
             left: 0;
+            z-index: 1; /* Зображення під текстом */
         }
+        /* ВИПРАВЛЕНО: Стилі плашки AI Освітній Асистент */
         .assistant-info {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            color: #1e40af;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px 15px;
-            border-radius: 8px;
+            position: relative; /* Щоб z-index працював над зображенням */
+            z-index: 2; /* Над зображенням */
+            color: white; /* Білий текст */
+            background: rgba(0, 0, 0, 0.4); /* Напівпрозорий чорний фон */
+            backdrop-filter: blur(5px); /* Ефект матового скла */
+            padding: 15px 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px; /* Відступ від низу */
         }
-        /* ВИПРАВЛЕНО: Розміри для полів вводу */
+        .assistant-info h1 {
+            font-size: 1.75rem; /* Забезпечення розміру тексту */
+            font-weight: bold;
+            color: white; /* Перевизначення, якщо Tailwind перекриває */
+        }
+        .assistant-info p {
+            font-size: 0.9rem;
+            color: white; /* Перевизначення */
+        }
+
         input[type="text"], select, textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #d1d5db;
             border-radius: 6px;
         }
-        /* ВИПРАВЛЕНО: Висота TextArea */
         #task-details {
             min-height: 80px; 
             resize: vertical;
         }
 
-        /* ІНШІ СТИЛІ (БЕЗ ЗМІН) */
+        /* ІНШІ СТИЛІ (з незначними змінами емодзі) */
         .assistant-button {
             background-color: #dbeafe; 
             color: #1e40af; 
@@ -174,7 +187,28 @@
              opacity: 0.5;
              cursor: not-allowed;
         }
-        
+        /* ВИПРАВЛЕНО: Стилі для кнопок "По зображенню" */
+        #photo-upload-section {
+            background-color: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            margin-top: 10px;
+        }
+        #photo-upload-section button {
+            background-color: #e5e7eb;
+            color: #374151;
+            padding: 10px 15px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        #photo-upload-section button:hover {
+            background-color: #d1d5db;
+        }
     </style>
 
     <script src="https://unpkg.com/@google/genai"></script> 
@@ -204,20 +238,9 @@
                     <span class="text-lg mr-2">🔗</span> По посиланню (URL)
                 </button>
                 
-                <div class="relative flex-grow">
-                    <button id="photo-camera-button" class="source-button source-button-inactive">
-                        <span class="text-lg mr-2">📸</span> Фото/Камера
-                    </button>
-                    <div id="photo-camera-dropdown" class="absolute z-10 w-full mt-2 bg-white rounded-md shadow-lg hidden flex flex-col p-2 space-y-2 border border-gray-200">
-                        <button id="upload-photo-btn" class="source-button source-button-inactive !w-full !min-w-0 !justify-start hover:!bg-gray-100">
-                            <span class="text-lg mr-2">📂</span> Завантажити фото
-                        </button>
-                        <button id="take-photo-btn" class="source-button source-button-inactive !w-full !min-w-0 !justify-start hover:!bg-gray-100">
-                            <span class="text-lg mr-2">📹</span> Зробити фото
-                        </button>
-                        <input type="file" id="file-input" accept="image/*" class="hidden">
-                    </div>
-                </div>
+                <button id="image-toggle" class="source-button source-button-inactive">
+                    <span class="text-lg mr-2">🖼️</span> По зображенню
+                </button>
             </div>
 
             <div id="url-section" class="mb-4">
@@ -238,6 +261,18 @@
                         <input type="text" id="task-number" value="294" placeholder="Напр. 294" class="h-10">
                     </div>
                 </div>
+            </div>
+
+            <div id="photo-upload-section" class="mb-4 hidden">
+                 <div class="flex flex-col space-y-3">
+                    <button id="upload-photo-btn" class="source-button !w-full !min-w-0">
+                        <span class="text-lg mr-2">📂</span> Завантажити фото
+                    </button>
+                    <button id="take-photo-btn" class="source-button !w-full !min-w-0">
+                        <span class="text-lg mr-2">📸</span> Зробити фото
+                    </button>
+                    <input type="file" id="file-input" accept="image/*" class="hidden">
+                 </div>
             </div>
 
             <div class="mb-6">
