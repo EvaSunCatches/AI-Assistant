@@ -82,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
             processingAnimation.classList.add('hidden');
             processingAnimation.classList.remove('pulse-default', 'pulse-speaking');
         }
+        // Запобігаємо очищенню повідомлення про помилку ключа/CDN
         if (responseArea && !responseArea.innerText.includes('Помилка')) {
             responseArea.innerText = message;
         }
@@ -90,9 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 1. ПЕРЕВІРКА КЛЮЧА ТА ІНІЦІАЛІЗАЦІЯ GEMINI API
     function initializeAI() {
-        // Перевіряємо, чи завантажена бібліотека Gemini (для виправлення помилки CDN)
-        if (typeof window.GoogleGenerativeAI === 'undefined') {
-             const errorText = 'КРИТИЧНА ПОМИЛКА: Бібліотека Google Gen AI не завантажена. Перевірте підключення CDN.';
+        
+        // ВИПРАВЛЕННЯ ДЛЯ CDN: Використовуємо глобальну змінну з UMD-версії
+        const GoogleGenerativeAI = window.GoogleGenerativeAI;
+        
+        if (typeof GoogleGenerativeAI === 'undefined') {
+             const errorText = 'КРИТИЧНА ПОМИЛКА: Бібліотека Google Gen AI не завантажена. Перевірте підключення CDN. (Помилка "export" усунена, але бібліотека не знайдена)';
              if (responseArea) responseArea.innerHTML = `<div class="error-message">${errorText}</div>`;
              if (assistantButton) assistantButton.disabled = true;
              console.error(errorText);
@@ -108,13 +112,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         }
 
-        const { GoogleGenerativeAI } = window; 
         ai = new GoogleGenerativeAI(API_KEY);
         // Ініціалізація чату для Copilot
         chat = ai.chats.create({ model: model });
         
         if (assistantButton) assistantButton.disabled = false;
-        hideProcessingAnimation(); // Скидаємо повідомлення про помилку ключа, якщо все добре
+        hideProcessingAnimation("Тут з'явиться детальна відповідь."); 
         return true;
     }
     // Запускаємо ініціалізацію одразу
