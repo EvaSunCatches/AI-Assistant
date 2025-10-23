@@ -58,17 +58,35 @@
             left: 0;
             z-index: 1; 
         }
-        /* ВИПРАВЛЕНО: Стилі плашки AI Освітній Асистент (матове скло) */
+
+        /* КОРИСТУВАЦЬКІ СТИЛІ (ХОЛОДНИЙ ТОН) */
+
+        /* ВИПРАВЛЕННЯ 1: СТИЛЬ ПЛАШКИ СПИСКУ ПРЕДМЕТІВ (МАТОВЕ СКЛО, ЯК В АСИСТЕНТА) */
+        .select-backdrop {
+            /* Копіюємо стилі з .assistant-label */
+            background-color: rgba(255, 255, 255, 0.7); /* Світліший фон */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); 
+            border: 1px solid rgba(0, 188, 212, 0.2); /* Акуратна облямівка */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+            transition: all 0.2s;
+        }
+
         .assistant-info {
             position: relative; 
             z-index: 2; 
-            color: white; 
-            background: rgba(0, 0, 0, 0.4); 
-            backdrop-filter: blur(5px); 
+            background-color: rgba(0, 0, 0, 0.25); 
+            color: #fff; 
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px); 
+            border: 1px solid rgba(255, 255, 255, 0.15); 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); 
             padding: 15px 25px;
             border-radius: 12px;
             text-align: center;
             margin-bottom: 20px; 
+            max-width: 90%; 
+            width: fit-content;
         }
         .assistant-info h1 {
             font-size: 1.75rem; 
@@ -80,58 +98,120 @@
             color: white; 
         }
 
+        /* Стиль для індикатора прогресу */
+        .progress-bar {
+            height: 10px;
+            background-color: #e5f5f7;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-image: linear-gradient(to right, #00BCD4, #4DD0E1); 
+            transition: width 0.5s ease;
+        }
+
+        /* СТИЛЬ ПЕРЕКЛЮЧАТЕЛЕЙ: ХОЛОДНИЙ ТОН */
+        .source-button {
+             padding: 10px;
+             border-radius: 6px;
+             transition: all 0.3s ease;
+             font-weight: 600;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             border: 1px solid #d1d5db; 
+             flex-grow: 1; 
+             cursor: pointer;
+             background-color: #ffffff; 
+        }
+        .source-button:hover:not(.source-button-active) {
+             background-color: #f3f4f6 !important; 
+        }
+        .source-button-active {
+            background-color: #E0F7FA !important; 
+            border-color: #00BCD4 !important; 
+            color: #006064 !important; 
+            box-shadow: 0 2px 4px rgba(0, 188, 212, 0.2);
+        }
+        .source-button-inactive {
+             background-color: #f3f4f6; 
+             color: #4b5563; 
+        }
+
+        /* Стиль кнопки Отримати допомогу */
+        .assistant-button {
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            background-image: linear-gradient(to right, #B2EBF2 0%, #E0F7FA 100%);  
+            color: #006064; 
+            border: 1px solid #80DEEA;
+            transition: all 0.3s ease;
+            font-weight: 800; 
+        }
+        .assistant-button:hover:not(:disabled) {
+            opacity: 0.95;
+            box-shadow: 0 6px 20px rgba(178, 235, 242, 0.6);
+            transform: translateY(-1px);
+        }
+        .assistant-button:disabled {
+            background-image: linear-gradient(to right, #CFD8DC 0%, #ECEFF1 100%);
+            cursor: not-allowed;
+            color: #90A4AE;
+            border: 1px solid #B0BEC5;
+            box-shadow: none;
+        }
+
+        /* ВИПРАВЛЕННЯ 2: СТИЛІ КНОПОК ДЛЯ ФОТО/КАМЕРИ */
+        .file-upload-btn, .camera-capture-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.15s;
+            cursor: pointer;
+            flex: 1; /* Рівна ширина */
+        }
+        .file-upload-btn {
+            border: 1px solid #00ACC1; 
+            background-color: #B2EBF2; /* Світло-блакитний */
+            color: #006064; 
+        }
+        .file-upload-btn:hover {
+            background-color: #80DEEA; 
+        }
+        .camera-capture-btn {
+            border: 1px solid #00BCD4; 
+            background-color: #80DEEA; /* Трохи темніше */
+            color: #006064; 
+        }
+        .camera-capture-btn:hover {
+            background-color: #4DD0E1;
+        }
+
+        /* ІНШІ СТИЛІ */
         input[type="text"], select, textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #d1d5db;
             border-radius: 6px;
         }
+        /* Встановлюємо ширину для select (Предмет) */
+        #subject-group {
+             width: 50%; /* Зробимо ширше, як ви просили */
+        }
+        
         #task-details {
             min-height: 80px; 
             resize: vertical;
-        }
-
-        /* ІНШІ СТИЛІ */
-        .assistant-button {
-            background-color: #dbeafe; 
-            color: #1e40af; 
-            padding: 12px;
-            border-radius: 8px;
-            transition: background-color 0.2s;
-            cursor: pointer;
-            text-align: center;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-        }
-        .assistant-button:hover:not(:disabled) {
-            background-color: #bfdbfe; 
-        }
-        .assistant-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .source-button {
-            padding: 10px;
-            border-radius: 6px;
-            transition: all 0.2s;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #d1d5db; 
-            flex-grow: 1; 
-        }
-        .source-button-active {
-            background-color: #bfdbfe; 
-            color: #1e40af; 
-            border-color: #60a5fa; 
-        }
-        .source-button-inactive {
-             background-color: #f3f4f6; 
-             color: #4b5563; 
         }
         .textarea-container {
             position: relative;
@@ -147,7 +227,7 @@
             z-index: 10;
         }
         .mic-button:hover {
-            color: #3B82F6;
+            color: #00BCD4;
         }
         .error-message {
             color: #DC2626; 
@@ -169,8 +249,8 @@
             align-items: center;
         }
         .tts-controls button {
-            background: #E5E7EB;
-            color: #4B5563;
+            background: #E5F5F7;
+            color: #006064;
             border: none;
             padding: 8px;
             border-radius: 50%;
@@ -182,34 +262,19 @@
             transition: background-color 0.2s, color 0.2s;
         }
         .tts-controls button:hover:not(:disabled) {
-            background: #D1D5DB;
-            color: #1F2937;
+            background: #B2EBF2;
         }
         .tts-controls button:disabled {
              opacity: 0.5;
              cursor: not-allowed;
         }
-        /* Стилі для кнопок "По зображенню" */
+        /* Стилі для секції "По зображенню" */
         #photo-upload-section {
-            background-color: #f3f4f6;
+            background-color: #f0f8ff; /* Дуже світлий блакитний фон */
             padding: 15px;
             border-radius: 8px;
-            border: 1px solid #d1d5db;
+            border: 1px solid #80DEEA;
             margin-top: 10px;
-        }
-        #photo-upload-section button {
-            background-color: #e5e7eb;
-            color: #374151;
-            padding: 10px 15px;
-            border-radius: 6px;
-            transition: background-color 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-        }
-        #photo-upload-section button:hover {
-            background-color: #d1d5db;
         }
     </style>
 
@@ -223,9 +288,9 @@
         <div class="left-panel">
             <h2 class="text-3xl font-bold mb-6 text-gray-800">Введіть ваше завдання</h2>
 
-            <div class="mb-4">
+            <div class="mb-4" id="subject-group">
                 <label for="subject" class="block mb-2 text-sm font-medium text-gray-700">Правильно вибрати предмет</label>
-                <select id="subject" class="h-10"> 
+                <select id="subject" class="h-10 select-backdrop"> 
                     <option value="Математика" selected>Математика</option>
                     <option value="Українська мова">Українська мова</option>
                     <option value="Українська література">Українська література</option>
@@ -267,15 +332,15 @@
 
             
             <div id="photo-upload-section" class="mb-4 hidden">
-                 <div class="flex flex-col space-y-3">
-                    <button id="upload-photo-btn" class="source-button !w-full !min-w-0">
+                 <div class="flex space-x-4">
+                    <button id="upload-photo-btn" class="file-upload-btn">
                         <span class="material-icons-outlined mr-2">upload_file</span> Завантажити фото
                     </button>
-                    <button id="take-photo-btn" class="source-button !w-full !min-w-0">
+                    <button id="take-photo-btn" class="camera-capture-btn">
                         <span class="material-icons-outlined mr-2">camera_alt</span> Зробити фото
                     </button>
-                    <input type="file" id="file-input" accept="image/*" class="hidden">
                  </div>
+                 <input type="file" id="file-input" accept="image/*" class="hidden">
             </div>
 
             <div class="mb-6">
