@@ -1,416 +1,329 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Освітній Асистент</title>
+// AI-Assistant.js (Головний файл логіки - ПОВНИЙ І ВИПРАВЛЕНИЙ з GEMINI)
 
-    <script src="https://cdn.jsdelivr.net/npm/@google/genai@0.14.0/umd/index.js"></script> 
-    <script src="assets/api_config.js"></script>
+// --- Ініціалізація Gemini SDK ---
+// Припускаємо, що GEMINI_API_KEY визначено в assets/api_config.js
+if (typeof google === 'undefined' || typeof GEMINI_API_KEY === 'undefined') {
+    console.error("Gemini SDK або API ключ не завантажено. Перевірте index.html та assets/api_config.js.");
+}
 
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+// Створюємо клієнт для взаємодії з API
+const ai = new google.genai.GoogleGenAI({ apiKey: GEMINI_API_KEY });
+const chat = ai.chats.create({ model: "gemini-2.5-flash" }); // Використовуємо chat-сесію для контексту
+
+// --- Допоміжна функція для конвертації Blob в Base64 ---
+const blobToBase64 = (blob) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            // Отримуємо рядок Base64 (видаляємо префікс "data:audio/webm;base64,")
+            const base64String = reader.result.split(',')[1]; 
+            resolve(base64String);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- Змінні DOM-елементів ---
+    const responseArea = document.getElementById('response-area');
+    const assistantButton = document.getElementById('assistant-call-button');
+    const details = document.getElementById('task-details'); // Поле для STT
     
-    <link href="assets/tailwind.css" rel="stylesheet"> 
+    // ... інші поля вводу
+    const subject = document.getElementById('subject');
+    const url = document.getElementById('url');
+    const paragraph = document.getElementById('paragraph-number'); 
+    const page = document.getElementById('page-number');         
+    const task = document.getElementById('task-number');          
+
+    // --- Елементи керування STT/TTS ---
+    const micEmojiButton = document.getElementById('mic-emoji-button'); // Мікрофон для Деталей
+    const ttsControls = document.getElementById('tts-controls');
+    const playTtsBtn = document.getElementById('play-tts-btn');
+    const playPauseIcon = document.getElementById('play-pause-icon');
+    // const rewindTtsBtn = document.getElementById('rewind-tts-btn'); // Видалено/не використовується
+    // const forwardTtsBtn = document.getElementById('forward-tts-btn'); // Видалено/не використовується
+
+    // --- Елементи керування Copilot ---
+    const copilotSection = document.getElementById('copilot-section');
+    const micCopilotButton = document.getElementById('mic-copilot-button');
+    const sendCopilotBtn = document.getElementById('send-copilot-btn');
+    const copilotTextInput = document.getElementById('copilot-text-input');
+    const copilotResponseArea = document.getElementById('copilot-response-area');
+
+    // --- Глобальні змінні для TTS ---
+    let speechSynthesisUtterance = null;
+    let isPaused = false;
+
+    // --- Допоміжні функції інтерфейсу ---
     
-    <link rel="icon" type="image/png" href="assets/assistant.png"> 
+    // Встановлює статус для головного асистента
+    const setAssistantStatus = (message, isLoading = false) => {
+        responseArea.innerHTML = isLoading ? `
+            <div class="flex items-center space-x-2 text-blue-600">
+                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>${message}</span>
+            </div>
+        ` : message;
+        ttsControls.classList.add('hidden'); // Приховуємо TTS при зміні статусу/відповіді
+        if (speechSynthesisUtterance) {
+            window.speechSynthesis.cancel();
+            speechSynthesisUtterance = null;
+            isPaused = false;
+        }
+    };
 
-    <style>
-        /* ОСНОВНІ СТИЛІ */
-        body {
-            background-color: #F7F7F7; 
-            color: #1F2937; 
-            font-family: 'Nunito', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 0; 
-            margin: 0;
-        }
-        .container {
-            display: flex;
-            max-width: 1200px;
-            width: 100%;
-            min-height: 95vh; 
-            background-color: #FFFFFF; 
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            margin: 2.5vh auto; 
-            border-radius: 12px;
-        }
-        .left-panel {
-            width: 60%; 
-            padding: 30px;
-            border-right: 1px solid #E5E7EB;
-            overflow-y: auto; 
-        }
-        .right-panel {
-            width: 40%; 
-            position: relative;
-            padding: 0; 
-            background-color: #E0F7FA; 
-            display: flex; 
-            /* ВИПРАВЛЕННЯ: Центруємо інформаційний блок */
-            align-items: flex-end; 
-            justify-content: center; 
-        }
-        .right-panel img {
-            width: 100%;
-            height: 100%; 
-            object-fit: cover;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1; 
-            /* ВИПРАВЛЕННЯ: Додаємо transition, щоб уникнути стрибка при рендерингу */
-            transition: opacity 0.3s; 
+    // Встановлює статус для Copilot
+    const setCopilotStatus = (message, isLoading = false) => {
+        copilotResponseArea.innerHTML = isLoading ? `
+            <div class="flex items-center space-x-2 text-blue-600">
+                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>${message}</span>
+            </div>
+        ` : message;
+    };
+
+
+    // --- Логіка TTS (Text-to-Speech) ---
+    const speakText = (text) => {
+        if (!('speechSynthesis' in window)) {
+            console.error("Ваш браузер не підтримує Text-to-Speech.");
+            return;
         }
 
-        /* КОРИСТУВАЦЬКІ СТИЛІ (ХОЛОДНИЙ ТОН) */
+        window.speechSynthesis.cancel(); // Зупиняємо попереднє відтворення
 
-        .select-backdrop {
-            background-color: rgba(255, 255, 255, 0.7); 
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px); 
-            border: 1px solid rgba(0, 188, 212, 0.2); 
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
-            transition: all 0.2s;
-        }
-
-        .assistant-info {
-            position: relative; 
-            z-index: 2; 
-            background-color: rgba(0, 0, 0, 0.25); 
-            color: #fff; 
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px); 
-            border: 1px solid rgba(255, 255, 255, 0.15); 
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); 
-            padding: 15px 25px;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 20px; 
-            max-width: 90%; 
-            width: fit-content;
-        }
-        .assistant-info h1 {
-            font-size: 1.75rem; 
-            font-weight: bold;
-            color: white; 
-        }
-        .assistant-info p {
-            font-size: 0.9rem;
-            color: white; 
-        }
-
-        /* Стилі для індикатора прогресу */
-        .progress-bar {
-            height: 10px;
-            background-color: #e5f5f7;
-            border-radius: 9999px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background-image: linear-gradient(to right, #00BCD4, #4DD0E1); 
-            transition: width 0.5s ease;
-        }
-
-        /* СТИЛЬ ПЕРЕКЛЮЧАТЕЛЕЙ: ХОЛОДНИЙ ТОН */
-        .source-button {
-            padding: 10px;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #d1d5db; 
-            flex-grow: 1; 
-            cursor: pointer;
-            background-color: #ffffff; 
-        }
-        .source-button:hover:not(.source-button-active) {
-            background-color: #f3f4f6 !important; 
-        }
-        .source-button-active {
-            background-color: #E0F7FA !important; 
-            border-color: #00BCD4 !important; 
-            color: #006064 !important; 
-            box-shadow: 0 2px 4px rgba(0, 188, 212, 0.2);
-        }
-        .source-button-inactive {
-            background-color: #f3f4f6; 
-            color: #4b5563; 
-        }
-
-        /* Стиль кнопки Отримати допомогу */
-        .assistant-button {
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            background-image: linear-gradient(to right, #B2EBF2 0%, #E0F7FA 100%);  
-            color: #006064; 
-            border: 1px solid #80DEEA;
-            transition: all 0.3s ease;
-            font-weight: 800; 
-        }
-        .assistant-button:hover:not(:disabled) {
-            opacity: 0.95;
-            box-shadow: 0 6px 20px rgba(178, 235, 242, 0.6);
-            transform: translateY(-1px);
-        }
-        .assistant-button:disabled {
-            background-image: linear-gradient(to right, #CFD8DC 0%, #ECEFF1 100%);
-            cursor: not-allowed;
-            color: #90A4AE;
-            border: 1px solid #B0BEC5;
-            box-shadow: none;
-        }
-
-        /* Стилі кнопок для ФОТО/КАМЕРИ */
-        .file-upload-btn, .camera-capture-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            transition: all 0.15s;
-            cursor: pointer;
-            flex: 1; 
-        }
-        .file-upload-btn {
-            border: 1px solid #00ACC1; 
-            background-color: #B2EBF2; 
-            color: #006064; 
-        }
-        .file-upload-btn:hover {
-            background-color: #80DEEA; 
-        }
-        .camera-capture-btn {
-            border: 1px solid #00BCD4; 
-            background-color: #80DEEA; 
-            color: #006064; 
-        }
-        .camera-capture-btn:hover {
-            background-color: #4DD0E1;
-        }
-
-        /* ІНШІ СТИЛІ */
-        input[type="text"], select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-        }
+        speechSynthesisUtterance = new SpeechSynthesisUtterance(text);
+        speechSynthesisUtterance.lang = 'uk-UA'; // Українська мова
         
-        #subject-group {
-            width: 50%; 
+        // Знайти український голос, якщо є
+        const voices = window.speechSynthesis.getVoices();
+        const ukrainianVoice = voices.find(voice => voice.lang === 'uk-UA');
+        if (ukrainianVoice) {
+            speechSynthesisUtterance.voice = ukrainianVoice;
         }
-        
-        #task-details {
-            min-height: 80px; 
-            resize: vertical;
-        }
-        .textarea-container {
-            position: relative;
-        }
-        .mic-button { 
-            position: absolute;
-            top: 5px; 
-            right: 5px;
-            padding: 5px;
-            cursor: pointer;
-            color: #6B7280; 
-            font-size: 1.25rem; 
-            z-index: 10;
-        }
-        .mic-button:hover {
-            color: #00BCD4;
-        }
-        .error-message {
-            color: #DC2626; 
-            background-color: #FEE2E2; 
-            padding: 10px;
-            border-radius: 4px;
-            border: 1px solid #FCA5A5;
-        }
-        .input-group {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 15px; 
-            margin-bottom: 15px;
-        }
-        .tts-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            align-items: center;
-        }
-        .tts-controls button {
-            background: #E5F5F7;
-            color: #006064;
-            border: none;
-            padding: 8px;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: background-color 0.2s, color 0.2s;
-        }
-        .tts-controls button:hover:not(:disabled) {
-            background: #B2EBF2;
-        }
-        .tts-controls button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        /* Стилі для секції "По зображенню" */
-        #photo-upload-section {
-            background-color: #f0f8ff; 
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #80DEEA;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
 
-    <div class="container">
-        <div class="left-panel">
-            <h2 class="text-3xl font-bold mb-6 text-gray-800">Введіть ваше завдання</h2>
+        // Початок/Кінець відтворення
+        speechSynthesisUtterance.onstart = () => {
+            playPauseIcon.textContent = 'pause';
+            isPaused = false;
+        };
+        speechSynthesisUtterance.onend = () => {
+            playPauseIcon.textContent = 'play_arrow';
+            isPaused = false;
+            ttsControls.classList.remove('hidden'); // Залишаємо елементи керування після закінчення
+        };
+        speechSynthesisUtterance.onerror = (event) => {
+            console.error('Помилка TTS:', event);
+            playPauseIcon.textContent = 'play_arrow';
+            isPaused = false;
+        };
 
-            <div class="mb-4" id="subject-group">
-                <label for="subject" class="block mb-2 text-sm font-medium text-gray-700">Правильно вибрати предмет</label>
-                <select id="subject" class="h-10 select-backdrop"> 
-                    <option value="Математика" selected>Математика</option>
-                    <option value="Українська мова">Українська мова</option>
-                    <option value="Українська література">Українська література</option>
-                    <option value="Історія">Історія</option>
-                </select>
-            </div>
+        window.speechSynthesis.speak(speechSynthesisUtterance);
+        ttsControls.classList.remove('hidden');
+    };
 
-            <h3 class="text-xl font-semibold mb-3 mt-6 text-gray-800">Розділ 1: Джерело завдання</h3>
-            
-            <div class="flex space-x-4 mb-4">
-                <button id="url-toggle" class="source-button source-button-active">
-                    <span class="material-icons-outlined mr-2">link</span> По посиланню (URL)
-                </button>
-                
-                <button id="image-toggle" class="source-button source-button-inactive">
-                    <span class="material-icons-outlined mr-2">image</span> По зображенню
-                </button>
-            </div>
+    // Керування TTS
+    if (playTtsBtn) {
+        playTtsBtn.addEventListener('click', () => {
+            if (!speechSynthesisUtterance) {
+                // Якщо немає Utterance, беремо текст з responseArea
+                const text = responseArea.textContent.trim();
+                if (text && text !== "Тут з'являться відповіді Асистента.") {
+                    speakText(text);
+                }
+            } else if (window.speechSynthesis.speaking && !isPaused) {
+                window.speechSynthesis.pause();
+                playPauseIcon.textContent = 'play_arrow';
+                isPaused = true;
+            } else if (window.speechSynthesis.paused && isPaused) {
+                window.speechSynthesis.resume();
+                playPauseIcon.textContent = 'pause';
+                isPaused = false;
+            } else if (!window.speechSynthesis.speaking && !isPaused) {
+                // Якщо закінчилося, але Utterance існує, запускаємо знову
+                speakText(speechSynthesisUtterance.text);
+            }
+        });
+    }
 
-            <div id="url-section" class="mb-4">
-                <label for="url" class="block mb-2 text-sm font-medium text-gray-700">URL (Посилання на підручник, обов'язково)</label>
-                <input type="text" id="url" value="https://pidruchnyk.com.ua/1638-mat-merzialk-5-klas-2022.html" class="h-10">
+    // --- Логіка STT (Speech-to-Text) для поля "Деталі" ---
+    if ('webkitSpeechRecognition' in window && micEmojiButton && details) {
+        const recognitionDetails = new window.webkitSpeechRecognition();
+        recognitionDetails.continuous = false;
+        recognitionDetails.interimResults = false;
+        recognitionDetails.lang = 'uk-UA';
 
-                <div class="input-group mt-3">
-                    <div>
-                        <label for="paragraph-number" class="block mb-2 text-sm font-medium text-gray-700">Параграф</label>
-                        <input type="text" id="paragraph-number" value="§3" placeholder="Напр. §3" class="h-10">
+        micEmojiButton.addEventListener('click', () => {
+            if (micEmojiButton.disabled) return;
+            micEmojiButton.disabled = true;
+            micEmojiButton.style.color = '#DC2626'; 
+            details.placeholder = 'Слухаю...';
+            recognitionDetails.start();
+        });
+
+        recognitionDetails.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            details.value += (details.value.trim() ? ' ' : '') + transcript;
+            assistantButton.disabled = false;
+        };
+
+        recognitionDetails.onend = () => {
+             details.placeholder = "Введіть деталі завдання (або використовуйте мікрофон)";
+             micEmojiButton.disabled = false;
+             micEmojiButton.style.color = '#6B7280';
+        };
+
+        recognitionDetails.onerror = (event) => {
+             details.placeholder = "Введіть деталі завдання (або використовуйте мікрофон)";
+             console.error("Помилка розпізнавання Деталі:", event.error);
+             micEmojiButton.disabled = false;
+             micEmojiButton.style.color = '#6B7280';
+        };
+    } else if (micEmojiButton) {
+         micEmojiButton.disabled = true; 
+         micEmojiButton.style.opacity = 0.5;
+    }
+
+    // --- Логіка Головного Асистента (використання API) ---
+    assistantButton.addEventListener('click', async () => {
+        const subjectValue = subject ? subject.value.trim() : '';
+        const urlValue = url ? url.value.trim() : '';
+        const paragraphValue = paragraph ? paragraph.value.trim() : '';
+        const pageValue = page ? page.value.trim() : '';
+        const taskValue = task ? task.value.trim() : '';
+        const detailsValue = details ? details.value.trim() : '';
+
+        if (!detailsValue) {
+            setAssistantStatus('Будь ласка, введіть деталі завдання.', false);
+            return;
+        }
+
+        // --- Формування Prompt для моделі ---
+        let prompt = `Ти - AI Освітній Асистент. Твоє завдання - надати максимально точну та вичерпну відповідь на навчальне завдання користувача. 
+Користувач надав наступні дані:
+- **Предмет**: ${subjectValue || 'Не вказано'}
+- **URL/Джерело**: ${urlValue || 'Не вказано'}
+- **Номер параграфа**: ${paragraphValue || 'Не вказано'}
+- **Номер сторінки**: ${pageValue || 'Не вказано'}
+- **Номер завдання**: ${taskValue || 'Не вказано'}
+- **Деталі/Суть завдання (ОБОВ'ЯЗКОВО)**: ${detailsValue}
+
+Сформуй свою відповідь у вигляді навчального матеріалу, пояснення або прямої відповіді на питання, виходячи з наданих деталей. Намагайся бути лаконічним, але інформативним.`;
+
+        setAssistantStatus('Очікування відповіді від Асистента...', true);
+        assistantButton.disabled = true;
+
+        try {
+            const result = await ai.models.generateContent({
+                model: "gemini-2.5-flash", 
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+            });
+
+            const responseText = result.text;
+            setAssistantStatus(responseText, false);
+            speakText(responseText); // Запускаємо TTS автоматично
+
+        } catch (error) {
+            console.error("Помилка при виклику Gemini API для Асистента:", error);
+            setAssistantStatus('Виникла помилка під час отримання відповіді. Спробуйте ще раз.', false);
+        } finally {
+            assistantButton.disabled = false;
+        }
+    });
+
+    // --- Логіка Copilot (Chat) ---
+    const initialCopilotColor = micCopilotButton ? micCopilotButton.style.color : '#6B7280'; // Зберігаємо початковий колір
+
+    if (sendCopilotBtn) {
+        sendCopilotBtn.addEventListener('click', async () => {
+            const question = copilotTextInput ? copilotTextInput.value.trim() : '';
+            if (!question) return;
+
+            setCopilotStatus('Очікування відповіді від Copilot...', true);
+            sendCopilotBtn.disabled = true;
+            copilotTextInput.disabled = true;
+            if (micCopilotButton) micCopilotButton.disabled = true;
+
+            try {
+                // Використовуємо chat-сесію для збереження контексту
+                const result = await chat.sendMessage({ message: question }); 
+                const responseText = result.text;
+
+                // Додаємо попереднє питання та нову відповідь до історії чату (для відображення)
+                copilotResponseArea.innerHTML += `
+                    <div class="mt-2 p-2 bg-blue-100 rounded-md text-sm">
+                        <span class="font-bold">Ви:</span> ${question}
                     </div>
-                    <div>
-                        <label for="page-number" class="block mb-2 text-sm font-medium text-gray-700">Сторінка (Номер)</label>
-                        <input type="text" id="page-number" value="88" placeholder="Напр. 88" class="h-10">
+                    <div class="mt-1 p-2 bg-gray-100 rounded-md text-sm whitespace-pre-wrap">
+                        <span class="font-bold">Copilot:</span> ${responseText}
                     </div>
-                    <div>
-                        <label for="task-number" class="block mb-2 text-sm font-medium text-gray-700">Номер завдання</label>
-                        <input type="text" id="task-number" value="294" placeholder="Напр. 294" class="h-10">
-                    </div>
-                </div>
-            </div>
+                `;
+                copilotTextInput.value = ''; // Очищаємо поле вводу
+                setCopilotStatus('Тут з\'являться відповіді Copilot.', false); // Повертаємо початковий текст
+                copilotResponseArea.scrollTop = copilotResponseArea.scrollHeight; // Прокручуємо вниз
 
-            
-            <div id="photo-upload-section" class="mb-4 hidden">
-                <div class="flex space-x-4">
-                    <button id="upload-photo-btn" class="file-upload-btn">
-                        <span class="material-icons-outlined mr-2">upload_file</span> Завантажити фото
-                    </button>
-                    <button id="take-photo-btn" class="camera-capture-btn">
-                        <span class="material-icons-outlined mr-2">camera_alt</span> Зробити фото
-                    </button>
-                </div>
-                <input type="file" id="file-input" accept="image/*" class="hidden">
-            </div>
+            } catch (error) {
+                console.error("Помилка при виклику Gemini API для Copilot:", error);
+                setCopilotStatus('Виникла помилка під час отримання відповіді Copilot.', false);
+            } finally {
+                sendCopilotBtn.disabled = false;
+                copilotTextInput.disabled = false;
+                if (micCopilotButton) micCopilotButton.disabled = false;
+            }
+        });
+    }
 
-            <div class="mb-6">
-                <h3 class="text-xl font-semibold mb-3 mt-6 text-gray-800">Секція: Вкажіть, що необхідно зробити (деталі)</h3>
-                <div class="textarea-container">
-                    <textarea id="task-details" rows="3" placeholder="Наприклад: 'Поясни крок 3 детально.' Або: 'Знайди помилку в рішенні і виправ її.'">Поясни крок 3 детально.</textarea>
-                    <button id="mic-emoji-button" class="mic-button focus:outline-none" title="Голосове введення">
-                        <span class="material-icons-outlined text-xl">mic</span> 
-                    </button>
-                </div>
-            </div>
+    // --- Логіка STT для Copilot ---
+    if ('webkitSpeechRecognition' in window && micCopilotButton && copilotTextInput) {
+        const recognitionCopilot = new window.webkitSpeechRecognition();
+        recognitionCopilot.continuous = false;
+        recognitionCopilot.interimResults = false;
+        recognitionCopilot.lang = 'uk-UA';
 
-            <button id="assistant-call-button" class="assistant-button">
-                <span class="material-icons-outlined mr-2">auto_fix_high</span> Отримати допомогу асистента
-            </button>
+        micCopilotButton.addEventListener('click', () => {
+            if (micCopilotButton.disabled) return;
+            micCopilotButton.disabled = true;
+            micCopilotButton.style.color = '#DC2626'; 
+            if (copilotTextInput) copilotTextInput.placeholder = 'Слухаю...';
+            recognitionCopilot.start();
+        });
 
-            <div class="mt-8">
-                <h3 class="text-xl font-semibold mb-3 text-gray-800">ВІДПОВІДЬ АСИСТЕНТА</h3>
-                <div id="response-area" class="p-4 rounded-lg min-h-[100px] whitespace-pre-wrap bg-gray-50 border border-gray-200">
-                    Тут з'явиться детальна відповідь.
-                </div>
-                <div id="tts-controls" class="tts-controls hidden">
-                    <button id="rewind-tts-btn" title="Перемотка назад" disabled>
-                        <span class="material-icons-outlined">fast_rewind</span>
-                    </button>
-                    <button id="play-tts-btn" title="Відтворити / Пауза">
-                        <span class="material-icons-outlined" id="play-pause-icon">play_arrow</span>
-                    </button>
-                    <button id="forward-tts-btn" title="Перемотка вперед" disabled>
-                        <span class="material-icons-outlined">fast_forward</span>
-                    </button>
-                </div>
-            </div>
+        recognitionCopilot.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            if (copilotTextInput) copilotTextInput.value += (copilotTextInput.value.trim() ? ' ' : '') + transcript;
+            if (sendCopilotBtn) sendCopilotBtn.disabled = false;
+        };
 
-            <div id="copilot-section" class="mt-8 p-4 bg-gray-100 rounded-lg hidden border border-gray-300">
-                <h3 class="text-xl font-semibold mb-3 text-gray-800">Copilot (Додаткові запитання)</h3>
-                <div class="textarea-container mb-3">
-                    <textarea id="copilot-text-input" rows="2" placeholder="Введіть додаткове питання або використовуйте мікрофон"></textarea>
-                    <button id="mic-copilot-button" class="mic-button focus:outline-none" title="Голосове введення">
-                        <span class="material-icons-outlined text-xl">mic</span>
-                    </button>
-                </div>
-                
-                <div class="flex items-center space-x-3 mt-4">
-                    <button id="send-copilot-btn" class="assistant-button !w-auto !py-2 !px-4" disabled>
-                        <span class="material-icons-outlined mr-2">send</span> Надіслати
-                    </button>
-                    <button id="start-recording-btn" class="assistant-button !bg-red-500 hover:!bg-red-600 !w-auto !py-2 !px-4">
-                        <span class="material-icons-outlined mr-2" id="recording-icon">mic</span> <span id="recording-status">Натисніть для початку...</span>
-                    </button>
-                </div>
-                <div id="copilot-response-area" class="mt-4 p-4 rounded-lg min-h-[50px] whitespace-pre-wrap bg-white border border-gray-200">
-                    Тут з'являться відповіді Copilot.
-                </div>
-            </div>
+        recognitionCopilot.onend = () => {
+             if (copilotTextInput) copilotTextInput.placeholder = "Введіть додаткове питання або використовуйте мікрофон";
+             micCopilotButton.disabled = false;
+             // !!! ВИПРАВЛЕННЯ: Використовуємо збережений колір !!!
+             if (micCopilotButton) micCopilotButton.style.color = initialCopilotColor; 
+        };
 
-        </div>
+        recognitionCopilot.onerror = (event) => {
+             if (copilotTextInput) copilotTextInput.placeholder = "Введіть додаткове питання або використовуйте мікрофон";
+             console.error("Помилка розпізнавання Copilot:", event.error);
+             micCopilotButton.disabled = false;
+             // !!! ВИПРАВЛЕННЯ: Використовуємо збережений колір !!!
+             if (micCopilotButton) micCopilotButton.style.color = initialCopilotColor;
+        };
+    } else if (micCopilotButton) {
+         micCopilotButton.disabled = true; 
+         micCopilotButton.style.opacity = 0.5;
+    }
+    // ----------------------------------------------------------------
 
-        <div class="right-panel">
-            <img src="assets/assistant.png" alt="AI Assistant"> 
-            <div class="assistant-info">
-                <h1 class="text-2xl font-bold">AI Освітній Асистент</h1>
-                <p class="text-sm">Ваш персональний помічник у навчанні</p>
-            </div>
-        </div>
-    </div>
-    
-    <script src="AI-Assistant.js" defer></script> 
+    // --- Media Recorder Logic for audio upload/processing, if needed later ---
+    // (Start Recording logic should go here if you decide to implement it)
 
-</body>
-</html>
+});
