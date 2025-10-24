@@ -1,425 +1,406 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Освітній Асистент</title>
 
+    <!-- Бібліотека Gemini API -->
+    <script src="https://unpkg.com/@google/genai"></script>
+    
+    <!-- Бібліотека для рендерингу Markdown (для структурованих відповідей) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/lib/marked.umd.min.js"></script>
+    
+    <!-- Tailwind CSS CDN (це все, що потрібно для стилів) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Використовуємо шрифт Nunito -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- Іконки Material Icons Outlined -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
     
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* ОСНОВНІ СТИЛІ */
+        /* ОСНОВНІ СТИЛІ ТА АДАПТИВНІСТЬ */
         body {
             background-color: #F7F7F7; 
             color: #1F2937; 
             font-family: 'Nunito', sans-serif;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
+            align-items: flex-start; 
             min-height: 100vh;
-            padding: 0; 
+            padding: 2rem 0; 
             margin: 0;
         }
+
         .container {
             display: flex;
             max-width: 1200px;
-            width: 100%;
-            min-height: 95vh; 
+            width: 95%; 
+            min-height: 90vh; 
             background-color: #FFFFFF; 
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            margin: 2.5vh auto; 
-            border-radius: 12px;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15); /* Покращена тінь */
+            border-radius: 1.5rem; /* Більше заокруглення */
+            overflow: hidden; 
         }
+        
         .left-panel {
-            width: 60%; 
-            padding: 30px;
-            border-right: 1px solid #E5E7EB;
-            overflow-y: auto; 
+            flex: 1; 
+            padding: 2.5rem; 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; 
+            overflow-y: auto;
         }
+        
+        /* Поле для відповіді - забезпечує прокрутку */
+        #copilot-response-area {
+             flex-grow: 1; 
+             overflow-y: auto; 
+             /* Мінімальна висота, щоб було видно контент одразу */
+             min-height: 200px;
+             max-height: calc(100vh - 200px); /* Обмеження висоти */
+        }
+        
+        /* СТИЛІ ДЛЯ MARKDOWN - забезпечують гарний вигляд відповіді */
+        #copilot-response-area p, 
+        #copilot-response-area ul, 
+        #copilot-response-area ol, 
+        #copilot-response-area h2,
+        #copilot-response-area h3 {
+            margin-bottom: 1rem;
+        }
+
+        #copilot-response-area ul, #copilot-response-area ol {
+            padding-left: 1.5rem;
+        }
+        
+        #copilot-response-area li {
+            margin-bottom: 0.5rem;
+        }
+
+        #copilot-response-area pre {
+            background-color: #E5E7EB; /* Світло-сірий фон для коду */
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: monospace;
+            margin-bottom: 1rem;
+        }
+
+        /* ПРАВА ПАНЕЛЬ */
         .right-panel {
-            width: 40%; 
-            position: relative;
-            padding: 0; 
-            background-color: #E0F7FA; 
-            display: flex; 
-            align-items: flex-end; 
-            justify-content: center; 
+            width: 350px; 
+            background: linear-gradient(135deg, #E0F2F7 0%, #D1E8F7 100%); /* Градієнтний фон */
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            justify-content: center;
+            border-left: 1px solid #C0DFF2;
         }
+
         .right-panel img {
             width: 100%;
-            height: 100%; 
-            object-fit: cover;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1; 
-            transition: opacity 0.3s; 
+            max-width: 200px; 
+            height: auto;
+            margin-bottom: 2rem;
+            border-radius: 50%; /* Кругле зображення */
+            box-shadow: 0 8px 15px -5px rgba(0, 0, 0, 0.2);
+            border: 5px solid white; 
         }
 
-        /* КОРИСТУВАЦЬКІ СТИЛІ (ХОЛОДНИЙ ТОН) */
-
-        .select-backdrop {
-            background-color: rgba(255, 255, 255, 0.7); 
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px); 
-            border: 1px solid rgba(0, 188, 212, 0.2); 
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
-            transition: all 0.2s;
-        }
-
-        .assistant-info {
-            position: relative; 
-            z-index: 2; 
-            background-color: rgba(0, 0, 0, 0.25); 
-            color: #fff; 
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px); 
-            border: 1px solid rgba(255, 255, 255, 0.15); 
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); 
-            padding: 15px 25px;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 20px; 
-            max-width: 90%; 
-            width: fit-content;
-        }
         .assistant-info h1 {
-            font-size: 1.75rem; 
-            font-weight: bold;
-            color: white; 
+            color: #1E40AF; /* Темно-синій */
+            font-weight: 800;
         }
         .assistant-info p {
-            font-size: 0.9rem;
-            color: white; 
+            color: #4B5563;
         }
 
-        /* Стилі кнопки Отримати допомогу */
-        .assistant-button {
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
+        /* КНОПКИ ТА ЕЛЕМЕНТИ ФОРМИ */
+        .input-area {
+            display: flex;
+            align-items: flex-end; 
+            background-color: #FFFFFF; 
+            border: 1px solid #D1D5DB;
+            border-radius: 1rem;
+            padding: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        #user-prompt-input {
+            flex: 1;
+            padding: 0.25rem 0.5rem;
+            background-color: transparent;
+            border: none;
+            outline: none;
+            resize: none; 
+            min-height: 30px;
+            max-height: 150px; 
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        
+        .send-button {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            background-image: linear-gradient(to right, #B2EBF2 0%, #E0F7FA 100%);  
-            color: #006064; 
-            border: 1px solid #80DEEA;
-            transition: all 0.3s ease;
-            font-weight: 800; 
-        }
-        .assistant-button:hover:not(:disabled) {
-            opacity: 0.95;
-            box-shadow: 0 6px 20px rgba(178, 235, 242, 0.6);
-            transform: translateY(-1px);
-        }
-        .assistant-button:disabled {
-            background-image: linear-gradient(to right, #CFD8DC 0%, #ECEFF1 100%);
-            cursor: not-allowed;
-            color: #90A4AE;
-            border: 1px solid #B0BEC5;
-            box-shadow: none;
-        }
-
-        /* ІНШІ СТИЛІ */
-        input[type="text"], select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-        }
-        
-        #subject-group {
-             width: 50%; 
-        }
-        
-        #task-details {
-            min-height: 80px; 
-            resize: vertical;
-            padding-right: 40px; /* Залишаємо місце для мікрофона */
-        }
-        .textarea-container {
-            position: relative;
-        }
-        .mic-button { 
-            position: absolute;
-            top: 5px; 
-            right: 5px;
-            padding: 5px;
-            cursor: pointer;
-            color: #6B7280; 
-            font-size: 1.25rem; 
-            z-index: 10;
-        }
-        .mic-button:hover {
-            color: #00BCD4;
-        }
-        .error-message {
-            color: #DC2626; 
-            background-color: #FEE2E2; 
-            padding: 10px;
-            border-radius: 4px;
-            border: 1px solid #FCA5A5;
-        }
-        .input-group {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 15px; 
-            margin-bottom: 15px;
-        }
-        .tts-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            align-items: center;
-        }
-        .tts-controls button {
-            background: #E5F5F7;
-            color: #006064;
-            border: none;
-            padding: 8px;
-            border-radius: 50%;
+            margin-left: 0.5rem;
             width: 40px;
             height: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: background-color 0.2s, color 0.2s;
-        }
-        .tts-controls button:hover:not(:disabled) {
-            background: #B2EBF2;
-        }
-        .tts-controls button:disabled {
-             opacity: 0.5;
-             cursor: not-allowed;
+            background-color: #3B82F6; 
+            color: white;
+            border-radius: 50%;
+            transition: background-color 0.2s, opacity 0.2s, transform 0.1s;
         }
 
-        /* НОВІ СТИЛІ ДЛЯ КАРАОКЕ ТА ВИВЕДЕННЯ ВІДПОВІДІ */
-        .karaoke-word {
-            transition: color 0.4s ease; 
-            color: #1F2937; /* Default text color */
-            font-weight: inherit;
+        .send-button:hover:not(:disabled) {
+            background-color: #2563EB;
+            transform: scale(1.05);
         }
-        .karaoke-highlight {
-            color: #00BCD4; /* Cold blue color for highlighting */
+
+        .send-button:disabled {
+            background-color: #93C5FD; 
+            cursor: not-allowed;
         }
-        .solution-section div:first-child h4 {
-            font-size: 1.5rem; /* Завдання */
-            font-weight: 800;
-            color: #006064;
-        }
-        .solution-section div:nth-child(2) h4 {
-            font-size: 1.25rem; /* Рішення */
-            font-weight: 800;
-            color: #00BCD4;
-        }
-        
-        /* Стиль для кнопки-мікрофона STT (загальний для Copilot та Task Details) */
-        .mic-button-general {
-            position: absolute;
-            top: 50%;
-            right: 10px;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #6B7280;
-            transition: color 0.2s;
-            z-index: 10;
-        }
-        .mic-button-general:hover {
-            color: #00BCD4;
-        }
-        .mic-button-recording {
-             color: #EF4444; /* Червоний під час запису */
-        }
-        .text-input-with-mic {
-             padding-right: 40px; /* Щоб текст не заходив під іконку */
+
+        /* АДАПТИВНІСТЬ */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem 0;
+            }
+            .container {
+                flex-direction: column; 
+                min-height: auto;
+                width: 98%; 
+                border-radius: 0.5rem;
+            }
+            .left-panel {
+                padding: 1.5rem;
+                order: 2; 
+                min-height: 50vh;
+            }
+            .right-panel {
+                width: 100%; 
+                padding: 1.5rem;
+                border-bottom: 1px solid #E5E7EB;
+                border-left: none;
+                order: 1; 
+            }
+            .right-panel img {
+                max-width: 100px; 
+                margin-bottom: 1rem;
+            }
+            #copilot-response-area {
+                max-height: 30vh; 
+            }
         }
     </style>
 </head>
 <body>
+    
+    <!-- УДАЛЕНА ИЗБЫТОЧНАЯ ТЕГ <script src="assets/api_config.js"></script>, КОТОРЫЙ ВЫЗЫВАЛ SyntaxError. -->
 
     <div class="container">
+        
+        <!-- ЛІВА ПАНЕЛЬ: Ввід та Відповідь -->
         <div class="left-panel">
-            <h2 class="text-3xl font-bold mb-6 text-gray-800">Введіть ваше завдання</h2>
-
-            <div class="mb-4" id="subject-group">
-                <label for="subject" class="block mb-2 text-sm font-medium text-gray-700">Правильно вибрати предмет</label>
-                <select id="subject" class="h-10 select-backdrop"> 
-                    <option value="Математика" selected>Математика</option>
-                    <option value="Українська мова">Українська мова</option>
-                    <option value="Українська література">Українська література</option>
-                    <option value="Історія">Історія</option>
-                </select>
-            </div>
-
-            <h3 class="text-xl font-semibold mb-3 mt-6 text-gray-800">Розділ 1: Джерело завдання</h3>
             
-            <div class="flex space-x-4 mb-4">
-                <button id="url-toggle" class="source-button source-button-active">
-                    <span class="material-icons-outlined mr-2">link</span> По посиланню (URL)
-                </button>
+            <div class="top-section flex flex-col h-full">
+                <h1 class="text-3xl font-extrabold mb-6 text-gray-800">AI Асистент</h1>
                 
-                <button id="image-toggle" class="source-button source-button-inactive">
-                    <span class="material-icons-outlined mr-2">image</span> По зображенню
-                </button>
-            </div>
-
-            <div id="url-section" class="mb-4">
-                <label for="url" class="block mb-2 text-sm font-medium text-gray-700">URL (Посилання на підручник, обов'язково)</label>
-                <input type="text" id="url" value="https://pidruchnyk.com.ua/1638-mat-merzialk-5-klas-2022.html" class="h-10">
-
-                <div class="input-group mt-3">
-                    <div>
-                        <label for="paragraph-number" class="block mb-2 text-sm font-medium text-gray-700">Параграф</label>
-                        <input type="text" id="paragraph-number" value="§3" placeholder="Напр. §3" class="h-10">
-                    </div>
-                    <div>
-                        <label for="page-number" class="block mb-2 text-sm font-medium text-gray-700">Сторінка (Номер)</label>
-                        <input type="text" id="page-number" value="88" placeholder="Напр. 88" class="h-10">
-                    </div>
-                    <div>
-                        <label for="task-number" class="block mb-2 text-sm font-medium text-gray-700">Номер завдання</label>
-                        <input type="text" id="task-number" value="294" placeholder="Напр. 294" class="h-10">
+                <!-- ОБЛАСТЬ ВІДПОВІДІ (прокручувана) -->
+                <div id="copilot-response-area" class="p-4 rounded-xl bg-gray-50 border border-gray-200 shadow-inner text-gray-700 mb-4 h-full">
+                    <div class="flex items-center text-blue-600 font-semibold">
+                        <span class="material-icons-outlined mr-2">school</span>
+                        Привіт! Я AI Освітній Асистент. Чим можу допомогти тобі у навчанні сьогодні?
                     </div>
                 </div>
             </div>
 
-            
-            <div id="photo-upload-section" class="mb-4 hidden">
-                 <div class="flex space-x-4">
-                    <button id="upload-photo-btn" class="file-upload-btn">
-                        <span class="material-icons-outlined mr-2">upload_file</span> Завантажити фото
-                    </button>
-                    <button id="take-photo-btn" class="camera-capture-btn">
-                        <span class="material-icons-outlined mr-2">camera_alt</span> Зробити фото
-                    </button>
-                 </div>
-                 <input type="file" id="file-input" accept="image/*" class="hidden">
-            </div>
-
-            <div class="mb-6">
-                <h3 class="text-xl font-semibold mb-3 mt-6 text-gray-800">Секція: Вкажіть, що необхідно зробити (деталі)</h3>
-                <div class="textarea-container">
-                    <textarea id="task-details" rows="3" placeholder="Наприклад: 'Поясни крок 3 детально.' Або: 'Знайди помилку в рішенні і виправ її.'"></textarea>
-                    <!-- Кнопка мікрофона для основного введення -->
-                    <button id="mic-task-details-button" class="mic-button-general" title="Голосове введення">
-                        <span class="material-icons-outlined text-xl">mic</span> 
-                    </button>
-                </div>
-            </div>
-
-            <button id="assistant-call-button" class="assistant-button">
-                <span class="material-icons-outlined mr-2">auto_fix_high</span> Отримати допомогу асистента
-            </button>
-
-            <div class="mt-8">
-                <h3 class="text-xl font-semibold mb-3 text-gray-800">ВІДПОВІДЬ АСИСТЕНТА</h3>
-                
-                <!-- Це стара секція, яка буде прихована, але залишена як плейсхолдер -->
-                <div id="response-area" class="p-4 rounded-lg min-h-[100px] whitespace-pre-wrap bg-gray-50 border border-gray-200 hidden">
-                    Тут з'явиться детальна відповідь.
-                </div>
-                
-                <!-- НОВА СТРУКТУРА ДЛЯ ВІДПОВІДІ -->
-                <div id="solution-section" class="solution-section mt-4 hidden">
-                    <!-- Завдання з кнопкою Озвучити -->
-                    <div class="mb-4 p-4 bg-white rounded-lg border border-teal-100 shadow-sm">
-                        <h4 class="flex items-center justify-between">
-                            <span>ЗАВДАННЯ</span>
-                            <button id="task-tts-btn" class="text-teal-600 hover:text-teal-800 transition disabled:opacity-50" title="Озвучити завдання" disabled>
-                                <span class="material-icons-outlined">volume_up</span>
-                            </button>
-                        </h4>
-                        <div id="task-content" class="text-gray-800 mt-2 whitespace-pre-wrap"></div>
-                    </div>
+            <!-- ОБЛАСТЬ ВВОДУ З КОНТРОЛЯМИ -->
+            <div class="bottom-section">
+                <div class="input-area">
+                    <textarea 
+                        id="user-prompt-input" 
+                        placeholder="Введіть ваше питання або завдання (наприклад: 'Поясни закон Ома')" 
+                        rows="1"
+                        oninput="this.style.height='auto'; this.style.height=(this.scrollHeight)+'px'; checkInput();"></textarea>
                     
-                    <!-- Рішення -->
-                    <div class="mt-6 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-                        <h4 class="mb-2">ДЕТАЛЬНЕ РІШЕННЯ</h4>
-                        <div id="solution-content" class="text-gray-800 whitespace-pre-wrap"></div>
-                    </div>
-
-                    <!-- КЕРУВАННЯ ВІДТВОРЕННЯМ -->
-                    <div id="tts-controls" class="tts-controls mt-4 hidden">
-                        <button id="rewind-tts-btn" title="Перемотка назад на початок речення" disabled>
-                            <span class="material-icons-outlined">fast_rewind</span>
-                        </button>
-                        <button id="play-tts-btn" title="Відтворити / Пауза">
-                            <span class="material-icons-outlined" id="play-pause-icon">play_arrow</span>
-                        </button>
-                        <button id="forward-tts-btn" title="Перемотка вперед до наступного речення" disabled>
-                            <span class="material-icons-outlined">fast_forward</span>
-                        </button>
-                        <span id="playback-status" class="text-sm text-gray-500 ml-4">Готово до відтворення</span>
-                    </div>
-                </div>
-
-                <!-- ВИВЕДЕННЯ ПОМИЛОК -->
-                <div id="error-message" class="error-message mt-4 hidden"></div>
-
-            </div>
-
-            <div id="copilot-section" class="mt-8 p-4 bg-gray-100 rounded-lg hidden border border-gray-300">
-                <h3 class="text-xl font-semibold mb-3 text-gray-800">Copilot (Додаткові запитання)</h3>
-                
-                <div id="copilot-chat-history" class="mb-4 max-h-60 overflow-y-auto p-2 bg-white rounded-lg border border-gray-200">
-                    <!-- Історія чату Copilot буде тут -->
-                </div>
-                
-                <div class="textarea-container mb-3">
-                     <textarea id="copilot-text-input" rows="2" placeholder="Введіть додаткове питання"></textarea>
-                     <!-- Кнопка мікрофона для Copilot Input -->
-                     <button id="mic-copilot-input-button" class="mic-button-general" title="Голосове введення">
+                    <!-- Кнопка мікрофона (прихована, оскільки функціонал не реалізований) -->
+                    <!-- <button id="mic-button" class="mic-button focus:outline-none" title="Голосове введення">
                         <span class="material-icons-outlined text-xl">mic</span>
+                    </button> -->
+                    
+                    <!-- Кнопка Надіслати -->
+                    <button id="send-copilot-btn" class="send-button focus:outline-none" disabled title="Надіслати запит">
+                        <span class="material-icons-outlined text-xl">send</span>
                     </button>
-                </div>
-                 
-                <div class="flex items-center space-x-3 mt-4">
-                    <button id="send-copilot-btn" class="assistant-button !w-auto !py-2 !px-4" disabled>
-                        <span class="material-icons-outlined mr-2">send</span> Надіслати
-                    </button>
-                    <!-- Цю кнопку тепер використовуємо для загального контролю запису, хоча основний запис йде через іконку -->
-                    <button id="start-recording-btn" class="assistant-button !bg-red-500 hover:!bg-red-600 !w-auto !py-2 !px-4 hidden">
-                        <span class="material-icons-outlined mr-2" id="recording-icon">mic</span> <span id="recording-status">Натисніть для початку...</span>
-                    </button>
-                </div>
-                
-                <!-- Ця секція буде використана для виведення відповіді Copilot, щоб її можна було озвучити -->
-                <h4 class="text-lg font-semibold mb-3 mt-6 text-gray-800">ВІДПОВІДЬ COPILOT</h4>
-                 <div id="copilot-response-area" class="mt-2 p-4 rounded-lg min-h-[50px] whitespace-pre-wrap bg-white border border-gray-200">
-                    Тут з'являться відповіді Copilot.
-                </div>
-                <!-- КЕРУВАННЯ ВІДТВОРЕННЯМ COPILOT -->
-                <div id="copilot-tts-controls" class="tts-controls mt-4 hidden">
-                    <button id="copilot-rewind-tts-btn" title="Перемотка назад на початок речення" disabled>
-                        <span class="material-icons-outlined">fast_rewind</span>
-                    </button>
-                    <button id="copilot-play-tts-btn" title="Відтворити / Пауза">
-                        <span class="material-icons-outlined" id="copilot-play-pause-icon">play_arrow</span>
-                    </button>
-                    <button id="copilot-forward-tts-btn" title="Перемотка вперед до наступного речення" disabled>
-                        <span class="material-icons-outlined">fast_forward</span>
-                    </button>
-                    <span id="copilot-playback-status" class="text-sm text-gray-500 ml-4">Готово до відтворення</span>
                 </div>
             </div>
 
         </div>
 
+        <!-- ПРАВА ПАНЕЛЬ: Інфо Асистента -->
         <div class="right-panel">
-            <img src="https://placehold.co/1200x1200/00BCD4/FFFFFF?text=AI+ASSISTANT" alt="AI Assistant"> 
+            <!-- Зображення AI Асистента -->
+            <img src="assets/assistant.png" onerror="this.onerror=null;this.src='https://placehold.co/200x200/5B84B1/FFFFFF?text=AI+Assistant'" alt="AI Assistant"> 
             <div class="assistant-info">
-                <h1 class="text-2xl font-bold">AI Освітній Асистент</h1>
-                <p class="text-sm">Ваш персональний помічник у навчанні</p>
+                <h1 class="text-2xl font-extrabold mb-1">AI Освітній Асистент</h1>
+                <p class="text-base font-semibold">Ваш персональний помічник у навчанні</p>
             </div>
         </div>
     </div>
     
-    <script src="AI-Assistant.js" type="module" defer></script> 
+    <script type="module">
+        // Імпортуємо конфігурацію з окремого файлу. Припускаємо, що api_config.js знаходиться у папці assets/.
+        // FIX: Змінюємо відносний шлях './assets/api_config.js' на кореневий '/assets/api_config.js',
+        // щоб уникнути помилки TypeError: Failed to resolve module specifier в деяких середовищах.
+        import { API_KEY, MODEL_NAME, SYSTEM_INSTRUCTION } from '/assets/api_config.js';
 
+        // Ініціалізація змінних
+        let client;
+        const responseArea = document.getElementById('copilot-response-area');
+        const promptInput = document.getElementById('user-prompt-input');
+        const sendButton = document.getElementById('send-copilot-btn');
+
+        // Функція для перевірки стану поля вводу (винесена у window для доступу з oninput)
+        window.checkInput = function() {
+            sendButton.disabled = promptInput.value.trim() === '';
+        }
+
+        // Ініціалізація після завантаження DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                // Ініціалізація клієнта
+                client = new GoogleGenAI({ apiKey: API_KEY });
+            } catch (error) {
+                console.error("Помилка ініціалізації GoogleGenAI:", error);
+                responseArea.innerHTML = 
+                    "<div class='text-red-500'>Помилка: Не вдалося ініціалізувати AI клієнт.</div>";
+            }
+
+            // Обробники подій
+            sendButton.addEventListener('click', sendPrompt);
+            promptInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault(); 
+                    sendPrompt();
+                }
+            });
+            promptInput.addEventListener('input', window.checkInput);
+        });
+
+        // Основна функція для надсилання запиту до Gemini
+        async function sendPrompt() {
+            const userPrompt = promptInput.value.trim();
+
+            if (!userPrompt || !client) {
+                return;
+            }
+
+            // UI: Вимкнення та очищення
+            sendButton.disabled = true;
+            promptInput.disabled = true;
+            
+            // Зберігаємо поточний промпт для відображення у відповіді
+            const currentPrompt = userPrompt;
+            
+            promptInput.value = '';
+            promptInput.style.height = '30px'; // Скидаємо висоту
+            window.checkInput(); 
+
+            // Додаємо запит користувача до області відповіді (для контексту)
+            responseArea.innerHTML += `
+                <div class="my-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm font-medium text-gray-800 shadow-sm">
+                    <span class="material-icons-outlined text-base align-middle mr-1">person</span> 
+                    **Ваш запит:** ${currentPrompt}
+                </div>`;
+            
+            // UI: Показуємо індикатор завантаження
+            const loadingHtml = `
+                <div id="loading-indicator" class="flex items-center text-gray-500 my-4 p-3 bg-gray-100 rounded-lg">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="font-medium text-blue-600">AI Асистент генерує відповідь...</span>
+                </div>`;
+            responseArea.innerHTML += loadingHtml;
+            responseArea.scrollTop = responseArea.scrollHeight; 
+
+            try {
+                const request = {
+                    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+                    config: {
+                        systemInstruction: SYSTEM_INSTRUCTION,
+                        tools: [{ googleSearch: {} }] 
+                    }
+                };
+                
+                // Виклик API
+                const response = await client.models.generateContent({
+                    model: MODEL_NAME,
+                    ...request
+                });
+
+                let generatedText = response.text || "Не вдалося отримати відповідь від моделі.";
+                
+                // Видаляємо індикатор завантаження
+                const loadingIndicator = document.getElementById('loading-indicator');
+                if (loadingIndicator) loadingIndicator.remove();
+                
+                // 1. Рендеринг Markdown у HTML
+                const renderedHtml = marked.parse(generatedText);
+                
+                let finalResponseHtml = `
+                    <div class="my-4 p-4 bg-white border border-gray-200 rounded-xl shadow-lg">
+                        <div class="flex items-center mb-3 font-bold text-gray-700">
+                            <span class="material-icons-outlined mr-2 text-blue-500">auto_fix_high</span>
+                            Відповідь Асистента:
+                        </div>
+                        ${renderedHtml}
+                    </div>`;
+
+                // 2. Додавання посилань на джерела
+                const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
+                if (groundingMetadata && groundingMetadata.groundingAttributions && groundingMetadata.groundingAttributions.length > 0) {
+                    let sourcesHtml = '<div class="mt-4 pt-2 border-t border-gray-100 text-xs text-gray-500">';
+                    
+                    const uniqueUris = new Set();
+                    groundingMetadata.groundingAttributions.forEach((attr) => {
+                        if (attr.web && attr.web.uri && attr.web.title && !uniqueUris.has(attr.web.uri)) {
+                            uniqueUris.add(attr.web.uri);
+                            sourcesHtml += `<br> ${uniqueUris.size}. <a href="${attr.web.uri}" target="_blank" class="text-blue-500 hover:underline">${attr.web.title}</a>`;
+                        }
+                    });
+                    sourcesHtml += '</div>';
+                    if (uniqueUris.size > 0) {
+                        finalResponseHtml = finalResponseHtml.slice(0, -6) + sourcesHtml + finalResponseHtml.slice(-6); // Додаємо джерела всередину блоку
+                    }
+                }
+                
+                responseArea.innerHTML += finalResponseHtml;
+
+            } catch (error) {
+                console.error("Помилка при виклику Gemini API:", error);
+                
+                const loadingIndicator = document.getElementById('loading-indicator');
+                if (loadingIndicator) loadingIndicator.remove();
+                
+                responseArea.innerHTML += `<div class='my-4 p-4 bg-red-100 border border-red-300 rounded-lg text-red-700'>На жаль, сталася помилка при генерації відповіді. Спробуйте ще раз.</div>`;
+            } finally {
+                // UI: Відновлення
+                sendButton.disabled = false;
+                promptInput.disabled = false;
+                promptInput.focus();
+                responseArea.scrollTop = responseArea.scrollHeight; 
+            }
+        }
+        
+    </script>
 </body>
 </html>
