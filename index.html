@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Освітній Асистент</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@google/genai@0.14.0/umd/index.js"></script> 
+    <script src="assets/api_config.js"></script> 
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    
+    <style>
+        /* СТИЛІ, АДАПТОВАНІ ПІД ВАШ СКРІНШОТ */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0f0f0; 
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px; /* Зменшуємо ширину, щоб відповідати вигляду скріншота */
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column; 
+            overflow: hidden;
+            padding: 30px; 
+        }
+
+        /* Заголовки */
+        h2, h3 {
+            color: #333;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        h2 { font-size: 1.8rem; }
+        h3 { font-size: 1.2rem; }
+
+        /* Група введення (Поле + Мікрофон) */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        /* Стилі для поля Деталі завдання та Copilot */
+        .input-with-mic {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding-right: 5px;
+            background-color: #fff;
+        }
+        .input-with-mic textarea, .input-with-mic input {
+            flex-grow: 1;
+            border: none;
+            padding: 10px;
+            outline: none;
+            resize: none; 
+            box-sizing: border-box;
+        }
+
+        /* Кнопка Мікрофона */
+        .mic-button {
+            border: none;
+            background: none;
+            padding: 8px;
+            cursor: pointer;
+            color: #555; 
+            transition: color 0.2s;
+        }
+        .mic-button:hover {
+            color: #007bff; /* Синій колір при наведенні */
+        }
+        .mic-button.recording {
+            color: #dc3545; /* Червоний колір при записі */
+        }
+
+        /* Кнопка Асистента */
+        #assistant-call-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        #assistant-call-button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        #assistant-call-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Область Відповіді */
+        #response-area, #copilot-response-area {
+            min-height: 100px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+            margin-bottom: 15px;
+        }
+        
+        /* Керування TTS */
+        #tts-controls {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        #play-tts-btn {
+            background-color: #28a745;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        #play-tts-btn:hover {
+            background-color: #1e7e34;
+        }
+
+        /* Секція Copilot */
+        #copilot-section {
+            padding-top: 20px;
+            border-top: 1px solid #ccc;
+        }
+        #send-copilot-btn {
+            background-color: #6c757d; 
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        #send-copilot-btn:hover:not(:disabled) {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2 class="text-3xl">AI Освітній Асистент</h2>
+        
+        <div class="input-group">
+            <label for="subject">Предмет:</label>
+            <input type="text" id="subject" class="input-field" placeholder="Наприклад: Математика, Історія">
+        </div>
+        <div class="input-group">
+            <label for="url">URL/Джерело:</label>
+            <input type="url" id="url" class="input-field" placeholder="Посилання на матеріал (необов'язково)">
+        </div>
+
+        <div style="display: flex; gap: 20px;">
+            <div class="input-group" style="flex: 1;">
+                <label for="paragraph-number">Параграф №:</label>
+                <input type="text" id="paragraph-number" class="input-field" placeholder="Наприклад: 5.2">
+            </div>
+            <div class="input-group" style="flex: 1;">
+                <label for="page-number">Сторінка №:</label>
+                <input type="number" id="page-number" class="input-field" placeholder="Наприклад: 125">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="task-number">Номер завдання:</label>
+            <input type="text" id="task-number" class="input-field" placeholder="Наприклад: Завдання 3, Вправа 10">
+        </div>
+
+        <div class="input-group">
+            <label for="task-details">Деталі завдання (ОБОВ'ЯЗКОВО):</label>
+            <div class="input-with-mic">
+                <textarea id="task-details" rows="3" placeholder="Введіть деталі завдання (або використовуйте мікрофон)"></textarea>
+                <button id="mic-emoji-button" class="mic-button" title="Голосове введення">
+                    <span class="material-icons-outlined">mic</span>
+                </button>
+            </div>
+        </div>
+
+        <button id="assistant-call-button">
+            <span class="material-icons-outlined" style="margin-right: 8px;">smart_toy</span> Згенерувати Відповідь
+        </button>
+
+        <h3>Відповідь Асистента:</h3>
+        <div id="tts-controls" style="display: none;">
+             <button id="play-tts-btn">
+                <span class="material-icons" id="play-pause-icon" style="margin-right: 5px;">play_arrow</span> <span id="tts-status">Озвучити</span>
+            </button>
+        </div>
+        <div id="response-area">
+            Тут з'являться відповіді Асистента.
+        </div>
+
+        <div id="copilot-section">
+            <h3>Copilot (Чат-помічник)</h3>
+            
+            <div class="input-group">
+                <label for="copilot-text-input">Ваше питання:</label>
+                <div class="input-with-mic">
+                    <input type="text" id="copilot-text-input" placeholder="Введіть додаткове питання або використовуйте мікрофон">
+                    <button id="mic-copilot-button" class="mic-button" title="Голосове введення">
+                        <span class="material-icons-outlined">mic</span>
+                    </button>
+                </div>
+            </div>
+            
+            <button id="send-copilot-btn" style="margin-bottom: 15px;">
+                <span class="material-icons-outlined" style="margin-right: 5px;">send</span> Надіслати
+            </button>
+
+            <div id="copilot-response-area">
+                Тут з'являться відповіді Copilot.
+            </div>
+
+            </div>
+    </div>
+
+    <script src="AI-Assistant.js"></script>
+
+</body>
+</html>
