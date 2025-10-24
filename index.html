@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Освітній Асистент</title>
 
-    <!-- ИСПРАВЛЕНО: УДАЛЕНА ПРОБЛЕМНАЯ БИБЛИОТЕКА GenAI, которая вызывала 'Unexpected token export' -->
-    <!-- <script src="https://unpkg.com/@google/genai"></script>  -->
-
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
@@ -49,7 +46,6 @@
             padding: 0; 
             background-color: #E0F7FA; 
             display: flex; 
-            /* ВИПРАВЛЕННЯ: Центруємо інформаційний блок */
             align-items: flex-end; 
             justify-content: center; 
         }
@@ -61,7 +57,6 @@
             top: 0;
             left: 0;
             z-index: 1; 
-            /* ВИПРАВЛЕННЯ: Додаємо transition, щоб уникнути стрибка при рендерингу */
             transition: opacity 0.3s; 
         }
 
@@ -102,48 +97,7 @@
             color: white; 
         }
 
-        /* Стилі для індикатора прогресу */
-        .progress-bar {
-            height: 10px;
-            background-color: #e5f5f7;
-            border-radius: 9999px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background-image: linear-gradient(to right, #00BCD4, #4DD0E1); 
-            transition: width 0.5s ease;
-        }
-
-        /* СТИЛЬ ПЕРЕКЛЮЧАТЕЛЕЙ: ХОЛОДНИЙ ТОН */
-        .source-button {
-             padding: 10px;
-             border-radius: 6px;
-             transition: all 0.3s ease;
-             font-weight: 600;
-             display: flex;
-             align-items: center;
-             justify-content: center;
-             border: 1px solid #d1d5db; 
-             flex-grow: 1; 
-             cursor: pointer;
-             background-color: #ffffff; 
-        }
-        .source-button:hover:not(.source-button-active) {
-             background-color: #f3f4f6 !important; 
-        }
-        .source-button-active {
-            background-color: #E0F7FA !important; 
-            border-color: #00BCD4 !important; 
-            color: #006064 !important; 
-            box-shadow: 0 2px 4px rgba(0, 188, 212, 0.2);
-        }
-        .source-button-inactive {
-             background-color: #f3f4f6; 
-             color: #4b5563; 
-        }
-
-        /* Стиль кнопки Отримати допомогу */
+        /* Стилі кнопки Отримати допомогу */
         .assistant-button {
             padding: 12px;
             border-radius: 8px;
@@ -171,36 +125,6 @@
             box-shadow: none;
         }
 
-        /* Стилі кнопок для ФОТО/КАМЕРИ */
-        .file-upload-btn, .camera-capture-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            transition: all 0.15s;
-            cursor: pointer;
-            flex: 1; 
-        }
-        .file-upload-btn {
-            border: 1px solid #00ACC1; 
-            background-color: #B2EBF2; 
-            color: #006064; 
-        }
-        .file-upload-btn:hover {
-            background-color: #80DEEA; 
-        }
-        .camera-capture-btn {
-            border: 1px solid #00BCD4; 
-            background-color: #80DEEA; 
-            color: #006064; 
-        }
-        .camera-capture-btn:hover {
-            background-color: #4DD0E1;
-        }
-
         /* ІНШІ СТИЛІ */
         input[type="text"], select, textarea {
             width: 100%;
@@ -216,6 +140,7 @@
         #task-details {
             min-height: 80px; 
             resize: vertical;
+            padding-right: 40px; /* Залишаємо місце для мікрофона */
         }
         .textarea-container {
             position: relative;
@@ -272,15 +197,7 @@
              opacity: 0.5;
              cursor: not-allowed;
         }
-        /* Стилі для секції "По зображенню" */
-        #photo-upload-section {
-            background-color: #f0f8ff; 
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #80DEEA;
-            margin-top: 10px;
-        }
-        
+
         /* НОВІ СТИЛІ ДЛЯ КАРАОКЕ ТА ВИВЕДЕННЯ ВІДПОВІДІ */
         .karaoke-word {
             transition: color 0.4s ease; 
@@ -299,6 +216,27 @@
             font-size: 1.25rem; /* Рішення */
             font-weight: 800;
             color: #00BCD4;
+        }
+        
+        /* Стиль для кнопки-мікрофона STT (загальний для Copilot та Task Details) */
+        .mic-button-general {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6B7280;
+            transition: color 0.2s;
+            z-index: 10;
+        }
+        .mic-button-general:hover {
+            color: #00BCD4;
+        }
+        .mic-button-recording {
+             color: #EF4444; /* Червоний під час запису */
+        }
+        .text-input-with-mic {
+             padding-right: 40px; /* Щоб текст не заходив під іконку */
         }
     </style>
 </head>
@@ -366,8 +304,9 @@
             <div class="mb-6">
                 <h3 class="text-xl font-semibold mb-3 mt-6 text-gray-800">Секція: Вкажіть, що необхідно зробити (деталі)</h3>
                 <div class="textarea-container">
-                    <textarea id="task-details" rows="3" placeholder="Наприклад: 'Поясни крок 3 детально.' Або: 'Знайди помилку в рішенні і виправ її.'">Поясни крок 3 детально.</textarea>
-                    <button id="mic-emoji-button" class="mic-button focus:outline-none" title="Голосове введення">
+                    <textarea id="task-details" rows="3" placeholder="Наприклад: 'Поясни крок 3 детально.' Або: 'Знайди помилку в рішенні і виправ її.'"></textarea>
+                    <!-- Кнопка мікрофона для основного введення -->
+                    <button id="mic-task-details-button" class="mic-button-general" title="Голосове введення">
                         <span class="material-icons-outlined text-xl">mic</span> 
                     </button>
                 </div>
@@ -380,7 +319,8 @@
             <div class="mt-8">
                 <h3 class="text-xl font-semibold mb-3 text-gray-800">ВІДПОВІДЬ АСИСТЕНТА</h3>
                 
-                <div id="response-area" class="p-4 rounded-lg min-h-[100px] whitespace-pre-wrap bg-gray-50 border border-gray-200">
+                <!-- Це стара секція, яка буде прихована, але залишена як плейсхолдер -->
+                <div id="response-area" class="p-4 rounded-lg min-h-[100px] whitespace-pre-wrap bg-gray-50 border border-gray-200 hidden">
                     Тут з'явиться детальна відповідь.
                 </div>
                 
@@ -390,7 +330,7 @@
                     <div class="mb-4 p-4 bg-white rounded-lg border border-teal-100 shadow-sm">
                         <h4 class="flex items-center justify-between">
                             <span>ЗАВДАННЯ</span>
-                            <button id="task-tts-btn" class="text-teal-600 hover:text-teal-800 transition disabled:opacity-50" title="Озвучити завдання">
+                            <button id="task-tts-btn" class="text-teal-600 hover:text-teal-800 transition disabled:opacity-50" title="Озвучити завдання" disabled>
                                 <span class="material-icons-outlined">volume_up</span>
                             </button>
                         </h4>
@@ -404,7 +344,7 @@
                     </div>
 
                     <!-- КЕРУВАННЯ ВІДТВОРЕННЯМ -->
-                    <div id="tts-controls" class="tts-controls mt-4">
+                    <div id="tts-controls" class="tts-controls mt-4 hidden">
                         <button id="rewind-tts-btn" title="Перемотка назад на початок речення" disabled>
                             <span class="material-icons-outlined">fast_rewind</span>
                         </button>
@@ -425,9 +365,15 @@
 
             <div id="copilot-section" class="mt-8 p-4 bg-gray-100 rounded-lg hidden border border-gray-300">
                 <h3 class="text-xl font-semibold mb-3 text-gray-800">Copilot (Додаткові запитання)</h3>
+                
+                <div id="copilot-chat-history" class="mb-4 max-h-60 overflow-y-auto p-2 bg-white rounded-lg border border-gray-200">
+                    <!-- Історія чату Copilot буде тут -->
+                </div>
+                
                 <div class="textarea-container mb-3">
-                     <textarea id="copilot-text-input" rows="2" placeholder="Введіть додаткове питання або використовуйте мікрофон"></textarea>
-                     <button id="mic-copilot-button" class="mic-button focus:outline-none" title="Голосове введення">
+                     <textarea id="copilot-text-input" rows="2" placeholder="Введіть додаткове питання"></textarea>
+                     <!-- Кнопка мікрофона для Copilot Input -->
+                     <button id="mic-copilot-input-button" class="mic-button-general" title="Голосове введення">
                         <span class="material-icons-outlined text-xl">mic</span>
                     </button>
                 </div>
@@ -436,12 +382,13 @@
                     <button id="send-copilot-btn" class="assistant-button !w-auto !py-2 !px-4" disabled>
                         <span class="material-icons-outlined mr-2">send</span> Надіслати
                     </button>
-                    <!-- Кнопка голосового запису для Copilot - використовуємо STT API браузера -->
-                    <button id="start-recording-btn" class="assistant-button !bg-red-500 hover:!bg-red-600 !w-auto !py-2 !px-4">
+                    <!-- Цю кнопку тепер використовуємо для загального контролю запису, хоча основний запис йде через іконку -->
+                    <button id="start-recording-btn" class="assistant-button !bg-red-500 hover:!bg-red-600 !w-auto !py-2 !px-4 hidden">
                         <span class="material-icons-outlined mr-2" id="recording-icon">mic</span> <span id="recording-status">Натисніть для початку...</span>
                     </button>
                 </div>
                 
+                <!-- Ця секція буде використана для виведення відповіді Copilot, щоб її можна було озвучити -->
                 <h4 class="text-lg font-semibold mb-3 mt-6 text-gray-800">ВІДПОВІДЬ COPILOT</h4>
                  <div id="copilot-response-area" class="mt-2 p-4 rounded-lg min-h-[50px] whitespace-pre-wrap bg-white border border-gray-200">
                     Тут з'являться відповіді Copilot.
@@ -472,7 +419,6 @@
         </div>
     </div>
     
-    <!-- ИСПРАВЛЕНО: Добавлен type="module", чтобы разрешить использование 'import' и 'export' внутри AI-Assistant.js -->
     <script src="AI-Assistant.js" type="module" defer></script> 
 
 </body>
