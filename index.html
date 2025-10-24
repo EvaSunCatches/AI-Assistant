@@ -1,26 +1,18 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Освітній Асистент</title>
 
-    <!-- !!! ВАЖНО: Тег <base> для исправления путей на GitHub Pages !!! -->
-    <base href="/AI-Assistant/">
+    <!-- ИСПРАВЛЕНО: УДАЛЕНА ПРОБЛЕМНАЯ БИБЛИОТЕКА GenAI, которая вызывала 'Unexpected token export' -->
+    <!-- <script src="https://unpkg.com/@google/genai"></script>  -->
 
-    <!-- УДАЛЕНО: <script src="https://unpkg.com/@google/genai"></script> для устранения ошибки "Unexpected token 'export'" -->
-    <!-- УДАЛЕНО: <script src="assets/api_config.js"></script> - конфигурация будет в AI-Assistant.js -->
-
-    <!-- Импорт шрифтов и иконок -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
     
-    <!-- Импорт Tailwind CSS через CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Подключение custom CSS, если он есть в assets (согласно вашему скрину) -->
-    <link rel="stylesheet" href="assets/tailwind.css"> 
-
     <style>
         /* ОСНОВНІ СТИЛІ */
         body {
@@ -57,6 +49,7 @@
             padding: 0; 
             background-color: #E0F7FA; 
             display: flex; 
+            /* ВИПРАВЛЕННЯ: Центруємо інформаційний блок */
             align-items: flex-end; 
             justify-content: center; 
         }
@@ -68,10 +61,12 @@
             top: 0;
             left: 0;
             z-index: 1; 
+            /* ВИПРАВЛЕННЯ: Додаємо transition, щоб уникнути стрибка при рендерингу */
             transition: opacity 0.3s; 
         }
 
         /* КОРИСТУВАЦЬКІ СТИЛІ (ХОЛОДНИЙ ТОН) */
+
         .select-backdrop {
             background-color: rgba(255, 255, 255, 0.7); 
             backdrop-filter: blur(10px);
@@ -285,18 +280,6 @@
             border: 1px solid #80DEEA;
             margin-top: 10px;
         }
-        /* Стиль для предварительного просмотра изображения */
-        #image-preview {
-             display: none; /* Скрыто по умолчанию */
-             margin-top: 10px;
-             text-align: center;
-        }
-        #preview-image {
-             max-width: 100%;
-             height: auto;
-             border-radius: 8px;
-             border: 1px solid #d1d5db;
-        }
     </style>
 </head>
 <body>
@@ -358,10 +341,6 @@
                     </button>
                  </div>
                  <input type="file" id="file-input" accept="image/*" class="hidden">
-                 <div id="image-preview" class="mt-3">
-                    <img id="preview-image" src="#" alt="Попередній перегляд зображення">
-                    <p class="text-sm text-gray-500 mt-1" id="image-status"></p>
-                 </div>
             </div>
 
             <div class="mb-6">
@@ -429,7 +408,7 @@
         </div>
     </div>
     
-    <!-- ВАЖНО: Загружаем AI-Assistant.js как модуль, так как он использует импорты Firebase -->
+    <!-- ИСПРАВЛЕНО: Добавлен type="module", чтобы разрешить использование 'import' и 'export' внутри AI-Assistant.js -->
     <script src="AI-Assistant.js" type="module" defer></script> 
 
 </body>
