@@ -27,7 +27,7 @@
 
         .container {
             width: 100%;
-            max-width: 900px; /* Зменшуємо ширину, щоб відповідати вигляду скріншота */
+            max-width: 900px; 
             background-color: #ffffff;
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -47,7 +47,7 @@
         h2 { font-size: 1.8rem; }
         h3 { font-size: 1.2rem; }
 
-        /* Група введення (Поле + Мікрофон) */
+        /* Загальний стиль для полів вводу */
         .input-group {
             margin-bottom: 15px;
         }
@@ -60,7 +60,7 @@
             box-sizing: border-box;
         }
 
-        /* Стилі для поля Деталі завдання та Copilot */
+        /* Стилі для поля Деталі завдання та Copilot (з мікрофоном) */
         .input-with-mic {
             display: flex;
             align-items: center;
@@ -176,7 +176,7 @@
 <body>
 
     <div class="container">
-        <h2 class="text-3xl">AI Освітній Асистент</h2>
+        <h2>AI Освітній Асистент</h2>
         
         <div class="input-group">
             <label for="subject">Предмет:</label>
@@ -247,8 +247,7 @@
             <div id="copilot-response-area">
                 Тут з'являться відповіді Copilot.
             </div>
-
-            </div>
+        </div>
     </div>
 
     <script src="AI-Assistant.js"></script>
