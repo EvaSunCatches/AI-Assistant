@@ -8,98 +8,103 @@
     <!-- !!! ВАЖНО: Тег <base> для исправления путей на GitHub Pages !!! -->
     <base href="/AI-Assistant/">
 
-    <!-- Импорты библиотек -->
     <!-- УДАЛЕНО: <script src="https://unpkg.com/@google/genai"></script> для устранения ошибки "Unexpected token 'export'" -->
+    <!-- УДАЛЕНО: <script src="assets/api_config.js"></script> - конфигурация будет в AI-Assistant.js -->
+
+    <!-- Импорт шрифтов и иконок -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    
+    <!-- Импорт Tailwind CSS через CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Подключение custom CSS, если он есть в assets (согласно вашему скрину) -->
+    <link rel="stylesheet" href="assets/tailwind.css"> 
 
     <style>
         /* ОСНОВНІ СТИЛІ */
         body {
-            background-color: #F7F7F7;
-            color: #1F2937;
+            background-color: #F7F7F7; 
+            color: #1F2937; 
             font-family: 'Nunito', sans-serif;
             display: flex;
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
-            padding: 0;
+            padding: 0; 
             margin: 0;
         }
         .container {
             display: flex;
             max-width: 1200px;
             width: 100%;
-            min-height: 95vh;
-            background-color: #FFFFFF;
+            min-height: 95vh; 
+            background-color: #FFFFFF; 
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             overflow: hidden;
-            margin: 2.5vh auto;
+            margin: 2.5vh auto; 
             border-radius: 12px;
         }
         .left-panel {
-            width: 60%;
+            width: 60%; 
             padding: 30px;
             border-right: 1px solid #E5E7EB;
-            overflow-y: auto;
+            overflow-y: auto; 
         }
         .right-panel {
-            width: 40%;
+            width: 40%; 
             position: relative;
-            padding: 0;
-            background-color: #E0F7FA;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
+            padding: 0; 
+            background-color: #E0F7FA; 
+            display: flex; 
+            align-items: flex-end; 
+            justify-content: center; 
         }
-        /* Путь к изображению исправлен тегом <base> выше, поэтому здесь менять не нужно */
-        .right-panel img { 
+        .right-panel img {
             width: 100%;
-            height: 100%;
+            height: 100%; 
             object-fit: cover;
             position: absolute;
             top: 0;
             left: 0;
-            z-index: 1;
-            transition: opacity 0.3s;
+            z-index: 1; 
+            transition: opacity 0.3s; 
         }
 
         /* КОРИСТУВАЦЬКІ СТИЛІ (ХОЛОДНИЙ ТОН) */
-
         .select-backdrop {
-            background-color: rgba(255, 255, 255, 0.7);
+            background-color: rgba(255, 255, 255, 0.7); 
             backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 188, 212, 0.2);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            -webkit-backdrop-filter: blur(10px); 
+            border: 1px solid rgba(0, 188, 212, 0.2); 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
             transition: all 0.2s;
         }
 
         .assistant-info {
-            position: relative;
-            z-index: 2;
-            background-color: rgba(0, 0, 0, 0.25);
-            color: #fff;
+            position: relative; 
+            z-index: 2; 
+            background-color: rgba(0, 0, 0, 0.25); 
+            color: #fff; 
             backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            -webkit-backdrop-filter: blur(15px); 
+            border: 1px solid rgba(255, 255, 255, 0.15); 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); 
             padding: 15px 25px;
             border-radius: 12px;
             text-align: center;
-            margin-bottom: 20px;
-            max-width: 90%;
+            margin-bottom: 20px; 
+            max-width: 90%; 
             width: fit-content;
         }
         .assistant-info h1 {
-            font-size: 1.75rem;
+            font-size: 1.75rem; 
             font-weight: bold;
-            color: white;
+            color: white; 
         }
         .assistant-info p {
             font-size: 0.9rem;
-            color: white;
+            color: white; 
         }
 
         /* Стилі для індикатора прогресу */
@@ -111,7 +116,7 @@
         }
         .progress-fill {
             height: 100%;
-            background-image: linear-gradient(to right, #00BCD4, #4DD0E1);
+            background-image: linear-gradient(to right, #00BCD4, #4DD0E1); 
             transition: width 0.5s ease;
         }
 
@@ -124,23 +129,23 @@
              display: flex;
              align-items: center;
              justify-content: center;
-             border: 1px solid #d1d5db;
-             flex-grow: 1;
+             border: 1px solid #d1d5db; 
+             flex-grow: 1; 
              cursor: pointer;
-             background-color: #ffffff;
+             background-color: #ffffff; 
         }
         .source-button:hover:not(.source-button-active) {
-             background-color: #f3f4f6 !important;
+             background-color: #f3f4f6 !important; 
         }
         .source-button-active {
-            background-color: #E0F7FA !important;
-            border-color: #00BCD4 !important;
-            color: #006064 !important;
+            background-color: #E0F7FA !important; 
+            border-color: #00BCD4 !important; 
+            color: #006064 !important; 
             box-shadow: 0 2px 4px rgba(0, 188, 212, 0.2);
         }
         .source-button-inactive {
-             background-color: #f3f4f6;
-             color: #4b5563;
+             background-color: #f3f4f6; 
+             color: #4b5563; 
         }
 
         /* Стиль кнопки Отримати допомогу */
@@ -152,11 +157,11 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            background-image: linear-gradient(to right, #B2EBF2 0%, #E0F7FA 100%);
-            color: #006064;
+            background-image: linear-gradient(to right, #B2EBF2 0%, #E0F7FA 100%);  
+            color: #006064; 
             border: 1px solid #80DEEA;
             transition: all 0.3s ease;
-            font-weight: 800;
+            font-weight: 800; 
         }
         .assistant-button:hover:not(:disabled) {
             opacity: 0.95;
@@ -182,20 +187,20 @@
             font-weight: 600;
             transition: all 0.15s;
             cursor: pointer;
-            flex: 1;
+            flex: 1; 
         }
         .file-upload-btn {
-            border: 1px solid #00ACC1;
-            background-color: #B2EBF2;
-            color: #006064;
+            border: 1px solid #00ACC1; 
+            background-color: #B2EBF2; 
+            color: #006064; 
         }
         .file-upload-btn:hover {
-            background-color: #80DEEA;
+            background-color: #80DEEA; 
         }
         .camera-capture-btn {
-            border: 1px solid #00BCD4;
-            background-color: #80DEEA;
-            color: #006064;
+            border: 1px solid #00BCD4; 
+            background-color: #80DEEA; 
+            color: #006064; 
         }
         .camera-capture-btn:hover {
             background-color: #4DD0E1;
@@ -208,42 +213,42 @@
             border: 1px solid #d1d5db;
             border-radius: 6px;
         }
-
+        
         #subject-group {
-             width: 50%;
+             width: 50%; 
         }
-
+        
         #task-details {
-            min-height: 80px;
+            min-height: 80px; 
             resize: vertical;
         }
         .textarea-container {
             position: relative;
         }
-        .mic-button {
+        .mic-button { 
             position: absolute;
-            top: 5px;
+            top: 5px; 
             right: 5px;
             padding: 5px;
             cursor: pointer;
-            color: #6B7280;
-            font-size: 1.25rem;
+            color: #6B7280; 
+            font-size: 1.25rem; 
             z-index: 10;
         }
         .mic-button:hover {
             color: #00BCD4;
         }
         .error-message {
-            color: #DC2626;
-            background-color: #FEE2E2;
+            color: #DC2626; 
+            background-color: #FEE2E2; 
             padding: 10px;
             border-radius: 4px;
             border: 1px solid #FCA5A5;
         }
         .input-group {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 15px; 
             margin-bottom: 15px;
         }
         .tts-controls {
@@ -274,11 +279,23 @@
         }
         /* Стилі для секції "По зображенню" */
         #photo-upload-section {
-            background-color: #f0f8ff;
+            background-color: #f0f8ff; 
             padding: 15px;
             border-radius: 8px;
             border: 1px solid #80DEEA;
             margin-top: 10px;
+        }
+        /* Стиль для предварительного просмотра изображения */
+        #image-preview {
+             display: none; /* Скрыто по умолчанию */
+             margin-top: 10px;
+             text-align: center;
+        }
+        #preview-image {
+             max-width: 100%;
+             height: auto;
+             border-radius: 8px;
+             border: 1px solid #d1d5db;
         }
     </style>
 </head>
@@ -290,7 +307,7 @@
 
             <div class="mb-4" id="subject-group">
                 <label for="subject" class="block mb-2 text-sm font-medium text-gray-700">Правильно вибрати предмет</label>
-                <select id="subject" class="h-10 select-backdrop">
+                <select id="subject" class="h-10 select-backdrop"> 
                     <option value="Математика" selected>Математика</option>
                     <option value="Українська мова">Українська мова</option>
                     <option value="Українська література">Українська література</option>
@@ -299,12 +316,12 @@
             </div>
 
             <h3 class="text-xl font-semibold mb-3 mt-6 text-gray-800">Розділ 1: Джерело завдання</h3>
-
+            
             <div class="flex space-x-4 mb-4">
                 <button id="url-toggle" class="source-button source-button-active">
                     <span class="material-icons-outlined mr-2">link</span> По посиланню (URL)
                 </button>
-
+                
                 <button id="image-toggle" class="source-button source-button-inactive">
                     <span class="material-icons-outlined mr-2">image</span> По зображенню
                 </button>
@@ -330,7 +347,7 @@
                 </div>
             </div>
 
-
+            
             <div id="photo-upload-section" class="mb-4 hidden">
                  <div class="flex space-x-4">
                     <button id="upload-photo-btn" class="file-upload-btn">
@@ -341,8 +358,8 @@
                     </button>
                  </div>
                  <input type="file" id="file-input" accept="image/*" class="hidden">
-                 <div id="image-preview" class="mt-3 hidden">
-                    <img id="preview-image" src="#" alt="Попередній перегляд зображення" class="max-w-full h-auto rounded-lg border border-gray-300">
+                 <div id="image-preview" class="mt-3">
+                    <img id="preview-image" src="#" alt="Попередній перегляд зображення">
                     <p class="text-sm text-gray-500 mt-1" id="image-status"></p>
                  </div>
             </div>
@@ -352,7 +369,7 @@
                 <div class="textarea-container">
                     <textarea id="task-details" rows="3" placeholder="Наприклад: 'Поясни крок 3 детально.' Або: 'Знайди помилку в рішенні і виправ її.'">Поясни крок 3 детально.</textarea>
                     <button id="mic-emoji-button" class="mic-button focus:outline-none" title="Голосове введення">
-                        <span class="material-icons-outlined text-xl">mic</span>
+                        <span class="material-icons-outlined text-xl">mic</span> 
                     </button>
                 </div>
             </div>
@@ -387,7 +404,7 @@
                         <span class="material-icons-outlined text-xl">mic</span>
                     </button>
                 </div>
-
+                 
                 <div class="flex items-center space-x-3 mt-4">
                     <button id="send-copilot-btn" class="assistant-button !w-auto !py-2 !px-4" disabled>
                         <span class="material-icons-outlined mr-2">send</span> Надіслати
@@ -404,7 +421,6 @@
         </div>
 
         <div class="right-panel">
-            <!-- Путь к изображению исправлен тегом <base> -->
             <img src="assets/assistant.png" alt="AI Assistant"> 
             <div class="assistant-info">
                 <h1 class="text-2xl font-bold">AI Освітній Асистент</h1>
@@ -412,398 +428,9 @@
             </div>
         </div>
     </div>
+    
+    <!-- ВАЖНО: Загружаем AI-Assistant.js как модуль, так как он использует импорты Firebase -->
+    <script src="AI-Assistant.js" type="module" defer></script> 
 
-    <script type="module">
-        // Обязательные глобальные переменные для работы в Canvas
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        // Firebase Imports (Firestore и Auth)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Gemini API configuration (Placeholder - API Key is managed by Canvas environment)
-        const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
-        const TTS_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=";
-        const API_KEY = ""; // Будет предоставлен Canvas во время выполнения
-
-        // --- Элементы DOM ---
-        const urlToggle = document.getElementById('url-toggle');
-        const imageToggle = document.getElementById('image-toggle');
-        const urlSection = document.getElementById('url-section');
-        const photoUploadSection = document.getElementById('photo-upload-section');
-        const assistantCallButton = document.getElementById('assistant-call-button');
-        const responseArea = document.getElementById('response-area');
-        const taskDetailsInput = document.getElementById('task-details');
-        const imagePreviewDiv = document.getElementById('image-preview');
-        const previewImage = document.getElementById('preview-image');
-        const imageStatus = document.getElementById('image-status');
-        const fileInput = document.getElementById('file-input');
-        const uploadPhotoBtn = document.getElementById('upload-photo-btn');
-        const ttsControls = document.getElementById('tts-controls');
-        const playPauseIcon = document.getElementById('play-pause-icon');
-        const playTtsBtn = document.getElementById('play-tts-btn');
-
-        let isImageMode = false;
-        let selectedFileBase64 = null;
-        let isTtsPlaying = false;
-        let audioContext = null;
-        let audioSource = null;
-        let currentAudioBuffer = null;
-        let playbackStartTime = 0;
-        let currentPauseTime = 0;
-
-        // --- Инициализация Firebase ---
-        let auth, db, userId;
-
-        const initializeFirebase = async () => {
-            if (firebaseConfig) {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                try {
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                    userId = auth.currentUser?.uid || crypto.randomUUID();
-                    console.log("Firebase initialized. User ID:", userId);
-                } catch (error) {
-                    console.error("Firebase Auth error:", error);
-                    userId = crypto.randomUUID();
-                }
-            } else {
-                 console.error("Firebase config is missing.");
-            }
-        };
-
-        // --- Вспомогательные функции для UI и Логики ---
-
-        /**
-         * Переключает режимы "По ссылке" и "По изображению".
-         * @param {boolean} toImageMode - true, если переключаемся на режим изображения.
-         */
-        const toggleMode = (toImageMode) => {
-            isImageMode = toImageMode;
-            if (isImageMode) {
-                urlToggle.classList.remove('source-button-active');
-                urlToggle.classList.add('source-button-inactive');
-                imageToggle.classList.add('source-button-active');
-                imageToggle.classList.remove('source-button-inactive');
-                urlSection.classList.add('hidden');
-                photoUploadSection.classList.remove('hidden');
-            } else {
-                urlToggle.classList.add('source-button-active');
-                urlToggle.classList.remove('source-button-inactive');
-                imageToggle.classList.remove('source-button-active');
-                imageToggle.classList.add('source-button-inactive');
-                urlSection.classList.remove('hidden');
-                photoUploadSection.classList.add('hidden');
-                // Сброс данных изображения
-                selectedFileBase64 = null;
-                imagePreviewDiv.classList.add('hidden');
-            }
-            // Сброс ответа и Copilot
-            responseArea.innerHTML = "Тут з'явиться детальна відповідь.";
-            document.getElementById('copilot-section').classList.add('hidden');
-        };
-
-        /**
-         * Конвертирует PCM16 (Int16Array) в WAV Blob.
-         * @param {Int16Array} pcm16 - Аудио данные PCM16.
-         * @param {number} sampleRate - Частота дискретизации.
-         * @returns {Blob} - Аудиофайл в формате WAV.
-         */
-        const pcmToWav = (pcm16, sampleRate) => {
-            const numChannels = 1;
-            const bytesPerSample = 2;
-            const blockAlign = numChannels * bytesPerSample;
-            const byteRate = sampleRate * blockAlign;
-            const dataSize = pcm16.length * bytesPerSample;
-            const buffer = new ArrayBuffer(44 + dataSize);
-            const view = new DataView(buffer);
-
-            let offset = 0;
-
-            // RIFF chunk
-            writeString(view, offset, 'RIFF'); offset += 4;
-            view.setUint32(offset, 36 + dataSize, true); offset += 4;
-            writeString(view, offset, 'WAVE'); offset += 4;
-
-            // fmt sub-chunk
-            writeString(view, offset, 'fmt '); offset += 4;
-            view.setUint32(offset, 16, true); offset += 4;
-            view.setUint16(offset, 1, true); offset += 2; // PCM format
-            view.setUint16(offset, numChannels, true); offset += 2;
-            view.setUint32(offset, sampleRate, true); offset += 4;
-            view.setUint32(offset, byteRate, true); offset += 4;
-            view.setUint16(offset, blockAlign, true); offset += 2;
-            view.setUint16(offset, 16, true); offset += 2; // Bits per sample (16-bit)
-
-            // data sub-chunk
-            writeString(view, offset, 'data'); offset += 4;
-            view.setUint32(offset, dataSize, true); offset += 4;
-
-            // Write PCM data
-            for (let i = 0; i < pcm16.length; i++, offset += 2) {
-                view.setInt16(offset, pcm16[i], true);
-            }
-
-            return new Blob([buffer], { type: 'audio/wav' });
-        };
-
-        const writeString = (view, offset, string) => {
-            for (let i = 0; i < string.length; i++) {
-                view.setUint8(offset + i, string.charCodeAt(i));
-            }
-        };
-
-        const base64ToArrayBuffer = (base64) => {
-            const binaryString = atob(base64);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return bytes.buffer;
-        };
-
-        // --- Обработка событий ---
-
-        urlToggle.addEventListener('click', () => toggleMode(false));
-        imageToggle.addEventListener('click', () => toggleMode(true));
-
-        uploadPhotoBtn.addEventListener('click', () => fileInput.click());
-
-        fileInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                imageStatus.textContent = `Завантажено: ${file.name}`;
-                imagePreviewDiv.classList.remove('hidden');
-                
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    previewImage.src = e.target.result;
-                    // Сохраняем только base64 часть (без префикса data:image/...)
-                    selectedFileBase64 = e.target.result.split(',')[1];
-                };
-                reader.onerror = () => {
-                     imageStatus.textContent = "Помилка при зчитуванні файлу.";
-                     selectedFileBase64 = null;
-                     previewImage.src = "#";
-                };
-                reader.readAsDataURL(file);
-            } else {
-                 imageStatus.textContent = "";
-                 selectedFileBase64 = null;
-                 imagePreviewDiv.classList.add('hidden');
-            }
-        });
-
-        assistantCallButton.addEventListener('click', handleAssistantCall);
-        playTtsBtn.addEventListener('click', toggleTtsPlayback);
-
-
-        // --- Основная логика: Запрос к Gemini и TTS ---
-
-        async function handleAssistantCall() {
-            // 1. Сбор данных
-            const subject = document.getElementById('subject').value;
-            const taskDetails = taskDetailsInput.value;
-            let promptParts = [];
-            let imagePart = null;
-
-            if (!taskDetails.trim()) {
-                responseArea.textContent = "Будь ласка, введіть деталі завдання.";
-                return;
-            }
-
-            if (isImageMode && selectedFileBase64) {
-                // Режим "По изображению"
-                const mimeType = previewImage.src.split(':')[1].split(';')[0];
-                imagePart = {
-                    inlineData: {
-                        mimeType: mimeType,
-                        data: selectedFileBase64
-                    }
-                };
-                promptParts.push({ text: `Предмет: ${subject}. Деталі завдання: ${taskDetails}. Проаналізуй надане зображення та дай повну і розгорнуту відповідь.` });
-                promptParts.push(imagePart);
-            } else if (!isImageMode) {
-                // Режим "По ссылке"
-                const url = document.getElementById('url').value;
-                const paragraph = document.getElementById('paragraph-number').value;
-                const page = document.getElementById('page-number').value;
-                const taskNumber = document.getElementById('task-number').value;
-
-                if (!url.trim()) {
-                     responseArea.textContent = "Будь ласка, введіть URL підручника.";
-                     return;
-                }
-
-                const fullPrompt = `Предмет: ${subject}. Посилання на підручник: ${url}. Параграф: ${paragraph}. Сторінка: ${page}. Номер завдання: ${taskNumber}. Деталі завдання: ${taskDetails}. Використовуючи інформацію з джерела, дай розгорнуте та зрозуміле пояснення, керуючись рівнем 5-го класу.`;
-
-                promptParts.push({ text: fullPrompt });
-            } else {
-                 responseArea.textContent = "Будь ласка, завантажте зображення або переключіться на режим посилання.";
-                 return;
-            }
-
-            // 2. Визуальная обратная связь
-            assistantCallButton.disabled = true;
-            responseArea.textContent = "Асистент генерує відповідь... Це може зайняти кілька секунд.";
-
-            try {
-                // 3. Вызов Gemini API
-                const payload = {
-                    contents: [{ parts: promptParts }],
-                    tools: [{ "google_search": {} }],
-                    systemInstruction: {
-                        parts: [{ text: "Ти — українськомовний освітній асистент. Твої відповіді мають бути деталізовані, дружні, навчальні та відповідати шкільному рівню (зокрема 5-му класу), якщо інше не вказано." }]
-                    },
-                };
-
-                const response = await fetch(GEMINI_API_URL + API_KEY, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Помилка: не вдалося отримати відповідь від асистента.";
-                responseArea.textContent = text;
-                document.getElementById('copilot-section').classList.remove('hidden');
-
-                // 4. Генерация TTS после успешного ответа
-                await generateTts(text);
-
-            } catch (error) {
-                console.error("Помилка при виклику Gemini API:", error);
-                responseArea.textContent = "Помилка з'єднання або обробки запиту. Спробуйте ще раз.";
-            } finally {
-                assistantCallButton.disabled = false;
-            }
-        }
-
-        async function generateTts(textToSpeak) {
-             // 1. Настройка UI
-             ttsControls.classList.add('hidden'); // Скрываем управление, пока генерируем
-
-             try {
-                // 2. Вызов TTS API
-                const payload = {
-                    contents: [{ parts: [{ text: textToSpeak }] }],
-                    generationConfig: {
-                        responseModalities: ["AUDIO"],
-                        speechConfig: {
-                            voiceConfig: {
-                                // Выбираем украинскую озвучку, если доступна, или универсальную
-                                prebuiltVoiceConfig: { voiceName: "Kore" } 
-                            }
-                        }
-                    },
-                    model: "gemini-2.5-flash-preview-tts"
-                };
-
-                const ttsResponse = await fetch(TTS_API_URL + API_KEY, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const ttsResult = await ttsResponse.json();
-                const part = ttsResult?.candidates?.[0]?.content?.parts?.[0];
-                const audioData = part?.inlineData?.data;
-                const mimeType = part?.inlineData?.mimeType;
-
-                if (audioData && mimeType && mimeType.startsWith("audio/L16")) {
-                    // Парсинг частоты дискретизации
-                    const rateMatch = mimeType.match(/rate=(\d+)/);
-                    const sampleRate = rateMatch ? parseInt(rateMatch[1], 10) : 16000;
-
-                    // Конвертация Base64 -> ArrayBuffer -> Int16Array -> WAV Blob
-                    const pcmData = base64ToArrayBuffer(audioData);
-                    const pcm16 = new Int16Array(pcmData);
-                    const wavBlob = pcmToWav(pcm16, sampleRate);
-
-                    // Создание AudioContext и декодирование
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: sampleRate });
-                    const arrayBuffer = await wavBlob.arrayBuffer();
-
-                    // Декодируем WAV blob в AudioBuffer
-                    // (ПРИМЕЧАНИЕ: На самом деле API возвращает PCM16, но для удобства и универсальности,
-                    // мы сохраняем его в AudioBuffer после конвертации в WAV. В реальном приложении можно декодировать напрямую PCM.)
-                    audioContext.decodeAudioData(arrayBuffer, (buffer) => {
-                        currentAudioBuffer = buffer;
-                        // Сброс состояния воспроизведения
-                        isTtsPlaying = false;
-                        currentPauseTime = 0;
-                        playPauseIcon.textContent = 'play_arrow';
-                        ttsControls.classList.remove('hidden');
-                        playTtsBtn.disabled = false;
-                    }, (e) => {
-                        console.error("Error decoding audio data", e);
-                        responseArea.textContent += "\n[Помилка TTS: Не вдалося відтворити аудіо.]";
-                    });
-
-                } else {
-                    console.error("TTS failed or audio data missing:", ttsResult);
-                    responseArea.textContent += "\n[Помилка TTS: Не вдалося згенерувати аудіо.]";
-                }
-
-             } catch (error) {
-                 console.error("Помилка при виклику TTS API:", error);
-                 responseArea.textContent += "\n[Помилка TTS: Помилка з'єднання.]";
-             }
-        }
-
-        function toggleTtsPlayback() {
-            if (!currentAudioBuffer) return;
-
-            if (isTtsPlaying) {
-                // Пауза
-                audioSource.stop();
-                currentPauseTime += audioContext.currentTime - playbackStartTime;
-                isTtsPlaying = false;
-                playPauseIcon.textContent = 'play_arrow';
-            } else {
-                // Воспроизведение / Продолжение
-                audioSource = audioContext.createBufferSource();
-                audioSource.buffer = currentAudioBuffer;
-                audioSource.connect(audioContext.destination);
-
-                const offset = currentPauseTime % currentAudioBuffer.duration;
-                audioSource.start(0, offset);
-                playbackStartTime = audioContext.currentTime;
-
-                isTtsPlaying = true;
-                playPauseIcon.textContent = 'pause';
-
-                // Сброс состояния по окончании
-                audioSource.onended = () => {
-                    if (isTtsPlaying) { // Убедиться, что это не было ручной остановкой
-                        isTtsPlaying = false;
-                        currentPauseTime = 0;
-                        playPauseIcon.textContent = 'play_arrow';
-                    }
-                };
-            }
-        }
-
-
-        // --- Инициализация при загрузке страницы ---
-        window.onload = () => {
-             initializeFirebase();
-             // В случае, если Camera API не поддерживается (в iFrame), кнопка не будет работать, но она остается для лучшего UI/UX.
-             document.getElementById('take-photo-btn').addEventListener('click', () => {
-                 responseArea.textContent = "Функція 'Зробити фото' може не працювати у цьому середовищі. Використовуйте 'Завантажити фото'.";
-             });
-        };
-
-    </script>
 </body>
 </html>
