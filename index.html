@@ -280,6 +280,26 @@
             border: 1px solid #80DEEA;
             margin-top: 10px;
         }
+        
+        /* НОВІ СТИЛІ ДЛЯ КАРАОКЕ ТА ВИВЕДЕННЯ ВІДПОВІДІ */
+        .karaoke-word {
+            transition: color 0.4s ease; 
+            color: #1F2937; /* Default text color */
+            font-weight: inherit;
+        }
+        .karaoke-highlight {
+            color: #00BCD4; /* Cold blue color for highlighting */
+        }
+        .solution-section div:first-child h4 {
+            font-size: 1.5rem; /* Завдання */
+            font-weight: 800;
+            color: #006064;
+        }
+        .solution-section div:nth-child(2) h4 {
+            font-size: 1.25rem; /* Рішення */
+            font-weight: 800;
+            color: #00BCD4;
+        }
     </style>
 </head>
 <body>
@@ -359,20 +379,48 @@
 
             <div class="mt-8">
                 <h3 class="text-xl font-semibold mb-3 text-gray-800">ВІДПОВІДЬ АСИСТЕНТА</h3>
+                
                 <div id="response-area" class="p-4 rounded-lg min-h-[100px] whitespace-pre-wrap bg-gray-50 border border-gray-200">
                     Тут з'явиться детальна відповідь.
                 </div>
-                <div id="tts-controls" class="tts-controls hidden">
-                    <button id="rewind-tts-btn" title="Перемотка назад" disabled>
-                        <span class="material-icons-outlined">fast_rewind</span>
-                    </button>
-                    <button id="play-tts-btn" title="Відтворити / Пауза">
-                        <span class="material-icons-outlined" id="play-pause-icon">play_arrow</span>
-                    </button>
-                    <button id="forward-tts-btn" title="Перемотка вперед" disabled>
-                        <span class="material-icons-outlined">fast_forward</span>
-                    </button>
+                
+                <!-- НОВА СТРУКТУРА ДЛЯ ВІДПОВІДІ -->
+                <div id="solution-section" class="solution-section mt-4 hidden">
+                    <!-- Завдання з кнопкою Озвучити -->
+                    <div class="mb-4 p-4 bg-white rounded-lg border border-teal-100 shadow-sm">
+                        <h4 class="flex items-center justify-between">
+                            <span>ЗАВДАННЯ</span>
+                            <button id="task-tts-btn" class="text-teal-600 hover:text-teal-800 transition disabled:opacity-50" title="Озвучити завдання">
+                                <span class="material-icons-outlined">volume_up</span>
+                            </button>
+                        </h4>
+                        <div id="task-content" class="text-gray-800 mt-2 whitespace-pre-wrap"></div>
+                    </div>
+                    
+                    <!-- Рішення -->
+                    <div class="mt-6 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                        <h4 class="mb-2">ДЕТАЛЬНЕ РІШЕННЯ</h4>
+                        <div id="solution-content" class="text-gray-800 whitespace-pre-wrap"></div>
+                    </div>
+
+                    <!-- КЕРУВАННЯ ВІДТВОРЕННЯМ -->
+                    <div id="tts-controls" class="tts-controls mt-4">
+                        <button id="rewind-tts-btn" title="Перемотка назад на початок речення" disabled>
+                            <span class="material-icons-outlined">fast_rewind</span>
+                        </button>
+                        <button id="play-tts-btn" title="Відтворити / Пауза">
+                            <span class="material-icons-outlined" id="play-pause-icon">play_arrow</span>
+                        </button>
+                        <button id="forward-tts-btn" title="Перемотка вперед до наступного речення" disabled>
+                            <span class="material-icons-outlined">fast_forward</span>
+                        </button>
+                        <span id="playback-status" class="text-sm text-gray-500 ml-4">Готово до відтворення</span>
+                    </div>
                 </div>
+
+                <!-- ВИВЕДЕННЯ ПОМИЛОК -->
+                <div id="error-message" class="error-message mt-4 hidden"></div>
+
             </div>
 
             <div id="copilot-section" class="mt-8 p-4 bg-gray-100 rounded-lg hidden border border-gray-300">
@@ -388,19 +436,35 @@
                     <button id="send-copilot-btn" class="assistant-button !w-auto !py-2 !px-4" disabled>
                         <span class="material-icons-outlined mr-2">send</span> Надіслати
                     </button>
+                    <!-- Кнопка голосового запису для Copilot - використовуємо STT API браузера -->
                     <button id="start-recording-btn" class="assistant-button !bg-red-500 hover:!bg-red-600 !w-auto !py-2 !px-4">
                         <span class="material-icons-outlined mr-2" id="recording-icon">mic</span> <span id="recording-status">Натисніть для початку...</span>
                     </button>
                 </div>
-                 <div id="copilot-response-area" class="mt-4 p-4 rounded-lg min-h-[50px] whitespace-pre-wrap bg-white border border-gray-200">
+                
+                <h4 class="text-lg font-semibold mb-3 mt-6 text-gray-800">ВІДПОВІДЬ COPILOT</h4>
+                 <div id="copilot-response-area" class="mt-2 p-4 rounded-lg min-h-[50px] whitespace-pre-wrap bg-white border border-gray-200">
                     Тут з'являться відповіді Copilot.
+                </div>
+                <!-- КЕРУВАННЯ ВІДТВОРЕННЯМ COPILOT -->
+                <div id="copilot-tts-controls" class="tts-controls mt-4 hidden">
+                    <button id="copilot-rewind-tts-btn" title="Перемотка назад на початок речення" disabled>
+                        <span class="material-icons-outlined">fast_rewind</span>
+                    </button>
+                    <button id="copilot-play-tts-btn" title="Відтворити / Пауза">
+                        <span class="material-icons-outlined" id="copilot-play-pause-icon">play_arrow</span>
+                    </button>
+                    <button id="copilot-forward-tts-btn" title="Перемотка вперед до наступного речення" disabled>
+                        <span class="material-icons-outlined">fast_forward</span>
+                    </button>
+                    <span id="copilot-playback-status" class="text-sm text-gray-500 ml-4">Готово до відтворення</span>
                 </div>
             </div>
 
         </div>
 
         <div class="right-panel">
-            <img src="assets/assistant.png" alt="AI Assistant"> 
+            <img src="https://placehold.co/1200x1200/00BCD4/FFFFFF?text=AI+ASSISTANT" alt="AI Assistant"> 
             <div class="assistant-info">
                 <h1 class="text-2xl font-bold">AI Освітній Асистент</h1>
                 <p class="text-sm">Ваш персональний помічник у навчанні</p>
