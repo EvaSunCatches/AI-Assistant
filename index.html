@@ -5,252 +5,805 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Освітній Асистент</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@google/genai@0.14.0/umd/index.js"></script> 
-    <script src="assets/api_config.js"></script> 
+    <!-- !!! ВАЖНО: Тег <base> для исправления путей на GitHub Pages !!! -->
+    <base href="/AI-Assistant/">
 
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Импорты библиотек -->
+    <!-- УДАЛЕНО: <script src="https://unpkg.com/@google/genai"></script> для устранения ошибки "Unexpected token 'export'" -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
-    
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
-        /* СТИЛІ, АДАПТОВАНІ ПІД ВАШ СКРІНШОТ */
+        /* ОСНОВНІ СТИЛІ */
         body {
+            background-color: #F7F7F7;
+            color: #1F2937;
             font-family: 'Nunito', sans-serif;
-            background-color: #f0f0f0; 
             display: flex;
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
+            padding: 0;
             margin: 0;
-            padding: 20px;
         }
-
         .container {
-            width: 100%;
-            max-width: 900px; 
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             display: flex;
-            flex-direction: column; 
+            max-width: 1200px;
+            width: 100%;
+            min-height: 95vh;
+            background-color: #FFFFFF;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             overflow: hidden;
-            padding: 30px; 
+            margin: 2.5vh auto;
+            border-radius: 12px;
         }
-
-        /* Заголовки */
-        h2, h3 {
-            color: #333;
-            border-bottom: 2px solid #ccc;
-            padding-bottom: 5px;
-            margin-bottom: 15px;
+        .left-panel {
+            width: 60%;
+            padding: 30px;
+            border-right: 1px solid #E5E7EB;
+            overflow-y: auto;
         }
-        h2 { font-size: 1.8rem; }
-        h3 { font-size: 1.2rem; }
-
-        /* Загальний стиль для полів вводу */
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-        }
-
-        /* Стилі для поля Деталі завдання та Copilot (з мікрофоном) */
-        .input-with-mic {
+        .right-panel {
+            width: 40%;
+            position: relative;
+            padding: 0;
+            background-color: #E0F7FA;
             display: flex;
-            align-items: center;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding-right: 5px;
-            background-color: #fff;
+            align-items: flex-end;
+            justify-content: center;
         }
-        .input-with-mic textarea, .input-with-mic input {
-            flex-grow: 1;
-            border: none;
-            padding: 10px;
-            outline: none;
-            resize: none; 
-            box-sizing: border-box;
-        }
-
-        /* Кнопка Мікрофона */
-        .mic-button {
-            border: none;
-            background: none;
-            padding: 8px;
-            cursor: pointer;
-            color: #555; 
-            transition: color 0.2s;
-        }
-        .mic-button:hover {
-            color: #007bff; /* Синій колір при наведенні */
-        }
-        .mic-button.recording {
-            color: #dc3545; /* Червоний колір при записі */
+        /* Путь к изображению исправлен тегом <base> выше, поэтому здесь менять не нужно */
+        .right-panel img { 
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            transition: opacity 0.3s;
         }
 
-        /* Кнопка Асистента */
-        #assistant-call-button {
-            background-color: #007bff;
+        /* КОРИСТУВАЦЬКІ СТИЛІ (ХОЛОДНИЙ ТОН) */
+
+        .select-backdrop {
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 188, 212, 0.2);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+        }
+
+        .assistant-info {
+            position: relative;
+            z-index: 2;
+            background-color: rgba(0, 0, 0, 0.25);
+            color: #fff;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            padding: 15px 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            max-width: 90%;
+            width: fit-content;
+        }
+        .assistant-info h1 {
+            font-size: 1.75rem;
+            font-weight: bold;
             color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
+        }
+        .assistant-info p {
+            font-size: 0.9rem;
+            color: white;
+        }
+
+        /* Стилі для індикатора прогресу */
+        .progress-bar {
+            height: 10px;
+            background-color: #e5f5f7;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-image: linear-gradient(to right, #00BCD4, #4DD0E1);
+            transition: width 0.5s ease;
+        }
+
+        /* СТИЛЬ ПЕРЕКЛЮЧАТЕЛЕЙ: ХОЛОДНИЙ ТОН */
+        .source-button {
+             padding: 10px;
+             border-radius: 6px;
+             transition: all 0.3s ease;
+             font-weight: 600;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             border: 1px solid #d1d5db;
+             flex-grow: 1;
+             cursor: pointer;
+             background-color: #ffffff;
+        }
+        .source-button:hover:not(.source-button-active) {
+             background-color: #f3f4f6 !important;
+        }
+        .source-button-active {
+            background-color: #E0F7FA !important;
+            border-color: #00BCD4 !important;
+            color: #006064 !important;
+            box-shadow: 0 2px 4px rgba(0, 188, 212, 0.2);
+        }
+        .source-button-inactive {
+             background-color: #f3f4f6;
+             color: #4b5563;
+        }
+
+        /* Стиль кнопки Отримати допомогу */
+        .assistant-button {
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background-color 0.2s;
             width: 100%;
-            margin-bottom: 20px;
+            background-image: linear-gradient(to right, #B2EBF2 0%, #E0F7FA 100%);
+            color: #006064;
+            border: 1px solid #80DEEA;
+            transition: all 0.3s ease;
+            font-weight: 800;
         }
-        #assistant-call-button:hover:not(:disabled) {
-            background-color: #0056b3;
+        .assistant-button:hover:not(:disabled) {
+            opacity: 0.95;
+            box-shadow: 0 6px 20px rgba(178, 235, 242, 0.6);
+            transform: translateY(-1px);
         }
-        #assistant-call-button:disabled {
-            opacity: 0.6;
+        .assistant-button:disabled {
+            background-image: linear-gradient(to right, #CFD8DC 0%, #ECEFF1 100%);
             cursor: not-allowed;
+            color: #90A4AE;
+            border: 1px solid #B0BEC5;
+            box-shadow: none;
         }
 
-        /* Область Відповіді */
-        #response-area, #copilot-response-area {
-            min-height: 100px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-            white-space: pre-wrap;
+        /* Стилі кнопок для ФОТО/КАМЕРИ */
+        .file-upload-btn, .camera-capture-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.15s;
+            cursor: pointer;
+            flex: 1;
+        }
+        .file-upload-btn {
+            border: 1px solid #00ACC1;
+            background-color: #B2EBF2;
+            color: #006064;
+        }
+        .file-upload-btn:hover {
+            background-color: #80DEEA;
+        }
+        .camera-capture-btn {
+            border: 1px solid #00BCD4;
+            background-color: #80DEEA;
+            color: #006064;
+        }
+        .camera-capture-btn:hover {
+            background-color: #4DD0E1;
+        }
+
+        /* ІНШІ СТИЛІ */
+        input[type="text"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+        }
+
+        #subject-group {
+             width: 50%;
+        }
+
+        #task-details {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .textarea-container {
+            position: relative;
+        }
+        .mic-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            padding: 5px;
+            cursor: pointer;
+            color: #6B7280;
+            font-size: 1.25rem;
+            z-index: 10;
+        }
+        .mic-button:hover {
+            color: #00BCD4;
+        }
+        .error-message {
+            color: #DC2626;
+            background-color: #FEE2E2;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #FCA5A5;
+        }
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
             margin-bottom: 15px;
         }
-        
-        /* Керування TTS */
-        #tts-controls {
+        .tts-controls {
             display: flex;
+            gap: 10px;
+            margin-top: 10px;
             align-items: center;
-            margin-bottom: 20px;
         }
-        #play-tts-btn {
-            background-color: #28a745;
-            color: white;
-            padding: 8px 15px;
+        .tts-controls button {
+            background: #E5F5F7;
+            color: #006064;
             border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9rem;
+            padding: 8px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
             display: flex;
+            justify-content: center;
             align-items: center;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, color 0.2s;
         }
-        #play-tts-btn:hover {
-            background-color: #1e7e34;
+        .tts-controls button:hover:not(:disabled) {
+            background: #B2EBF2;
         }
-
-        /* Секція Copilot */
-        #copilot-section {
-            padding-top: 20px;
-            border-top: 1px solid #ccc;
+        .tts-controls button:disabled {
+             opacity: 0.5;
+             cursor: not-allowed;
         }
-        #send-copilot-btn {
-            background-color: #6c757d; 
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            transition: background-color 0.2s;
-        }
-        #send-copilot-btn:hover:not(:disabled) {
-            background-color: #5a6268;
+        /* Стилі для секції "По зображенню" */
+        #photo-upload-section {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #80DEEA;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>AI Освітній Асистент</h2>
-        
-        <div class="input-group">
-            <label for="subject">Предмет:</label>
-            <input type="text" id="subject" class="input-field" placeholder="Наприклад: Математика, Історія">
-        </div>
-        <div class="input-group">
-            <label for="url">URL/Джерело:</label>
-            <input type="url" id="url" class="input-field" placeholder="Посилання на матеріал (необов'язково)">
-        </div>
+        <div class="left-panel">
+            <h2 class="text-3xl font-bold mb-6 text-gray-800">Введіть ваше завдання</h2>
 
-        <div style="display: flex; gap: 20px;">
-            <div class="input-group" style="flex: 1;">
-                <label for="paragraph-number">Параграф №:</label>
-                <input type="text" id="paragraph-number" class="input-field" placeholder="Наприклад: 5.2">
+            <div class="mb-4" id="subject-group">
+                <label for="subject" class="block mb-2 text-sm font-medium text-gray-700">Правильно вибрати предмет</label>
+                <select id="subject" class="h-10 select-backdrop">
+                    <option value="Математика" selected>Математика</option>
+                    <option value="Українська мова">Українська мова</option>
+                    <option value="Українська література">Українська література</option>
+                    <option value="Історія">Історія</option>
+                </select>
             </div>
-            <div class="input-group" style="flex: 1;">
-                <label for="page-number">Сторінка №:</label>
-                <input type="number" id="page-number" class="input-field" placeholder="Наприклад: 125">
-            </div>
-        </div>
 
-        <div class="input-group">
-            <label for="task-number">Номер завдання:</label>
-            <input type="text" id="task-number" class="input-field" placeholder="Наприклад: Завдання 3, Вправа 10">
-        </div>
+            <h3 class="text-xl font-semibold mb-3 mt-6 text-gray-800">Розділ 1: Джерело завдання</h3>
 
-        <div class="input-group">
-            <label for="task-details">Деталі завдання (ОБОВ'ЯЗКОВО):</label>
-            <div class="input-with-mic">
-                <textarea id="task-details" rows="3" placeholder="Введіть деталі завдання (або використовуйте мікрофон)"></textarea>
-                <button id="mic-emoji-button" class="mic-button" title="Голосове введення">
-                    <span class="material-icons-outlined">mic</span>
+            <div class="flex space-x-4 mb-4">
+                <button id="url-toggle" class="source-button source-button-active">
+                    <span class="material-icons-outlined mr-2">link</span> По посиланню (URL)
+                </button>
+
+                <button id="image-toggle" class="source-button source-button-inactive">
+                    <span class="material-icons-outlined mr-2">image</span> По зображенню
                 </button>
             </div>
-        </div>
 
-        <button id="assistant-call-button">
-            <span class="material-icons-outlined" style="margin-right: 8px;">smart_toy</span> Згенерувати Відповідь
-        </button>
+            <div id="url-section" class="mb-4">
+                <label for="url" class="block mb-2 text-sm font-medium text-gray-700">URL (Посилання на підручник, обов'язково)</label>
+                <input type="text" id="url" value="https://pidruchnyk.com.ua/1638-mat-merzialk-5-klas-2022.html" class="h-10">
 
-        <h3>Відповідь Асистента:</h3>
-        <div id="tts-controls" style="display: none;">
-             <button id="play-tts-btn">
-                <span class="material-icons" id="play-pause-icon" style="margin-right: 5px;">play_arrow</span> <span id="tts-status">Озвучити</span>
-            </button>
-        </div>
-        <div id="response-area">
-            Тут з'являться відповіді Асистента.
-        </div>
+                <div class="input-group mt-3">
+                    <div>
+                        <label for="paragraph-number" class="block mb-2 text-sm font-medium text-gray-700">Параграф</label>
+                        <input type="text" id="paragraph-number" value="§3" placeholder="Напр. §3" class="h-10">
+                    </div>
+                    <div>
+                        <label for="page-number" class="block mb-2 text-sm font-medium text-gray-700">Сторінка (Номер)</label>
+                        <input type="text" id="page-number" value="88" placeholder="Напр. 88" class="h-10">
+                    </div>
+                    <div>
+                        <label for="task-number" class="block mb-2 text-sm font-medium text-gray-700">Номер завдання</label>
+                        <input type="text" id="task-number" value="294" placeholder="Напр. 294" class="h-10">
+                    </div>
+                </div>
+            </div>
 
-        <div id="copilot-section">
-            <h3>Copilot (Чат-помічник)</h3>
-            
-            <div class="input-group">
-                <label for="copilot-text-input">Ваше питання:</label>
-                <div class="input-with-mic">
-                    <input type="text" id="copilot-text-input" placeholder="Введіть додаткове питання або використовуйте мікрофон">
-                    <button id="mic-copilot-button" class="mic-button" title="Голосове введення">
-                        <span class="material-icons-outlined">mic</span>
+
+            <div id="photo-upload-section" class="mb-4 hidden">
+                 <div class="flex space-x-4">
+                    <button id="upload-photo-btn" class="file-upload-btn">
+                        <span class="material-icons-outlined mr-2">upload_file</span> Завантажити фото
+                    </button>
+                    <button id="take-photo-btn" class="camera-capture-btn">
+                        <span class="material-icons-outlined mr-2">camera_alt</span> Зробити фото
+                    </button>
+                 </div>
+                 <input type="file" id="file-input" accept="image/*" class="hidden">
+                 <div id="image-preview" class="mt-3 hidden">
+                    <img id="preview-image" src="#" alt="Попередній перегляд зображення" class="max-w-full h-auto rounded-lg border border-gray-300">
+                    <p class="text-sm text-gray-500 mt-1" id="image-status"></p>
+                 </div>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold mb-3 mt-6 text-gray-800">Секція: Вкажіть, що необхідно зробити (деталі)</h3>
+                <div class="textarea-container">
+                    <textarea id="task-details" rows="3" placeholder="Наприклад: 'Поясни крок 3 детально.' Або: 'Знайди помилку в рішенні і виправ її.'">Поясни крок 3 детально.</textarea>
+                    <button id="mic-emoji-button" class="mic-button focus:outline-none" title="Голосове введення">
+                        <span class="material-icons-outlined text-xl">mic</span>
                     </button>
                 </div>
             </div>
-            
-            <button id="send-copilot-btn" style="margin-bottom: 15px;">
-                <span class="material-icons-outlined" style="margin-right: 5px;">send</span> Надіслати
+
+            <button id="assistant-call-button" class="assistant-button">
+                <span class="material-icons-outlined mr-2">auto_fix_high</span> Отримати допомогу асистента
             </button>
 
-            <div id="copilot-response-area">
-                Тут з'являться відповіді Copilot.
+            <div class="mt-8">
+                <h3 class="text-xl font-semibold mb-3 text-gray-800">ВІДПОВІДЬ АСИСТЕНТА</h3>
+                <div id="response-area" class="p-4 rounded-lg min-h-[100px] whitespace-pre-wrap bg-gray-50 border border-gray-200">
+                    Тут з'явиться детальна відповідь.
+                </div>
+                <div id="tts-controls" class="tts-controls hidden">
+                    <button id="rewind-tts-btn" title="Перемотка назад" disabled>
+                        <span class="material-icons-outlined">fast_rewind</span>
+                    </button>
+                    <button id="play-tts-btn" title="Відтворити / Пауза">
+                        <span class="material-icons-outlined" id="play-pause-icon">play_arrow</span>
+                    </button>
+                    <button id="forward-tts-btn" title="Перемотка вперед" disabled>
+                        <span class="material-icons-outlined">fast_forward</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="copilot-section" class="mt-8 p-4 bg-gray-100 rounded-lg hidden border border-gray-300">
+                <h3 class="text-xl font-semibold mb-3 text-gray-800">Copilot (Додаткові запитання)</h3>
+                <div class="textarea-container mb-3">
+                     <textarea id="copilot-text-input" rows="2" placeholder="Введіть додаткове питання або використовуйте мікрофон"></textarea>
+                     <button id="mic-copilot-button" class="mic-button focus:outline-none" title="Голосове введення">
+                        <span class="material-icons-outlined text-xl">mic</span>
+                    </button>
+                </div>
+
+                <div class="flex items-center space-x-3 mt-4">
+                    <button id="send-copilot-btn" class="assistant-button !w-auto !py-2 !px-4" disabled>
+                        <span class="material-icons-outlined mr-2">send</span> Надіслати
+                    </button>
+                    <button id="start-recording-btn" class="assistant-button !bg-red-500 hover:!bg-red-600 !w-auto !py-2 !px-4">
+                        <span class="material-icons-outlined mr-2" id="recording-icon">mic</span> <span id="recording-status">Натисніть для початку...</span>
+                    </button>
+                </div>
+                 <div id="copilot-response-area" class="mt-4 p-4 rounded-lg min-h-[50px] whitespace-pre-wrap bg-white border border-gray-200">
+                    Тут з'являться відповіді Copilot.
+                </div>
+            </div>
+
+        </div>
+
+        <div class="right-panel">
+            <!-- Путь к изображению исправлен тегом <base> -->
+            <img src="assets/assistant.png" alt="AI Assistant"> 
+            <div class="assistant-info">
+                <h1 class="text-2xl font-bold">AI Освітній Асистент</h1>
+                <p class="text-sm">Ваш персональний помічник у навчанні</p>
             </div>
         </div>
     </div>
 
-    <script src="AI-Assistant.js"></script>
+    <script type="module">
+        // Обязательные глобальные переменные для работы в Canvas
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
+        // Firebase Imports (Firestore и Auth)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Gemini API configuration (Placeholder - API Key is managed by Canvas environment)
+        const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
+        const TTS_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=";
+        const API_KEY = ""; // Будет предоставлен Canvas во время выполнения
+
+        // --- Элементы DOM ---
+        const urlToggle = document.getElementById('url-toggle');
+        const imageToggle = document.getElementById('image-toggle');
+        const urlSection = document.getElementById('url-section');
+        const photoUploadSection = document.getElementById('photo-upload-section');
+        const assistantCallButton = document.getElementById('assistant-call-button');
+        const responseArea = document.getElementById('response-area');
+        const taskDetailsInput = document.getElementById('task-details');
+        const imagePreviewDiv = document.getElementById('image-preview');
+        const previewImage = document.getElementById('preview-image');
+        const imageStatus = document.getElementById('image-status');
+        const fileInput = document.getElementById('file-input');
+        const uploadPhotoBtn = document.getElementById('upload-photo-btn');
+        const ttsControls = document.getElementById('tts-controls');
+        const playPauseIcon = document.getElementById('play-pause-icon');
+        const playTtsBtn = document.getElementById('play-tts-btn');
+
+        let isImageMode = false;
+        let selectedFileBase64 = null;
+        let isTtsPlaying = false;
+        let audioContext = null;
+        let audioSource = null;
+        let currentAudioBuffer = null;
+        let playbackStartTime = 0;
+        let currentPauseTime = 0;
+
+        // --- Инициализация Firebase ---
+        let auth, db, userId;
+
+        const initializeFirebase = async () => {
+            if (firebaseConfig) {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    userId = auth.currentUser?.uid || crypto.randomUUID();
+                    console.log("Firebase initialized. User ID:", userId);
+                } catch (error) {
+                    console.error("Firebase Auth error:", error);
+                    userId = crypto.randomUUID();
+                }
+            } else {
+                 console.error("Firebase config is missing.");
+            }
+        };
+
+        // --- Вспомогательные функции для UI и Логики ---
+
+        /**
+         * Переключает режимы "По ссылке" и "По изображению".
+         * @param {boolean} toImageMode - true, если переключаемся на режим изображения.
+         */
+        const toggleMode = (toImageMode) => {
+            isImageMode = toImageMode;
+            if (isImageMode) {
+                urlToggle.classList.remove('source-button-active');
+                urlToggle.classList.add('source-button-inactive');
+                imageToggle.classList.add('source-button-active');
+                imageToggle.classList.remove('source-button-inactive');
+                urlSection.classList.add('hidden');
+                photoUploadSection.classList.remove('hidden');
+            } else {
+                urlToggle.classList.add('source-button-active');
+                urlToggle.classList.remove('source-button-inactive');
+                imageToggle.classList.remove('source-button-active');
+                imageToggle.classList.add('source-button-inactive');
+                urlSection.classList.remove('hidden');
+                photoUploadSection.classList.add('hidden');
+                // Сброс данных изображения
+                selectedFileBase64 = null;
+                imagePreviewDiv.classList.add('hidden');
+            }
+            // Сброс ответа и Copilot
+            responseArea.innerHTML = "Тут з'явиться детальна відповідь.";
+            document.getElementById('copilot-section').classList.add('hidden');
+        };
+
+        /**
+         * Конвертирует PCM16 (Int16Array) в WAV Blob.
+         * @param {Int16Array} pcm16 - Аудио данные PCM16.
+         * @param {number} sampleRate - Частота дискретизации.
+         * @returns {Blob} - Аудиофайл в формате WAV.
+         */
+        const pcmToWav = (pcm16, sampleRate) => {
+            const numChannels = 1;
+            const bytesPerSample = 2;
+            const blockAlign = numChannels * bytesPerSample;
+            const byteRate = sampleRate * blockAlign;
+            const dataSize = pcm16.length * bytesPerSample;
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            let offset = 0;
+
+            // RIFF chunk
+            writeString(view, offset, 'RIFF'); offset += 4;
+            view.setUint32(offset, 36 + dataSize, true); offset += 4;
+            writeString(view, offset, 'WAVE'); offset += 4;
+
+            // fmt sub-chunk
+            writeString(view, offset, 'fmt '); offset += 4;
+            view.setUint32(offset, 16, true); offset += 4;
+            view.setUint16(offset, 1, true); offset += 2; // PCM format
+            view.setUint16(offset, numChannels, true); offset += 2;
+            view.setUint32(offset, sampleRate, true); offset += 4;
+            view.setUint32(offset, byteRate, true); offset += 4;
+            view.setUint16(offset, blockAlign, true); offset += 2;
+            view.setUint16(offset, 16, true); offset += 2; // Bits per sample (16-bit)
+
+            // data sub-chunk
+            writeString(view, offset, 'data'); offset += 4;
+            view.setUint32(offset, dataSize, true); offset += 4;
+
+            // Write PCM data
+            for (let i = 0; i < pcm16.length; i++, offset += 2) {
+                view.setInt16(offset, pcm16[i], true);
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        };
+
+        const writeString = (view, offset, string) => {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        };
+
+        const base64ToArrayBuffer = (base64) => {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        };
+
+        // --- Обработка событий ---
+
+        urlToggle.addEventListener('click', () => toggleMode(false));
+        imageToggle.addEventListener('click', () => toggleMode(true));
+
+        uploadPhotoBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                imageStatus.textContent = `Завантажено: ${file.name}`;
+                imagePreviewDiv.classList.remove('hidden');
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImage.src = e.target.result;
+                    // Сохраняем только base64 часть (без префикса data:image/...)
+                    selectedFileBase64 = e.target.result.split(',')[1];
+                };
+                reader.onerror = () => {
+                     imageStatus.textContent = "Помилка при зчитуванні файлу.";
+                     selectedFileBase64 = null;
+                     previewImage.src = "#";
+                };
+                reader.readAsDataURL(file);
+            } else {
+                 imageStatus.textContent = "";
+                 selectedFileBase64 = null;
+                 imagePreviewDiv.classList.add('hidden');
+            }
+        });
+
+        assistantCallButton.addEventListener('click', handleAssistantCall);
+        playTtsBtn.addEventListener('click', toggleTtsPlayback);
+
+
+        // --- Основная логика: Запрос к Gemini и TTS ---
+
+        async function handleAssistantCall() {
+            // 1. Сбор данных
+            const subject = document.getElementById('subject').value;
+            const taskDetails = taskDetailsInput.value;
+            let promptParts = [];
+            let imagePart = null;
+
+            if (!taskDetails.trim()) {
+                responseArea.textContent = "Будь ласка, введіть деталі завдання.";
+                return;
+            }
+
+            if (isImageMode && selectedFileBase64) {
+                // Режим "По изображению"
+                const mimeType = previewImage.src.split(':')[1].split(';')[0];
+                imagePart = {
+                    inlineData: {
+                        mimeType: mimeType,
+                        data: selectedFileBase64
+                    }
+                };
+                promptParts.push({ text: `Предмет: ${subject}. Деталі завдання: ${taskDetails}. Проаналізуй надане зображення та дай повну і розгорнуту відповідь.` });
+                promptParts.push(imagePart);
+            } else if (!isImageMode) {
+                // Режим "По ссылке"
+                const url = document.getElementById('url').value;
+                const paragraph = document.getElementById('paragraph-number').value;
+                const page = document.getElementById('page-number').value;
+                const taskNumber = document.getElementById('task-number').value;
+
+                if (!url.trim()) {
+                     responseArea.textContent = "Будь ласка, введіть URL підручника.";
+                     return;
+                }
+
+                const fullPrompt = `Предмет: ${subject}. Посилання на підручник: ${url}. Параграф: ${paragraph}. Сторінка: ${page}. Номер завдання: ${taskNumber}. Деталі завдання: ${taskDetails}. Використовуючи інформацію з джерела, дай розгорнуте та зрозуміле пояснення, керуючись рівнем 5-го класу.`;
+
+                promptParts.push({ text: fullPrompt });
+            } else {
+                 responseArea.textContent = "Будь ласка, завантажте зображення або переключіться на режим посилання.";
+                 return;
+            }
+
+            // 2. Визуальная обратная связь
+            assistantCallButton.disabled = true;
+            responseArea.textContent = "Асистент генерує відповідь... Це може зайняти кілька секунд.";
+
+            try {
+                // 3. Вызов Gemini API
+                const payload = {
+                    contents: [{ parts: promptParts }],
+                    tools: [{ "google_search": {} }],
+                    systemInstruction: {
+                        parts: [{ text: "Ти — українськомовний освітній асистент. Твої відповіді мають бути деталізовані, дружні, навчальні та відповідати шкільному рівню (зокрема 5-му класу), якщо інше не вказано." }]
+                    },
+                };
+
+                const response = await fetch(GEMINI_API_URL + API_KEY, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Помилка: не вдалося отримати відповідь від асистента.";
+                responseArea.textContent = text;
+                document.getElementById('copilot-section').classList.remove('hidden');
+
+                // 4. Генерация TTS после успешного ответа
+                await generateTts(text);
+
+            } catch (error) {
+                console.error("Помилка при виклику Gemini API:", error);
+                responseArea.textContent = "Помилка з'єднання або обробки запиту. Спробуйте ще раз.";
+            } finally {
+                assistantCallButton.disabled = false;
+            }
+        }
+
+        async function generateTts(textToSpeak) {
+             // 1. Настройка UI
+             ttsControls.classList.add('hidden'); // Скрываем управление, пока генерируем
+
+             try {
+                // 2. Вызов TTS API
+                const payload = {
+                    contents: [{ parts: [{ text: textToSpeak }] }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                // Выбираем украинскую озвучку, если доступна, или универсальную
+                                prebuiltVoiceConfig: { voiceName: "Kore" } 
+                            }
+                        }
+                    },
+                    model: "gemini-2.5-flash-preview-tts"
+                };
+
+                const ttsResponse = await fetch(TTS_API_URL + API_KEY, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const ttsResult = await ttsResponse.json();
+                const part = ttsResult?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData && mimeType && mimeType.startsWith("audio/L16")) {
+                    // Парсинг частоты дискретизации
+                    const rateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = rateMatch ? parseInt(rateMatch[1], 10) : 16000;
+
+                    // Конвертация Base64 -> ArrayBuffer -> Int16Array -> WAV Blob
+                    const pcmData = base64ToArrayBuffer(audioData);
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+
+                    // Создание AudioContext и декодирование
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: sampleRate });
+                    const arrayBuffer = await wavBlob.arrayBuffer();
+
+                    // Декодируем WAV blob в AudioBuffer
+                    // (ПРИМЕЧАНИЕ: На самом деле API возвращает PCM16, но для удобства и универсальности,
+                    // мы сохраняем его в AudioBuffer после конвертации в WAV. В реальном приложении можно декодировать напрямую PCM.)
+                    audioContext.decodeAudioData(arrayBuffer, (buffer) => {
+                        currentAudioBuffer = buffer;
+                        // Сброс состояния воспроизведения
+                        isTtsPlaying = false;
+                        currentPauseTime = 0;
+                        playPauseIcon.textContent = 'play_arrow';
+                        ttsControls.classList.remove('hidden');
+                        playTtsBtn.disabled = false;
+                    }, (e) => {
+                        console.error("Error decoding audio data", e);
+                        responseArea.textContent += "\n[Помилка TTS: Не вдалося відтворити аудіо.]";
+                    });
+
+                } else {
+                    console.error("TTS failed or audio data missing:", ttsResult);
+                    responseArea.textContent += "\n[Помилка TTS: Не вдалося згенерувати аудіо.]";
+                }
+
+             } catch (error) {
+                 console.error("Помилка при виклику TTS API:", error);
+                 responseArea.textContent += "\n[Помилка TTS: Помилка з'єднання.]";
+             }
+        }
+
+        function toggleTtsPlayback() {
+            if (!currentAudioBuffer) return;
+
+            if (isTtsPlaying) {
+                // Пауза
+                audioSource.stop();
+                currentPauseTime += audioContext.currentTime - playbackStartTime;
+                isTtsPlaying = false;
+                playPauseIcon.textContent = 'play_arrow';
+            } else {
+                // Воспроизведение / Продолжение
+                audioSource = audioContext.createBufferSource();
+                audioSource.buffer = currentAudioBuffer;
+                audioSource.connect(audioContext.destination);
+
+                const offset = currentPauseTime % currentAudioBuffer.duration;
+                audioSource.start(0, offset);
+                playbackStartTime = audioContext.currentTime;
+
+                isTtsPlaying = true;
+                playPauseIcon.textContent = 'pause';
+
+                // Сброс состояния по окончании
+                audioSource.onended = () => {
+                    if (isTtsPlaying) { // Убедиться, что это не было ручной остановкой
+                        isTtsPlaying = false;
+                        currentPauseTime = 0;
+                        playPauseIcon.textContent = 'play_arrow';
+                    }
+                };
+            }
+        }
+
+
+        // --- Инициализация при загрузке страницы ---
+        window.onload = () => {
+             initializeFirebase();
+             // В случае, если Camera API не поддерживается (в iFrame), кнопка не будет работать, но она остается для лучшего UI/UX.
+             document.getElementById('take-photo-btn').addEventListener('click', () => {
+                 responseArea.textContent = "Функція 'Зробити фото' може не працювати у цьому середовищі. Використовуйте 'Завантажити фото'.";
+             });
+        };
+
+    </script>
 </body>
 </html>
