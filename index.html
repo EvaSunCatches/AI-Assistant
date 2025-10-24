@@ -51,7 +51,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between; 
-            overflow-y: auto;
+            overflow-y: hidden; /* Основная прокрутка внутри response-area */
         }
         
         /* Поле для відповіді - забезпечує прокрутку */
@@ -60,7 +60,8 @@
              overflow-y: auto; 
              /* Мінімальна висота, щоб було видно контент одразу */
              min-height: 200px;
-             max-height: calc(100vh - 200px); /* Обмеження висоти */
+             /* Динамически рассчитываем высоту для лучшей адаптивности */
+             max-height: calc(90vh - 180px); 
         }
         
         /* СТИЛІ ДЛЯ MARKDOWN - забезпечують гарний вигляд відповіді */
@@ -195,15 +196,14 @@
                 margin-bottom: 1rem;
             }
             #copilot-response-area {
-                max-height: 30vh; 
+                /* На мобільних устройствах высота должна быть ограничена */
+                max-height: 40vh; 
             }
         }
     </style>
 </head>
 <body>
     
-    <!-- УДАЛЕНА ИЗБЫТОЧНАЯ ТЕГ <script src="assets/api_config.js"></script>, КОТОРЫЙ ВЫЗЫВАЛ SyntaxError. -->
-
     <div class="container">
         
         <!-- ЛІВА ПАНЕЛЬ: Ввід та Відповідь -->
@@ -222,18 +222,13 @@
             </div>
 
             <!-- ОБЛАСТЬ ВВОДУ З КОНТРОЛЯМИ -->
-            <div class="bottom-section">
+            <div class="bottom-section pt-4">
                 <div class="input-area">
                     <textarea 
                         id="user-prompt-input" 
                         placeholder="Введіть ваше питання або завдання (наприклад: 'Поясни закон Ома')" 
                         rows="1"
                         oninput="this.style.height='auto'; this.style.height=(this.scrollHeight)+'px'; checkInput();"></textarea>
-                    
-                    <!-- Кнопка мікрофона (прихована, оскільки функціонал не реалізований) -->
-                    <!-- <button id="mic-button" class="mic-button focus:outline-none" title="Голосове введення">
-                        <span class="material-icons-outlined text-xl">mic</span>
-                    </button> -->
                     
                     <!-- Кнопка Надіслати -->
                     <button id="send-copilot-btn" class="send-button focus:outline-none" disabled title="Надіслати запит">
@@ -256,45 +251,68 @@
     </div>
     
     <script type="module">
-        // Імпортуємо конфігурацію з окремого файлу. Припускаємо, що api_config.js знаходиться у папці assets/.
-        // FIX: Змінюємо відносний шлях './assets/api_config.js' на кореневий '/assets/api_config.js',
-        // щоб уникнути помилки TypeError: Failed to resolve module specifier в деяких середовищах.
-        import { API_KEY, MODEL_NAME, SYSTEM_INSTRUCTION } from '/assets/api_config.js';
+        // ** ШАГ 1.1: УСТРАНЕНИЕ ОШИБКИ ИМПОРТА **: 
+        // Конфигурационные переменные теперь определены непосредственно здесь.
+        
+        // ** ВАЖНО **: Вам необходимо вставить свой ключ API для работы AI Assistant.
+        const API_KEY = "AIzaSyCy0oVEmVk4vp3c5BiVonQeDwTJdWuVLBs"; // <-- ВСТАВЬТЕ ВАШ КЛЮЧ API ЗДЕСЬ
 
-        // Ініціалізація змінних
+        // Выбор модели Gemini
+        const MODEL_NAME = "gemini-2.5-flash-preview-09-2025"; 
+        
+        // Системная инструкция для модели
+        const SYSTEM_INSTRUCTION = "Ви висококваліфікований освітній асистент. Ваші відповіді повинні бути чіткими, структурованими та інформативними, орієнтованими на учнів середньої школи та студентів. Використовуйте українську мову. Форматуйте відповіді за допомогою Markdown.";
+
+        // Инициализация переменных
         let client;
         const responseArea = document.getElementById('copilot-response-area');
         const promptInput = document.getElementById('user-prompt-input');
         const sendButton = document.getElementById('send-copilot-btn');
 
-        // Функція для перевірки стану поля вводу (винесена у window для доступу з oninput)
+        // Функция для проверки состояния поля ввода
         window.checkInput = function() {
-            sendButton.disabled = promptInput.value.trim() === '';
+            // Кнопка активна, если есть текст и клиент инициализирован
+            sendButton.disabled = promptInput.value.trim() === '' || !client;
         }
 
-        // Ініціалізація після завантаження DOM
+        // Инициализация после загрузки DOM
         document.addEventListener('DOMContentLoaded', () => {
+            // ** ШАГ 1.2: ПРОВЕРКА API-КЛЮЧА **: 
+            if (!API_KEY || API_KEY.trim() === "") {
+                responseArea.innerHTML = 
+                    "<div class='my-4 p-4 bg-red-100 border border-red-300 rounded-lg text-red-700 font-bold'>" +
+                    "ПОМИЛКА КОНФІГУРАЦІЇ: Будь ласка, вставте ваш ключ API у рядок 262. " +
+                    "Доки ключ не буде додано, функціонал AI буде недоступний." +
+                    "</div>";
+                promptInput.disabled = true;
+                sendButton.disabled = true;
+                console.error("API Key is missing! Please insert your key in the index.html file.");
+                return; // Выход, если ключ не установлен
+            }
+            
             try {
-                // Ініціалізація клієнта
+                // Инициализация клиента Gemini
                 client = new GoogleGenAI({ apiKey: API_KEY });
+                window.checkInput();
+                
             } catch (error) {
                 console.error("Помилка ініціалізації GoogleGenAI:", error);
                 responseArea.innerHTML = 
                     "<div class='text-red-500'>Помилка: Не вдалося ініціалізувати AI клієнт.</div>";
             }
 
-            // Обробники подій
+            // Обработчики событий
             sendButton.addEventListener('click', sendPrompt);
             promptInput.addEventListener('keypress', (e) => {
+                // Отправка по Enter, но не по Shift+Enter
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault(); 
                     sendPrompt();
                 }
             });
-            promptInput.addEventListener('input', window.checkInput);
         });
 
-        // Основна функція для надсилання запиту до Gemini
+        // Основная функция для отправки запроса к Gemini
         async function sendPrompt() {
             const userPrompt = promptInput.value.trim();
 
@@ -302,25 +320,24 @@
                 return;
             }
 
-            // UI: Вимкнення та очищення
+            // UI: Блокировка и очистка
             sendButton.disabled = true;
             promptInput.disabled = true;
             
-            // Зберігаємо поточний промпт для відображення у відповіді
             const currentPrompt = userPrompt;
             
             promptInput.value = '';
-            promptInput.style.height = '30px'; // Скидаємо висоту
+            promptInput.style.height = '30px'; // Сброс высоты
             window.checkInput(); 
 
-            // Додаємо запит користувача до області відповіді (для контексту)
+            // Добавление запроса пользователя
             responseArea.innerHTML += `
                 <div class="my-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm font-medium text-gray-800 shadow-sm">
                     <span class="material-icons-outlined text-base align-middle mr-1">person</span> 
                     **Ваш запит:** ${currentPrompt}
                 </div>`;
             
-            // UI: Показуємо індикатор завантаження
+            // ** ШАГ 2.1: ИНДИКАТОР ЗАГРУЗКИ **: 
             const loadingHtml = `
                 <div id="loading-indicator" class="flex items-center text-gray-500 my-4 p-3 bg-gray-100 rounded-lg">
                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -341,7 +358,7 @@
                     }
                 };
                 
-                // Виклик API
+                // Вызов API
                 const response = await client.models.generateContent({
                     model: MODEL_NAME,
                     ...request
@@ -349,11 +366,11 @@
 
                 let generatedText = response.text || "Не вдалося отримати відповідь від моделі.";
                 
-                // Видаляємо індикатор завантаження
+                // Удаление индикатора загрузки
                 const loadingIndicator = document.getElementById('loading-indicator');
                 if (loadingIndicator) loadingIndicator.remove();
                 
-                // 1. Рендеринг Markdown у HTML
+                // Рендеринг Markdown
                 const renderedHtml = marked.parse(generatedText);
                 
                 let finalResponseHtml = `
@@ -365,7 +382,7 @@
                         ${renderedHtml}
                     </div>`;
 
-                // 2. Додавання посилань на джерела
+                // Добавление ссылок на источники
                 const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
                 if (groundingMetadata && groundingMetadata.groundingAttributions && groundingMetadata.groundingAttributions.length > 0) {
                     let sourcesHtml = '<div class="mt-4 pt-2 border-t border-gray-100 text-xs text-gray-500">';
@@ -379,7 +396,7 @@
                     });
                     sourcesHtml += '</div>';
                     if (uniqueUris.size > 0) {
-                        finalResponseHtml = finalResponseHtml.slice(0, -6) + sourcesHtml + finalResponseHtml.slice(-6); // Додаємо джерела всередину блоку
+                        finalResponseHtml = finalResponseHtml.slice(0, -6) + sourcesHtml + finalResponseHtml.slice(-6); 
                     }
                 }
                 
@@ -393,7 +410,7 @@
                 
                 responseArea.innerHTML += `<div class='my-4 p-4 bg-red-100 border border-red-300 rounded-lg text-red-700'>На жаль, сталася помилка при генерації відповіді. Спробуйте ще раз.</div>`;
             } finally {
-                // UI: Відновлення
+                // UI: Восстановление
                 sendButton.disabled = false;
                 promptInput.disabled = false;
                 promptInput.focus();
