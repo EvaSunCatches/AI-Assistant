@@ -1,174 +1,158 @@
+#!/usr/bin/env node
+
 /**
- * AI Educational Assistant — OCR Analyzer (v5.9-STABLE)
- * CommonJS backend, minimal functional version
+ * AI Educational Assistant — OCR backend
+ * Version: v6.8-STABLE
+ * Node.js server for image-to-text recognition with bounding boxes (HOCR/TSV)
  */
 
 const express = require("express");
-const fs = require("fs-extra");
-const path = require("path");
-const sharp = require("sharp");
 const multer = require("multer");
+const fs = require("fs-extra");
 const morgan = require("morgan");
-const tesseract = require("node-tesseract-ocr");
+const path = require("path");
+const { exec } = require("child_process");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
-// === Paths ===
+// Paths
 const PUBLIC_DIR = path.join(__dirname, "public");
 const DRAWINGS_DIR = path.join(PUBLIC_DIR, "drawings");
-const LOG_FILE = path.join(__dirname, "logs", "ocr.json");
 const LOGS_DIR = path.join(__dirname, "logs");
+const LOG_FILE = path.join(LOGS_DIR, "ocr.json");
 
-// === Ensure folders exist ===
+// Ensure directories exist
 fs.ensureDirSync(DRAWINGS_DIR);
 fs.ensureDirSync(LOGS_DIR);
 
-// === Multer config ===
+// Middleware
+app.use(express.static(PUBLIC_DIR));
+app.use(morgan("dev"));
+app.use(express.json({ limit: "50mb" }));
+
+// Multer setup for uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, DRAWINGS_DIR),
   filename: (req, file, cb) => {
-    const unique = Date.now();
-    const safe = file.originalname.replace(/\s+/g, "_");
-    cb(null, `ocr-${unique}-${safe}`);
+    const ext = path.extname(file.originalname);
+    const base = path.basename(file.originalname, ext);
+    const name = `ocr-${Date.now()}-${base}${ext}`;
+    cb(null, name);
   },
 });
 const upload = multer({ storage });
 
-// === Middlewares ===
-app.use(morgan("dev"));
-app.use(express.json());
-app.use(express.static(PUBLIC_DIR));
-
-// === Create index.html if missing ===
-const indexPath = path.join(PUBLIC_DIR, "index.html");
-if (!fs.existsSync(indexPath)) {
-  const html = `
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-  <meta charset="UTF-8" />
-  <title>OCR Аналізатор (AI Educational Assistant)</title>
-  <style>
-    body { font-family: sans-serif; margin: 2em; background: #fafafa; }
-    h1 { color: #333; }
-    #output { white-space: pre-wrap; background: #fff; padding: 1em; border-radius: 6px; }
-  </style>
-</head>
-<body>
-  <h1>🧠 OCR Аналізатор</h1>
-  <input type="file" id="fileInput" />
-  <button id="btn">Розпізнати</button>
-  <button id="clear">Очистити все</button>
-  <pre id="output"></pre>
-  <script>
-    document.getElementById('btn').onclick = async () => {
-      const f = document.getElementById('fileInput').files[0];
-      if (!f) return alert('Оберіть файл!');
-      const fd = new FormData();
-      fd.append('file', f);
-      const res = await fetch('/api/vision', { method: 'POST', body: fd });
-      const txt = await res.text();
-      try {
-        document.getElementById('output').textContent = JSON.stringify(JSON.parse(txt), null, 2);
-      } catch(e) {
-        document.getElementById('output').textContent = txt;
-      }
-    };
-    document.getElementById('clear').onclick = async () => {
-      await fetch('/api/clear', { method: 'POST' });
-      document.getElementById('output').textContent = '✅ Очищено';
-    };
-  </script>
-</body>
-</html>`;
-  fs.writeFileSync(indexPath, html);
+// Utility: append to OCR log file
+async function appendLog(entry) {
+  try {
+    let arr = [];
+    if (await fs.pathExists(LOG_FILE)) {
+      const content = await fs.readFile(LOG_FILE, "utf-8");
+      arr = JSON.parse(content || "[]");
+      if (!Array.isArray(arr)) arr = [];
+    }
+    arr.push(entry);
+    await fs.writeFile(LOG_FILE, JSON.stringify(arr, null, 2));
+  } catch (err) {
+    console.error("appendLog error:", err);
+  }
 }
 
-// === Helpers ===
-const readLogs = async () => {
-  try {
-    const data = await fs.readFile(LOG_FILE, "utf-8");
-    return JSON.parse(data || "[]");
-  } catch {
-    return [];
-  }
-};
-
-const saveLogs = async (entries) =>
-  fs.writeFile(LOG_FILE, JSON.stringify(entries.slice(-50), null, 2));
-
-// === OCR endpoint ===
+// Main OCR route
 app.post("/api/vision", upload.single("file"), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: "Файл не завантажено" });
-
     const filePath = req.file.path;
-    const text = await tesseract.recognize(filePath, { lang: "ukr+eng" });
+    const lang = "eng+ukr";
+    const baseCmd = `tesseract "${filePath}" stdout -l ${lang} --oem 1 --psm 3`;
 
-    // Автоопределение задания (по шаблону "312.", "313." и т.д.)
-    const taskMatch = text.match(/\b\d{3,4}\./);
-    const task = taskMatch ? taskMatch[0].replace(".", "") : null;
+    // Run three passes: plain text, HOCR, TSV
+    const cmdText = `${baseCmd}`;
+    const cmdHOCR = `${baseCmd} hocr`;
+    const cmdTSV = `${baseCmd} tsv`;
 
-    // Извлечение рисунков
-    const drawings = [...text.matchAll(/Рис\.?\s?(\d+)/gi)].map((m) => m[1]);
+    const runCommand = (cmd) =>
+      new Promise((resolve, reject) => {
+        exec(cmd, { maxBuffer: 50 * 1024 * 1024 }, (err, stdout, stderr) => {
+          if (err) return reject(stderr || err);
+          resolve(stdout);
+        });
+      });
 
-    const entry = {
-      status: task ? "✅ Завдання розпізнано" : "ℹ️ Текст розпізнано, завдання не визначено",
-      task,
-      drawings,
+    const [text, hocr, tsv] = await Promise.all([
+      runCommand(cmdText),
+      runCommand(cmdHOCR),
+      runCommand(cmdTSV),
+    ]);
+
+    // Extract words and coordinates from TSV
+    const words = [];
+    const lines = tsv.split("\n").slice(1);
+    for (const line of lines) {
+      const cols = line.split("\t");
+      if (cols.length > 11 && cols[11].trim()) {
+        words.push({
+          text: cols[11].trim(),
+          confidence: parseFloat(cols[10]),
+          bbox: {
+            x: parseInt(cols[6]),
+            y: parseInt(cols[7]),
+            w: parseInt(cols[8]),
+            h: parseInt(cols[9]),
+          },
+        });
+      }
+    }
+
+    const result = {
+      status: "✅ Завдання розпізнано",
       text: text.trim(),
-      file: `/public/drawings/${path.basename(filePath)}`,
-      timestamp: new Date().toISOString(),
+      words,
+      file: `/drawings/${path.basename(filePath)}`,
+      timestamp: Date.now(),
     };
 
-    const logs = await readLogs();
-    logs.push(entry);
-    await saveLogs(logs);
-
-    res.json(entry);
+    await appendLog(result);
+    res.json(result);
   } catch (err) {
-    console.error("❌ OCR error:", err);
-    res.status(500).json({ error: "Помилка OCR або некоректний формат файлу" });
+    console.error("OCR error:", err);
+    res.status(500).json({ status: "❌ OCR error", error: String(err) });
   }
 });
 
-// === Очистка логов и рисунков ===
-app.post("/api/clear", async (_req, res) => {
+// Clear drawings & logs
+app.post("/api/clear", async (req, res) => {
   try {
-    await fs.writeFile(LOG_FILE, "[]");
     await fs.emptyDir(DRAWINGS_DIR);
+    await fs.writeFile(LOG_FILE, "[]");
     res.json({ cleared: true });
   } catch (err) {
-    console.error("Clear error:", err);
-    res.status(500).json({ error: "Помилка очищення" });
+    res.status(500).json({ error: "Clear failed", details: String(err) });
   }
 });
 
-// === Health check ===
-app.get("/health", (_req, res) => {
+// Health check
+app.get("/health", (req, res) => {
   res.json({
     status: "✅ OK",
-    version: "v5.9-STABLE",
+    version: "v6.8-STABLE",
     endpoints: ["/api/vision", "/api/clear", "/health"],
   });
 });
 
-// === Auto-cleanup every 3 min ===
+// Auto-cleaner
 setInterval(async () => {
   try {
     await fs.emptyDir(DRAWINGS_DIR);
-    await saveLogs(await readLogs());
-  } catch {}
-}, 180000);
+  } catch (err) {
+    console.warn("Auto-clean error:", err);
+  }
+}, 180 * 1000);
 
-// === Start server ===
+// Start server
 app.listen(PORT, () => {
-  console.log(`✅ server.cjs v5.9-STABLE running on http://localhost:${PORT}`);
+  console.log(`✅ server.cjs v6.8-STABLE running on http://localhost:${PORT}`);
   console.log(`📁 Drawings: ${DRAWINGS_DIR}`);
-  console.log(`📁 Logs: ${LOG_FILE}`);
-  console.log(`🕒 Auto-cleanup: 180 sec`);
+  console.log(`📁 Logs: ${LOGS_DIR}`);
+  console.log("🕒 Auto-cleanup: 180 sec");
 });
-
-// export (for tests)
-module.exports = app;

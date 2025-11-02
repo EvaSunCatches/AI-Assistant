@@ -1,47 +1,157 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>🧠 OCR Аналізатор (AI Educational Assistant)</title>
-<style>
-body{font-family:system-ui,Arial,sans-serif;background:#f7f9fc;margin:2rem;}
-h1{color:#2a4d8f;text-align:center;}
-.container{max-width:700px;margin:auto;background:#fff;padding:2rem;border-radius:1rem;box-shadow:0 4px 12px rgba(0,0,0,.1);}
-input,button{margin-top:1rem;width:100%;padding:.6rem;font-size:1rem;}
-button{cursor:pointer;border:none;border-radius:.5rem;background:#2a4d8f;color:#fff;}
-button:hover{background:#1e3670;}
-pre{background:#eef2f7;padding:1rem;border-radius:.5rem;white-space:pre-wrap;word-wrap:break-word;}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🧠 OCR Аналізатор (AI Educational Assistant)</title>
+  <style>
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: #f8f9fb;
+      color: #222;
+      text-align: center;
+      margin: 0;
+      padding: 40px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      display: inline-block;
+      text-align: left;
+      width: 90%;
+      max-width: 720px;
+    }
+    #preview {
+      display: block;
+      margin: 20px auto;
+      max-width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 0 0 2px #e5e7eb;
+      position: relative;
+    }
+    .btn {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 6px;
+      font-size: 1rem;
+      transition: 0.2s;
+    }
+    .btn:hover {
+      background: #1d4ed8;
+    }
+    pre {
+      background: #f3f4f6;
+      text-align: left;
+      padding: 12px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 0.9rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .bbox {
+      position: absolute;
+      border: 2px solid rgba(255, 0, 0, 0.7);
+      pointer-events: none;
+      box-sizing: border-box;
+    }
+    #img-container {
+      position: relative;
+      display: inline-block;
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-<h1>🧠 OCR Аналізатор (AI Educational Assistant)</h1>
-<input type="file" id="fileInput" accept="image/*">
-<button id="analyzeBtn">Розпізнати</button>
-<button id="clearBtn" style="background:#c43d3d;margin-top:.5rem;">🧹 Очистити все</button>
-<pre id="output"></pre>
-</div>
-<script>
-const fileInput=document.getElementById("fileInput");
-const analyzeBtn=document.getElementById("analyzeBtn");
-const clearBtn=document.getElementById("clearBtn");
-const output=document.getElementById("output");
+  <h1>🧠 OCR Аналізатор (AI Educational Assistant)</h1>
+  <div class="card">
+    <input type="file" id="file" accept="image/*" />
+    <button class="btn" id="analyzeBtn">Розпізнати</button>
+    <button class="btn" id="clearBtn">🧹 Очистити все</button>
+    <div id="img-container">
+      <img id="preview" src="" alt="" style="display:none;" />
+    </div>
+    <pre id="output">{}</pre>
+  </div>
 
-analyzeBtn.onclick=async()=>{
-  const file=fileInput.files[0];
-  if(!file){alert("Будь ласка, виберіть файл!");return;}
-  const formData=new FormData();formData.append("file",file);
-  output.textContent="⏳ Обробка...";
-  const res=await fetch("/api/vision",{method:"POST",body:formData});
-  output.textContent=JSON.stringify(await res.json(),null,2);
-};
+  <script>
+    const fileInput = document.getElementById("file");
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const output = document.getElementById("output");
+    const preview = document.getElementById("preview");
+    const imgContainer = document.getElementById("img-container");
 
-clearBtn.onclick=async()=>{
-  if(!confirm("Очистити всі результати OCR?"))return;
-  const res=await fetch("/api/cleanup",{method:"POST"});
-  output.textContent=JSON.stringify(await res.json(),null,2);
-};
-</script>
+    // Отображение превью
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          preview.src = ev.target.result;
+          preview.style.display = "block";
+          clearBoxes();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Отправка на сервер
+    analyzeBtn.onclick = async () => {
+      const file = fileInput.files[0];
+      if (!file) return alert("Оберіть зображення");
+      const formData = new FormData();
+      formData.append("file", file);
+
+      output.textContent = "⏳ Обробка...";
+      clearBoxes();
+
+      const res = await fetch("/api/vision", { method: "POST", body: formData });
+      const data = await res.json();
+      output.textContent = JSON.stringify(data, null, 2);
+
+      if (data.words && data.words.length > 0) drawBoxes(data.words);
+    };
+
+    // Очистка
+    clearBtn.onclick = async () => {
+      await fetch("/api/clear", { method: "POST" });
+      output.textContent = "{}";
+      preview.src = "";
+      preview.style.display = "none";
+      clearBoxes();
+    };
+
+    // Функции для рамок
+    function clearBoxes() {
+      document.querySelectorAll(".bbox").forEach((b) => b.remove());
+    }
+
+    function drawBoxes(words) {
+      const rect = preview.getBoundingClientRect();
+      const scaleX = preview.width / preview.naturalWidth;
+      const scaleY = preview.height / preview.naturalHeight;
+
+      words.forEach((w) => {
+        const box = document.createElement("div");
+        box.className = "bbox";
+        box.style.left = w.bbox.x * scaleX + "px";
+        box.style.top = w.bbox.y * scaleY + "px";
+        box.style.width = w.bbox.w * scaleX + "px";
+        box.style.height = w.bbox.h * scaleY + "px";
+        imgContainer.appendChild(box);
+      });
+    }
+  </script>
 </body>
 </html>
