@@ -1,68 +1,108 @@
-document.getElementById('ocrForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
+console.log("🚀 AI Assistant UI loaded");
 
-  const fileInput = document.getElementById('file');
-  const taskInput = document.getElementById('task');
-  const resultBlock = document.getElementById('result');
-  const messageEl = document.getElementById('message');
-  const ocrTextEl = document.getElementById('ocrText');
-  const galleryEl = document.getElementById('gallery');
+const analyzeBtn = document.getElementById("analyzeBtn");
+const clearBtn = document.getElementById("clearBtn");
+const fileInput = document.getElementById("fileInput");
+const outputDiv = document.getElementById("output");
+const imagePreview = document.getElementById("imagePreview");
+const bboxCanvas = document.getElementById("bboxCanvas");
+const bboxCtx = bboxCanvas.getContext("2d");
 
+let currentImage = null;
+let ocrData = null;
+
+// 🧠 Отправка изображения на сервер
+analyzeBtn.onclick = async () => {
   const file = fileInput.files[0];
-  if (!file) return alert('Будь ласка, виберіть зображення.');
+  if (!file) {
+    alert("📁 Обери файл для аналізу!");
+    return;
+  }
 
   const formData = new FormData();
-  formData.append('file', file);
-  formData.append('task', taskInput.value.trim());
+  formData.append("file", file);
 
-  messageEl.textContent = '⏳ Обробка...';
-  resultBlock.classList.remove('hidden');
-  ocrTextEl.textContent = '';
-  galleryEl.innerHTML = '';
+  outputDiv.textContent = "⏳ Обробка...";
 
   try {
-    const res = await fetch('/api/vision', {
-      method: 'POST',
-      body: formData
+    // ✅ Використовуємо відносний шлях для Render
+    const response = await fetch("/api/vision", {
+      method: "POST",
+      body: formData,
     });
 
-    const data = await res.json();
-    console.log('Response:', data);
-
-    if (!res.ok || !data.found) {
-      messageEl.textContent = '❌ Завдання не розпізнано.';
-      return;
+    if (!response.ok) {
+      throw new Error(`Server responded with ${response.status}`);
     }
 
-    messageEl.textContent = data.message || '✅ Завдання розпізнано.';
-    ocrTextEl.textContent = data.ocrText || '';
+    const data = await response.json();
+    ocrData = data;
+    console.log("📜 OCR result:", data);
 
-    const images = [];
-
-    if (data.taskCrop) {
-      images.push({ label: `Завдання ${data.task}`, src: data.taskCrop });
+    if (data.status && data.status.startsWith("✅")) {
+      outputDiv.textContent = JSON.stringify(data, null, 2);
+      showImageWithBoxes(data);
+    } else {
+      outputDiv.textContent = `❌ Помилка OCR: ${data.error || "невідома"}`;
     }
-
-    if (data.drawings && Array.isArray(data.drawings)) {
-      for (const d of data.drawings) {
-        images.push({ label: `Рисунок ${d.number}`, src: d.url });
-      }
-    }
-
-    if (images.length) {
-      images.forEach(img => {
-        const div = document.createElement('div');
-        div.innerHTML = `
-          <figure>
-            <img src="${img.src}" alt="${img.label}" />
-            <figcaption>${img.label}</figcaption>
-          </figure>`;
-        galleryEl.appendChild(div);
-      });
-    }
-
   } catch (err) {
-    console.error(err);
-    messageEl.textContent = '💥 Помилка при обробці зображення.';
+    console.error("❌ Помилка запиту:", err);
+    outputDiv.textContent = `❌ Помилка запиту: ${err.message}`;
   }
-});
+};
+
+// 🧹 Очищення
+clearBtn.onclick = async () => {
+  outputDiv.textContent = "";
+  imagePreview.src = "";
+  bboxCtx.clearRect(0, 0, bboxCanvas.width, bboxCanvas.height);
+  fileInput.value = "";
+
+  try {
+    await fetch("/api/clear", { method: "POST" });
+  } catch (e) {
+    console.warn("Помилка при очищенні:", e);
+  }
+};
+
+// 🖼️ Попередній перегляд зображення
+fileInput.onchange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      imagePreview.src = event.target.result;
+      imagePreview.onload = () => {
+        bboxCanvas.width = imagePreview.width;
+        bboxCanvas.height = imagePreview.height;
+      };
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+// 📦 Відображення рамок
+function showImageWithBoxes(data) {
+  if (!data.words || data.words.length === 0) return;
+  const img = imagePreview;
+  if (!img.complete) {
+    img.onload = () => drawBoxes(data);
+  } else {
+    drawBoxes(data);
+  }
+}
+
+function drawBoxes(data) {
+  bboxCtx.clearRect(0, 0, bboxCanvas.width, bboxCanvas.height);
+  bboxCtx.strokeStyle = "rgba(255, 0, 0, 0.6)";
+  bboxCtx.lineWidth = 2;
+
+  const scaleX = bboxCanvas.width / 3584;
+  const scaleY = bboxCanvas.height / 5376;
+
+  data.words.forEach((word) => {
+    if (!word.bbox) return;
+    const { x, y, w, h } = word.bbox;
+    bboxCtx.strokeRect(x * scaleX, y * scaleY, w * scaleX, h * scaleY);
+  });
+}
