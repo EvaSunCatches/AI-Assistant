@@ -1,157 +1,135 @@
 <!DOCTYPE html>
 <html lang="uk">
-<head>
-  <meta charset="UTF-8">
-  <title>🧠 AI Educational Assistant — OCR Analyzer</title>
-  <style>
-    body {
-      font-family: 'Inter', Arial, sans-serif;
-      background: #f7f7f9;
-      color: #111;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      font-size: 26px;
-      margin-bottom: 10px;
-      color: #333;
-    }
-    .btn {
-      margin: 6px;
-      padding: 10px 18px;
-      border: none;
-      border-radius: 8px;
-      background: #4b7bec;
-      color: white;
-      font-size: 15px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .btn:hover {
-      background: #3867d6;
-    }
-    .secondary {
-      background: #20bf6b;
-    }
-    .warn {
-      background: #eb3b5a;
-    }
-    .panel {
-      max-width: 800px;
-      margin: 20px auto;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.1);
-      padding: 20px;
-    }
-    #preview {
-      max-width: 100%;
-      margin-top: 10px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      position: relative;
-    }
-    #canvas {
-      position: absolute;
-      left: 0;
-      top: 0;
-    }
-    pre {
-      text-align: left;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 14px;
-      background: #f0f0f0;
-      padding: 10px;
-      border-radius: 8px;
-    }
-  </style>
-</head>
-<body>
-  <h1>🧠 OCR Аналізатор (AI Educational Assistant)</h1>
-
-  <div class="panel">
-    <input type="file" id="fileInput" accept="image/*" />
-    <div>
-      <button class="btn" id="analyzeBtn">Розпізнати</button>
-      <button class="btn warn" id="clearBtn">Очистити все</button>
-    </div>
-    <div>
-      <button class="btn secondary" onclick="window.open('/logs','_blank')">📜 Логи</button>
-      <button class="btn secondary" onclick="window.open('/history','_blank')">🖼️ Історія</button>
-      <button class="btn secondary" onclick="window.open('/stats','_blank')">📊 Статистика</button>
-    </div>
-
-    <div style="position:relative;display:inline-block;">
-      <img id="preview" src="" alt="Preview">
-      <canvas id="canvas"></canvas>
-    </div>
-
-    <pre id="output"></pre>
-  </div>
-
-  <script>
-    const fileInput = document.getElementById('fileInput');
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const output = document.getElementById('output');
-    const preview = document.getElementById('preview');
-    const canvas = document.getElementById('canvas');
-
-    let file;
-
-    fileInput.onchange = e => {
-      file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = ev => preview.src = ev.target.result;
-        reader.readAsDataURL(file);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI OCR Assistant v7.6-FIX</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background: #f4f6f8;
+        color: #222;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
       }
-    };
 
-    analyzeBtn.onclick = async () => {
-      if (!file) {
-        alert("Будь ласка, виберіть зображення!");
-        return;
+      h1 {
+        margin-top: 20px;
+        color: #0077cc;
       }
-      output.textContent = "⏳ Обробка...";
-      const formData = new FormData();
-      formData.append("image", file);
 
-      try {
-        const res = await fetch("/api/vision", { method: "POST", body: formData });
-        const data = await res.json();
-        output.textContent = JSON.stringify(data, null, 2);
-
-        if (data.words && data.words.length > 0) {
-          drawBoxes(data.words);
-        }
-      } catch (err) {
-        output.textContent = "❌ Помилка запиту: " + err.message;
+      .container {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        width: 90%;
+        max-width: 900px;
+        margin-top: 20px;
       }
-    };
 
-    clearBtn.onclick = async () => {
-      await fetch("/api/clear", { method: "POST" });
-      output.textContent = "🧹 Очищено!";
-      preview.src = "";
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    };
+      .controls {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
 
-    function drawBoxes(words) {
-      const ctx = canvas.getContext("2d");
-      canvas.width = preview.width;
-      canvas.height = preview.height;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgba(255,0,0,0.7)";
-      words.forEach(w => {
-        const { x, y, w: wbox, h } = w.bbox || {};
-        if (x && y && wbox && h) ctx.strokeRect(x / 10, y / 10, wbox / 10, h / 10);
-      });
-    }
-  </script>
-</body>
+      button {
+        background-color: #0077cc;
+        border: none;
+        color: white;
+        padding: 10px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s;
+        font-weight: 500;
+      }
+
+      button:hover {
+        background-color: #005fa3;
+      }
+
+      #output {
+        white-space: pre-wrap;
+        background: #fafafa;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        margin-top: 20px;
+        font-family: monospace;
+        overflow-x: auto;
+      }
+
+      .image-area {
+        position: relative;
+        display: inline-block;
+        margin-top: 15px;
+      }
+
+      #imagePreview {
+        max-width: 100%;
+        border-radius: 10px;
+      }
+
+      #bboxCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+      }
+
+      footer {
+        margin: 30px 0;
+        color: #777;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🧠 AI OCR Assistant v7.6-FIX</h1>
+
+    <div class="container">
+      <div class="controls">
+        <input type="file" id="fileInput" accept="image/*" />
+        <button id="analyzeBtn">🔍 Розпізнати</button>
+        <button id="clearBtn">🧹 Очистити</button>
+        <button id="logsBtn">📜 Логи</button>
+        <button id="historyBtn">🕓 Історія</button>
+        <button id="statsBtn">📊 Статистика</button>
+      </div>
+
+      <div class="image-area">
+        <img id="imagePreview" />
+        <canvas id="bboxCanvas"></canvas>
+      </div>
+
+      <div id="output">Результат з'явиться тут...</div>
+    </div>
+
+    <footer>v7.6-FIX | Render Cloud Deployment</footer>
+
+    <script src="app.js"></script>
+    <script>
+      // Навигационные кнопки для интерфейса
+      document.getElementById("logsBtn").onclick = async () => {
+        const res = await fetch("/logs");
+        document.getElementById("output").textContent = await res.text();
+      };
+
+      document.getElementById("historyBtn").onclick = async () => {
+        const res = await fetch("/history");
+        document.getElementById("output").textContent = await res.text();
+      };
+
+      document.getElementById("statsBtn").onclick = async () => {
+        const res = await fetch("/stats");
+        document.getElementById("output").textContent = await res.text();
+      };
+    </script>
+  </body>
 </html>
