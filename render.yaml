@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ai-educational-assistant
+    env: node
+    plan: free
+    region: frankfurt  # или другой ближайший к тебе регион
+    buildCommand: npm install
+    startCommand: node server.cjs
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+    autoDeploy: true
+    disk:
+      name: drawings
+      mountPath: /public/drawings
+      sizeGB: 1
