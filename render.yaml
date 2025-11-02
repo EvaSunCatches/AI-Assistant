@@ -3,16 +3,17 @@ services:
     name: ai-educational-assistant
     env: node
     plan: free
-    region: frankfurt  # или другой ближайший к тебе регион
-    buildCommand: npm install
+    buildCommand: |
+      apt-get update && apt-get install -y tesseract-ocr tesseract-ocr-eng tesseract-ocr-ukr
+      npm install
     startCommand: node server.cjs
     envVars:
-      - key: NODE_ENV
-        value: production
+      - key: OCR_LANG
+        value: eng+ukr
+      - key: CLEANUP_INTERVAL
+        value: 180
       - key: PORT
         value: 3000
     autoDeploy: true
-    disk:
-      name: drawings
-      mountPath: /public/drawings
-      sizeGB: 1
+    healthCheckPath: /
+    region: frankfurt
