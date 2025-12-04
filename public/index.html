@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI Освітній Асистент</title>
+
+  <!-- Fonts / Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-wrap">
+    <div class="container" role="application">
+      <!-- LEFT PANEL -->
+      <div class="left-panel" id="leftPanel">
+        <h2>Введіть ваше завдання</h2>
+
+        <!-- Предмет -->
+        <div id="subjectGroup" style="margin-bottom:12px;">
+          <label class="label-compact">Оберіть предмет</label>
+          <select id="subject">
+            <option value="mathematics">Математика</option>
+            <option value="ukr-lang">Українська мова</option>
+            <option value="eng-lang">Англійська мова</option>
+            <option value="history">Історія</option>
+            <option value="science">Природознавство</option>
+            <option value="informatics">Інформатика</option>
+          </select>
+        </div>
+
+        <h3 style="margin-top:6px;">Розділ 1: Джерело завдання</h3>
+
+        <!-- Источник: PDF / Изображение -->
+        <div class="source-buttons">
+          <button id="pdf-toggle" class="source-button active">
+            <span class="material-icons-outlined">menu_book</span>
+            По підручнику (PDF)
+          </button>
+          <button id="image-toggle" class="source-button">
+            <span class="material-icons-outlined">image</span>
+            По зображенню
+          </button>
+        </div>
+
+        <!-- PDF-секция -->
+        <div id="pdf-section">
+          <label class="label-compact">Оберіть підручник (PDF)</label>
+          <div class="small-row top-gap">
+            <div style="flex:2">
+              <select id="book-select">
+                <option value="">Автоматично: перший знайдений у папці books</option>
+              </select>
+            </div>
+            <div style="flex:1">
+              <button id="upload-book-btn" class="assistant-button assistant-button--small" style="margin-top:0;">
+                <span class="material-icons-outlined" style="font-size:18px;vertical-align:middle;">upload_file</span>
+                Додати PDF
+              </button>
+              <input id="book-file-input" type="file" accept="application/pdf" style="display:none" />
+            </div>
+          </div>
+
+          <div class="small-row top-gap">
+            <div>
+              <label class="label-compact">Параграф</label>
+              <input id="paragraph-number" type="text" placeholder="Напр. §3">
+            </div>
+            <div>
+              <label class="label-compact">Сторінка</label>
+              <input id="page-number" type="text" placeholder="Напр. 156">
+            </div>
+            <div>
+              <label class="label-compact">Номер завдання</label>
+              <input id="task-number" type="text" placeholder="Напр. 535">
+            </div>
+          </div>
+        </div>
+
+        <!-- Image (photo) section -->
+        <div id="photo-upload-section" class="hidden top-gap">
+          <div class="photo-actions">
+            <button id="upload-photo-btn" class="file-upload-btn">
+              <span class="material-icons-outlined">upload_file</span>
+              Завантажити фото / скрін
+            </button>
+            <button id="take-photo-btn" class="camera-capture-btn">
+              <span class="material-icons-outlined">camera_alt</span>
+              Зробити фото
+            </button>
+          </div>
+          <input id="file-input" type="file" accept="image/*" style="display:none">
+          <p class="hint-text">
+            Можна перетягнути скріншот сторінки з підручника або зробити фото сторінки.
+          </p>
+        </div>
+
+        <!-- Деталі завдання -->
+        <div style="margin-top:18px;position:relative">
+          <h3>Секція: Вкажіть, що необхідно зробити (деталі)</h3>
+          <div class="textarea-container" style="margin-top:8px;">
+            <textarea id="task-details" placeholder="Наприклад: 'Поясни крок 3 детально.'">Поясни крок 3 детально.</textarea>
+            <button id="mic-emoji-button" class="mic-button" title="Голосове введення">
+              <span class="material-icons-outlined">mic</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Основная кнопка ассистента -->
+        <button id="assistant-call-button" class="assistant-button" aria-label="Отримати допомогу асистента">
+          Отримати допомогу асистента
+        </button>
+
+        <!-- Відповідь асистента -->
+        <div class="response-block" id="responseBlock">
+          <div style="margin-top:16px;">
+            <h3>ВІДПОВІДЬ АСИСТЕНТА</h3>
+            <div id="response-area" class="response-area">
+              Тут з'явиться детальна відповідь.
+            </div>
+
+            <div class="tts-controls" id="tts-controls" style="display:none">
+              <button id="rewind-tts-btn" title="Перемотка назад" disabled>
+                <span class="material-icons-outlined">fast_rewind</span>
+              </button>
+              <button id="play-tts-btn" title="Відтворити / Пауза">
+                <span class="material-icons-outlined" id="play-pause-icon">play_arrow</span>
+              </button>
+              <button id="forward-tts-btn" title="Перемотка вперед" disabled>
+                <span class="material-icons-outlined">fast_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Додаткові запитання -->
+        <div id="extra-section" class="extra-section hidden">
+          <h3>Додаткові запитання до асистента</h3>
+          <p class="hint-text">
+            Тут можна попросити: «Зроби короткий запис розв'язання для моєї зошита», 
+            «Поясни ще раз іншим способом» тощо.
+          </p>
+          <div class="textarea-container" style="margin-top:8px;">
+            <textarea id="extra-question" placeholder="Наприклад: 'Зроби короткий запис розв'язання для зошита.'"></textarea>
+            <button id="extra-mic-button" class="mic-button" title="Голосове введення">
+              <span class="material-icons-outlined">mic</span>
+            </button>
+          </div>
+          <button id="extra-send-button" class="assistant-button assistant-button--secondary">
+            Надіслати додаткове запитання
+          </button>
+        </div>
+
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="right-panel" id="rightPanel" aria-hidden="false">
+        <div
+          id="assistantImage"
+          class="assistant-image"
+          style="background-image: url('assets/assistant.png');"></div>
+
+        <div class="assistant-info" id="assistantInfo">
+          <h1>AI Освітній Асистент</h1>
+          <p>Ваш персональний помічник у навчанні</p>
+          <div class="progress-bar" id="progress-bar" style="margin-top:8px;display:none">
+            <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка камеры -->
+  <div id="camera-modal" class="camera-modal hidden">
+    <div class="camera-backdrop"></div>
+    <div class="camera-dialog">
+      <video id="camera-video" autoplay playsinline></video>
+      <div class="camera-controls">
+        <button id="camera-capture-btn" class="circle-btn">
+          <span class="material-icons-outlined">camera</span>
+        </button>
+        <button id="camera-close-btn" class="icon-btn">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+    </div>
+    <canvas id="camera-canvas" style="display:none;"></canvas>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
