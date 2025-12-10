@@ -1,53 +1,156 @@
+// aiClient.mjs — клиент для OpenRouter с авто-моделью, fallback и retry
+
 import dotenv from "dotenv";
 dotenv.config();
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || "openai/gpt-4.1-mini";
 
-if (!OPENROUTER_API_KEY) {
-  console.warn("[AI] OPENROUTER_API_KEY не встановлено. Відповіді AI працювати не будуть.");
+// Базовая модель из окружения (если задана)
+const ENV_DEFAULT_MODEL = process.env.OPENROUTER_MODEL;
+
+// Явные профили (по желанию — можно задать в Render):
+// OPENROUTER_MODEL_MATH, OPENROUTER_MODEL_CODE, OPENROUTER_MODEL_DEEP
+const MODEL_MATH = process.env.OPENROUTER_MODEL_MATH || null;
+const MODEL_CODE = process.env.OPENROUTER_MODEL_CODE || null;
+const MODEL_DEEP = process.env.OPENROUTER_MODEL_DEEP || null;
+
+// Жёсткий fallback (то, на что всегда можем откатиться)
+const FALLBACK_MODEL = "anthropic/claude-3.5-haiku";
+
+const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+
+function pickBaseModel() {
+  return ENV_DEFAULT_MODEL || FALLBACK_MODEL;
 }
 
-export async function callOpenRouter(messages, options = {}) {
-  if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY is missing");
+// Выбор модели по типу задачи и подсказке
+function pickModel({ type, modelHint } = {}) {
+  if (modelHint) return modelHint;
 
-  const body = {
-    model: OPENROUTER_MODEL,
-    messages,
-    temperature: options.temperature ?? 0.4,
-    max_tokens: options.max_tokens ?? 1200
-  };
+  if (type === "math" && MODEL_MATH) return MODEL_MATH;
+  if (type === "code" && MODEL_CODE) return MODEL_CODE;
+  if (type === "deep" && MODEL_DEEP) return MODEL_DEEP;
 
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${OPENROUTER_API_KEY}`
-    },
-    body: JSON.stringify(body)
-  });
+  return pickBaseModel();
+}
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    console.error("[OpenRouter error]", res.status, text);
-    throw new Error(`OpenRouter error: ${res.status} ${text}`);
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Универсальный вызов OpenRouter
+ * 
+ * @param {Object} params
+ * @param {string} params.system - системный промпт
+ * @param {string} params.prompt - пользовательский промпт
+ * @param {("math"|"code"|"deep"|"chat"|"general")} [params.type] - тип задачи
+ * @param {string} [params.modelHint] - конкретная модель (если нужно принудительно)
+ * @param {number} [params.maxRetries] - кол-во повторов при 429/5xx
+ */
+export async function askAssistant({
+  system,
+  prompt,
+  type = "general",
+  modelHint,
+  maxRetries = 2
+} = {}) {
+  if (!OPENROUTER_API_KEY) {
+    console.warn("⚠️ OPENROUTER_API_KEY не задан в переменных окружения");
+    return "AI: відсутній OPENROUTER_API_KEY у змінних середовища.";
   }
 
-  const data = await res.json();
-  const choice = data.choices?.[0];
-  const content = choice?.message?.content;
-  if (!content) throw new Error("Empty response from OpenRouter");
+  let attempt = 0;
+  let lastError = null;
 
-  if (typeof content === "string") return content;
-  if (Array.isArray(content)) return content.map(c => c.text || "").join("");
+  while (attempt <= maxRetries) {
+    // На первой попытке — выбранная модель, на последующих — базовый fallback
+    const model = attempt === 0 ? pickModel({ type, modelHint }) : pickBaseModel();
 
-  return String(content);
-}
+    try {
+      const resp = await fetch(OPENROUTER_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          // Рекомендуется OpenRouter'ом (метаданные, не секреты):
+          "HTTP-Referer": "https://ai-assistant-qv8x.onrender.com",
+          "X-Title": "AI Educational Assistant"
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            ...(system ? [{ role: "system", content: system }] : []),
+            { role: "user", content: prompt }
+          ],
+          temperature: type === "math" ? 0.4 : 0.7,
+          max_tokens: 1024
+        })
+      });
 
-export async function askAssistant(systemPrompt, userPrompt, extraOptions = {}) {
-  const messages = [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userPrompt }
-  ];
-  return callOpenRouter(messages, extraOptions);
+      const data = await resp.json().catch(() => ({}));
+
+      if (!resp.ok) {
+        const msg = data?.error?.message || resp.statusText;
+        console.error(
+          `[OpenRouter error] status=${resp.status} model=${model} attempt=${attempt} message=${msg}`
+        );
+
+        // ❌ Модель некорректна — пробуем сразу откатиться на базовую
+        if (
+          resp.status === 400 &&
+          msg &&
+          msg.toLowerCase().includes("not a valid model id") &&
+          model !== pickBaseModel()
+        ) {
+          attempt++;
+          lastError = msg;
+          continue;
+        }
+
+        // ⏳ Рейт-лимит / серверные ошибки — ретрай с backoff
+        if ([429, 500, 502, 503, 504].includes(resp.status) && attempt < maxRetries) {
+          const delay = 500 * Math.pow(2, attempt);
+          console.warn(`⏳ OpenRouter retry in ${delay}ms (status ${resp.status})`);
+          await sleep(delay);
+          attempt++;
+          lastError = msg;
+          continue;
+        }
+
+        // Полный фейл
+        return `OpenRouter error: ${resp.status} ${JSON.stringify(data)}`;
+      }
+
+      const choice = data.choices?.[0];
+      const content = choice?.message?.content;
+
+      if (!content) {
+        console.error("⚠️ OpenRouter: пустой ответ", data);
+        return "AI не повернув текст відповіді.";
+      }
+
+      const text = Array.isArray(content)
+        ? content.map((c) => (typeof c === "string" ? c : c.text || "")).join("\n")
+        : typeof content === "string"
+        ? content
+        : content.text || "";
+
+      return text.trim();
+    } catch (err) {
+      console.error(`[OpenRouter fetch error] attempt=${attempt}`, err);
+      lastError = err?.message || String(err);
+
+      if (attempt < maxRetries) {
+        const delay = 500 * Math.pow(2, attempt);
+        console.warn(`⏳ Network error, retry in ${delay}ms`);
+        await sleep(delay);
+        attempt++;
+      } else {
+        return `OpenRouter fetch error: ${lastError}`;
+      }
+    }
+  }
+
+  return `OpenRouter error after retries: ${lastError || "невідома помилка"}`;
 }

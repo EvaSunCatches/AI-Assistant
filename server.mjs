@@ -1,4 +1,4 @@
-// server.mjs — сервер PDF + AI (OpenRouter по умолчанию)
+// server.mjs — сервер PDF + AI (OpenRouter, авто-модели, fallback, retry)
 
 import express from "express";
 import fileUpload from "express-fileupload";
@@ -12,15 +12,14 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 const BOOKS_DIR = path.join(process.cwd(), "books");
 
-// --- middleware ---
+// ===== MIDDLEWARE =====
 app.use(express.json({ limit: "10mb" }));
 app.use(fileUpload());
 app.use(express.static(path.join(process.cwd(), "public")));
 
-// ====== PDF helpers ======
+// ===== HELPERS: PDF =====
 function bufferToUint8Array(buffer) {
   return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
 }
@@ -38,7 +37,8 @@ async function loadPdf(bookFile) {
     useWorkerFetch: false,
     isEvalSupported: false
   });
-  return await loadingTask.promise;
+  const pdf = await loadingTask.promise;
+  return pdf;
 }
 
 async function readPdfPageText(bookFile, pageIndex) {
@@ -54,6 +54,7 @@ async function readPdfPageText(bookFile, pageIndex) {
   return { text, pageIndex, numPages: pdf.numPages };
 }
 
+// Вытаскиваем конкретное задание по номеру
 function extractTaskFragment(pageText, taskNumber) {
   const cur = String(taskNumber);
   const next = String(Number(taskNumber) + 1);
@@ -62,13 +63,13 @@ function extractTaskFragment(pageText, taskNumber) {
     `\\b${cur}[\\.)]\\s*(.*?)(?=\\b${next}[\\.)]|$)`,
     "s"
   );
-
   const match = pageText.match(regex);
   if (!match) return null;
 
   return `${cur}. ${match[1].trim()}`;
 }
 
+// Поиск задания по всей книге
 async function findTaskInBook(bookFile, taskNumber) {
   const pdf = await loadPdf(bookFile);
   for (let i = 1; i <= pdf.numPages; i++) {
@@ -78,46 +79,63 @@ async function findTaskInBook(bookFile, taskNumber) {
     const text = tokens.join(" ").replace(/-\s+/g, "").replace(/\s+/g, " ").trim();
 
     const fragment = extractTaskFragment(text, taskNumber);
-    if (fragment) return { pageIndex: i, fragment };
+    if (fragment) {
+      return { pageIndex: i, fragment };
+    }
   }
   return null;
 }
 
-// ===== AI PROMPTS =====
+// ===== HEURISTICS: определяем тип задачи =====
+
+function looksLikeMath(text = "") {
+  const t = text.toLowerCase();
+  if (/[0-9]/.test(t) && /[+×*÷:/-]/.test(t)) return true;
+  if (/(дроб|частин|відсот|процент|рівнян|добуток|частка|сума)/.test(t)) return true;
+  if (/(square|fraction|percent|equation)/.test(t)) return true;
+  return false;
+}
+
+// ===== PROMPTS =====
 
 function buildTaskPrompt(fragment, details, mode) {
   let base =
-    "Ти — доброзичливий репетитор для учня 5 класу. Пояснюй просто, українською.\n" +
-    "Структура:\n" +
-    "— 'Правило'\n" +
-    "— 'Розв'язання' кроками\n" +
-    "— 'Відповідь'\n\n";
+    "Ти — доброзичливий репетитор з математики для учня 5 класу. Пояснюй дуже просто, українською мовою.\n\n" +
+    "Структура відповіді:\n" +
+    "1) **Правило** — коротко (1–3 речення).\n" +
+    "2) **Розв'язання** — крок за кроком.\n" +
+    "3) **Відповідь** — чітко та окремим блоком.\n\n";
 
-  if (details) base += `Додаткове прохання учня: "${details.trim()}"\n\n`;
-  if (mode === "strict") base += "Режим: строгий.\n\n";
-  else base += "Режим: розумний.\n\n";
+  if (details && details.trim()) {
+    base += `Додаткове прохання учня: "${details.trim()}". Зверни на це особливу увагу.\n\n`;
+  }
 
-  base += `Текст завдання:\n${fragment}\n`;
+  base += mode === "strict"
+    ? "Режим: строгий (номер сторінки відомий).\n\n"
+    : "Режим: розумний пошук по підручнику.\n\n";
+
+  base += `Текст завдання з підручника:\n${fragment}\n\n` +
+    "Сформуй відповідь у форматі Markdown.";
 
   return base;
 }
 
 function buildChatPrompt(question) {
   return (
-    "Ти — пояснюєш матеріал учню 4–6 класу простими словами.\n\n" +
+    "Ти пояснюєш матеріал дитині 4–6 класу простими словами, українською мовою.\n\n" +
     `Питання учня:\n${question}\n\n` +
-    "Відповідь: коротке пояснення + приклад."
+    "Структура відповіді: коротке пояснення + простий приклад (якщо доречно)."
   );
 }
 
 // ===== API ENDPOINTS =====
 
-// health
+// Health check
 app.get("/health", (req, res) => {
-  res.json({ ok: true, ai: "OpenRouter", port: PORT });
+  res.json({ ok: true, ai: "OpenRouter", port: String(PORT), mode: "smart+strict" });
 });
 
-// список книг
+// Список книг
 app.get("/api/books", (req, res) => {
   try {
     if (!fs.existsSync(BOOKS_DIR)) fs.mkdirSync(BOOKS_DIR, { recursive: true });
@@ -133,11 +151,12 @@ app.get("/api/books", (req, res) => {
 
     res.json({ books: files });
   } catch (err) {
+    console.error("[/api/books] error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// загрузка PDF
+// Загрузка PDF
 app.post("/api/upload-book", async (req, res) => {
   try {
     if (!req.files?.book) {
@@ -148,77 +167,107 @@ app.post("/api/upload-book", async (req, res) => {
 
     const file = req.files.book;
     const safeName = file.name.replace(/[^a-z0-9.\-_]+/gi, "_");
-    const dest = path.join(BOOKS_DIR, safeName);
-    await file.mv(dest);
+    const destPath = path.join(BOOKS_DIR, safeName);
+    await file.mv(destPath);
 
     res.json({ ok: true, filename: safeName });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+  } catch (err) {
+    console.error("[/api/upload-book] error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
-// strict mode
+// STRICT режим (номер страницы + номер задания)
 app.post("/api/task/strict", async (req, res) => {
   try {
     const { book, page, taskNumber, details } = req.body;
 
+    if (!book || !page || !taskNumber) {
+      return res
+        .status(400)
+        .json({ error: "Потрібні параметри: book, page, taskNumber" });
+    }
+
     const pageIndex = Number(page);
-    const { text } = await readPdfPageText(book, pageIndex);
+    const { text, numPages } = await readPdfPageText(book, pageIndex);
     const fragment = extractTaskFragment(text, taskNumber);
 
     if (!fragment) {
       return res.status(404).json({
-        error: `Task ${taskNumber} not found`,
-        pageIndex
+        error: `Task ${taskNumber} not found on page ${pageIndex}`,
+        pageIndex,
+        numPages
       });
     }
 
     const prompt = buildTaskPrompt(fragment, details, "strict");
-    const aiResponse = await askAssistant("Ти — репетитор.", prompt);
+
+    const aiResponse = await askAssistant({
+      system: "Ти — репетитор з математики. Допомагаєш учню 5 класу.",
+      prompt,
+      type: "math"
+    });
 
     res.json({
       ok: true,
       mode: "strict",
+      book,
       pageIndex,
       fragment,
       aiResponse
     });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+  } catch (err) {
+    console.error("[/api/task/strict] error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
-// smart mode
+// SMART режим + чат
 app.post("/api/task/smart", async (req, res) => {
   try {
     const { book, taskNumber, details, question } = req.body;
 
+    // 1) Если указан book + taskNumber → умный поиск по книге
     if (book && taskNumber) {
       const found = await findTaskInBook(book, taskNumber);
+      if (!found) {
+        return res
+          .status(404)
+          .json({ error: `Task ${taskNumber} not found in book ${book}` });
+      }
 
-      if (!found)
-        return res.status(404).json({ error: "Task not found in book" });
+      const { pageIndex, fragment } = found;
+      const prompt = buildTaskPrompt(fragment, details, "smart");
 
-      const prompt = buildTaskPrompt(found.fragment, details, "smart");
-      const aiResponse = await askAssistant("Ти — репетитор.", prompt);
+      const aiResponse = await askAssistant({
+        system: "Ти — репетитор з математики. Пояснюєш завдання з підручника.",
+        prompt,
+        type: "math"
+      });
 
       return res.json({
         ok: true,
         mode: "smart",
-        pageIndex: found.pageIndex,
-        fragment: found.fragment,
+        book,
+        pageIndex,
+        fragment,
         aiResponse
       });
     }
 
-    // чатовый режим
+    // 2) Чистый чат-вопрос
     const q = (question || details || "").trim();
     if (!q) {
-      return res.status(400).json({ error: "Empty question" });
+      return res.status(400).json({ error: "Немає тексту питання" });
     }
 
     const prompt = buildChatPrompt(q);
-    const aiResponse = await askAssistant("Ти — вчитель.", prompt);
+
+    const aiResponse = await askAssistant({
+      system: "Ти — вчитель, який пояснює матеріал дитині 4–6 класу.",
+      prompt,
+      type: looksLikeMath(q) ? "math" : "chat"
+    });
 
     res.json({
       ok: true,
@@ -226,12 +275,21 @@ app.post("/api/task/smart", async (req, res) => {
       question: q,
       aiResponse
     });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+  } catch (err) {
+    console.error("[/api/task/smart] error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
-// старт сервера
+// Заглушка для OCR-режима по изображению, чтобы фронт не падал
+app.post("/api/image-ocr", async (req, res) => {
+  res.json({
+    text:
+      "Режим по зображенню (OCR) буде додано окремо. Наразі скористайтесь режимом PDF або просто опишіть завдання текстом."
+  });
+});
+
+// ===== START SERVER =====
 app.listen(PORT, () => {
   console.log(`🚀 Server running with OpenRouter AI on http://localhost:${PORT}`);
 });
